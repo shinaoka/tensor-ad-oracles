@@ -538,7 +538,7 @@ requires-dist = [
     { name = "expecttest", specifier = ">=0.3" },
     { name = "jsonschema", specifier = ">=4.23" },
     { name = "numpy", specifier = ">=2.0" },
-    { name = "torch", specifier = ">=2.8" },
+    { name = "torch", specifier = "==2.10.0" },
 ]
 
 [package.metadata.requires-dev]

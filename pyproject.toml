@@ -9,7 +9,7 @@ dependencies = [
   "expecttest>=0.3",
   "jsonschema>=4.23",
   "numpy>=2.0",
-  "torch>=2.8",
+  "torch==2.10.0",
 ]
 
 [dependency-groups]

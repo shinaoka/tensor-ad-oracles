@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from scripts import validate_schema, verify_cases
+from scripts import check_regeneration, validate_schema, verify_cases
 
 
 class VerifyCasesTests(unittest.TestCase):
@@ -36,6 +36,128 @@ class VerifyCasesTests(unittest.TestCase):
             records = verify_cases.load_jsonl_records(path)
 
             self.assertEqual([record["case_id"] for record in records], ["a", "b"])
+
+
+class CheckRegenerationTests(unittest.TestCase):
+    def test_compare_case_trees_allows_numeric_drift_within_case_tolerance(self) -> None:
+        expected_record = {
+            "schema_version": 1,
+            "case_id": "solve_f64_identity_001",
+            "op": "solve",
+            "dtype": "float64",
+            "family": "identity",
+            "expected_behavior": "success",
+            "inputs": {
+                "a": {
+                    "dtype": "float64",
+                    "shape": [1],
+                    "order": "row_major",
+                    "data": [1.0],
+                }
+            },
+            "observable": {"kind": "identity"},
+            "comparison": {"kind": "allclose", "rtol": 1e-8, "atol": 1e-9},
+            "probes": [
+                {
+                    "probe_id": "p0",
+                    "direction": {
+                        "a": {
+                            "dtype": "float64",
+                            "shape": [1],
+                            "order": "row_major",
+                            "data": [1.0],
+                        }
+                    },
+                    "cotangent": {
+                        "value": {
+                            "dtype": "float64",
+                            "shape": [1],
+                            "order": "row_major",
+                            "data": [1.0],
+                        }
+                    },
+                    "pytorch_ref": {
+                        "jvp": {
+                            "value": {
+                                "dtype": "float64",
+                                "shape": [1],
+                                "order": "row_major",
+                                "data": [1.0],
+                            }
+                        },
+                        "vjp": {
+                            "a": {
+                                "dtype": "float64",
+                                "shape": [1],
+                                "order": "row_major",
+                                "data": [1.0],
+                            }
+                        },
+                    },
+                    "fd_ref": {
+                        "method": "central_difference",
+                        "stencil_order": 2,
+                        "step": 1e-6,
+                        "jvp": {
+                            "value": {
+                                "dtype": "float64",
+                                "shape": [1],
+                                "order": "row_major",
+                                "data": [1.0],
+                            }
+                        },
+                    },
+                }
+            ],
+            "provenance": {
+                "source_repo": "pytorch",
+                "source_file": "x.py",
+                "source_function": "sample_inputs_linalg_solve",
+                "source_commit": "deadbeef",
+                "generator": "python-pytorch-v1",
+                "seed": 17,
+                "torch_version": "2.10.0",
+                "fd_policy_version": "v1",
+            },
+        }
+        actual_record = json.loads(json.dumps(expected_record))
+        actual_record["probes"][0]["pytorch_ref"]["jvp"]["value"]["data"][0] = 1.0 + 5e-9
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            expected = root / "expected"
+            actual = root / "actual"
+            (expected / "solve").mkdir(parents=True)
+            (actual / "solve").mkdir(parents=True)
+            (expected / "solve" / "identity.jsonl").write_text(
+                json.dumps(expected_record) + "\n",
+                encoding="utf-8",
+            )
+            (actual / "solve" / "identity.jsonl").write_text(
+                json.dumps(actual_record) + "\n",
+                encoding="utf-8",
+            )
+
+            check_regeneration.compare_case_trees(expected, actual)
+
+    def test_compare_case_trees_detects_content_mismatch(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            expected = root / "expected"
+            actual = root / "actual"
+            (expected / "solve").mkdir(parents=True)
+            (actual / "solve").mkdir(parents=True)
+            (expected / "solve" / "identity.jsonl").write_text(
+                json.dumps({"case_id": "solve_f64_identity_001"}) + "\n",
+                encoding="utf-8",
+            )
+            (actual / "solve" / "identity.jsonl").write_text(
+                json.dumps({"case_id": "solve_f64_identity_999"}) + "\n",
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(ValueError, "content mismatch"):
+                check_regeneration.compare_case_trees(expected, actual)
 
 
 class ValidateSchemaTests(unittest.TestCase):
