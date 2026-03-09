@@ -148,7 +148,7 @@ The repository ships two CI lanes:
   - full replay of the published database
 - `oracle-regeneration`
   - full regeneration of `cases/`
-  - byte-for-byte comparison against the checked-in database
+  - semantic comparison against the checked-in database using each case tolerance
 
 `CODEOWNERS` covers `cases/`, `generators/`, `validators/`, `scripts/`,
 `schema/`, and workflow files. To make this effective, GitHub branch protection

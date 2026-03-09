@@ -38,6 +38,9 @@ uv sync --locked --all-groups
   - `uv run python scripts/verify_cases.py`
   - `uv run python scripts/check_replay.py`
   - `uv run python scripts/check_regeneration.py`
+- `scripts/check_regeneration.py` compares regenerated JSONL files semantically.
+  Metadata must match exactly, while numeric tensors may differ only within the
+  case-level `comparison.rtol` / `comparison.atol`.
 - `CODEOWNERS` only helps if GitHub branch protection requires CODEOWNERS review. Keep that enabled on the public repository.
 - Useful smoke checks:
 
