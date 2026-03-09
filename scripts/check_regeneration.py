@@ -37,6 +37,10 @@ def _load_jsonl(path: Path) -> list[dict]:
     return records
 
 
+def _is_comparison_tolerance_path(path: str) -> bool:
+    return path.endswith(".comparison.rtol") or path.endswith(".comparison.atol")
+
+
 def _compare_values(expected, actual, *, rtol: float, atol: float, path: str) -> None:
     if isinstance(expected, dict):
         if not isinstance(actual, dict):
@@ -58,6 +62,8 @@ def _compare_values(expected, actual, *, rtol: float, atol: float, path: str) ->
         return
 
     if isinstance(expected, float):
+        if _is_comparison_tolerance_path(path):
+            return
         if not isinstance(actual, (int, float)):
             raise ValueError(f"type mismatch at {path}: expected float, got {type(actual).__name__}")
         if not math.isclose(expected, float(actual), rel_tol=rtol, abs_tol=atol):

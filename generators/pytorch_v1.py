@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 from dataclasses import dataclass
+from functools import lru_cache
 from pathlib import Path
 from typing import Iterable
 
@@ -30,19 +31,17 @@ from .runtime import (
     tuple_to_tensor_map,
     zeros_like_input_map,
 )
+from .tolerance_audit import (
+    comparison_from_observed_residuals,
+    max_abs_diff,
+    max_rel_diff,
+    scalar_residual,
+)
+from .upstream_inventory import collect_ad_relevant_linalg_opinfos
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_PATH = REPO_ROOT / "schema" / "case.schema.json"
-TARGET_OPS = ("svd", "eigh", "solve", "cholesky", "qr", "pinv_singular")
-CASE_FAMILIES = {
-    "svd": ("u_abs", "s", "vh_abs", "uvh_product", "gauge_ill_defined"),
-    "eigh": ("values_vectors_abs", "gauge_ill_defined"),
-    "solve": ("identity",),
-    "cholesky": ("identity",),
-    "qr": ("identity",),
-    "pinv_singular": ("identity",),
-}
 
 
 @dataclass(frozen=True)
@@ -56,112 +55,34 @@ class CaseFamilySpec:
     source_file: str
     source_function: str
     gradcheck_wrapper: str | None = None
+    upstream_name: str | None = None
+    upstream_variant_name: str = ""
+    sample_process_name: str | None = None
 
 
-CASE_SPECS = (
-    CaseFamilySpec(
-        op="svd",
-        family="u_abs",
-        observable_kind="svd_u_abs",
-        expected_behavior="success",
-        source_file="torch/testing/_internal/opinfo/definitions/linalg.py",
-        source_function="sample_inputs_svd",
-    ),
-    CaseFamilySpec(
-        op="svd",
-        family="s",
-        observable_kind="svd_s",
-        expected_behavior="success",
-        source_file="torch/testing/_internal/opinfo/definitions/linalg.py",
-        source_function="sample_inputs_svd",
-    ),
-    CaseFamilySpec(
-        op="svd",
-        family="vh_abs",
-        observable_kind="svd_vh_abs",
-        expected_behavior="success",
-        source_file="torch/testing/_internal/opinfo/definitions/linalg.py",
-        source_function="sample_inputs_svd",
-    ),
-    CaseFamilySpec(
-        op="svd",
-        family="uvh_product",
-        observable_kind="svd_uvh_product",
-        expected_behavior="success",
-        source_file="torch/testing/_internal/opinfo/definitions/linalg.py",
-        source_function="sample_inputs_svd",
-    ),
-    CaseFamilySpec(
-        op="svd",
-        family="gauge_ill_defined",
-        observable_kind="svd_uvh_product",
-        expected_behavior="error",
-        source_file="test/test_linalg.py",
-        source_function="test_invariance_error_spectral_decompositions",
-    ),
-    CaseFamilySpec(
-        op="eigh",
-        family="values_vectors_abs",
-        observable_kind="eigh_values_vectors_abs",
-        expected_behavior="success",
-        source_file="torch/testing/_internal/opinfo/definitions/linalg.py",
-        source_function="sample_inputs_linalg_eigh",
-        gradcheck_wrapper="hermitian_input",
-    ),
-    CaseFamilySpec(
-        op="eigh",
-        family="gauge_ill_defined",
-        observable_kind="eigh_values_vectors_abs",
-        expected_behavior="error",
-        source_file="test/test_linalg.py",
-        source_function="test_invariance_error_spectral_decompositions",
-        gradcheck_wrapper="hermitian_input",
-    ),
-    CaseFamilySpec(
-        op="solve",
-        family="identity",
-        observable_kind="identity",
-        expected_behavior="success",
-        source_file="torch/testing/_internal/opinfo/definitions/linalg.py",
-        source_function="sample_inputs_linalg_solve",
-    ),
-    CaseFamilySpec(
-        op="cholesky",
-        family="identity",
-        observable_kind="identity",
-        expected_behavior="success",
-        source_file="torch/testing/_internal/opinfo/definitions/linalg.py",
-        source_function="sample_inputs_linalg_cholesky",
-    ),
-    CaseFamilySpec(
-        op="qr",
-        family="identity",
-        observable_kind="identity",
-        expected_behavior="success",
-        source_file="torch/testing/_internal/opinfo/definitions/linalg.py",
-        source_function="sample_inputs_linalg_qr_geqrf",
-    ),
-    CaseFamilySpec(
-        op="pinv_singular",
-        family="identity",
-        observable_kind="identity",
-        expected_behavior="success",
-        source_file="torch/testing/_internal/opinfo/definitions/linalg.py",
-        source_function="sample_inputs_linalg_pinv_singular",
-    ),
-)
+@dataclass(frozen=True)
+class UpstreamMappedFamily:
+    """DB family target associated with one upstream OpInfo variant."""
 
-SUCCESS_COMPARISONS = {
-    ("svd", "u_abs"): {"kind": "allclose", "rtol": 1e-6, "atol": 1e-7},
-    ("svd", "s"): {"kind": "allclose", "rtol": 1e-8, "atol": 1e-9},
-    ("svd", "vh_abs"): {"kind": "allclose", "rtol": 1e-6, "atol": 1e-7},
-    ("svd", "uvh_product"): {"kind": "allclose", "rtol": 1e-6, "atol": 1e-7},
-    ("eigh", "values_vectors_abs"): {"kind": "allclose", "rtol": 1e-6, "atol": 1e-7},
-    ("solve", "identity"): {"kind": "allclose", "rtol": 1e-8, "atol": 1e-9},
-    ("cholesky", "identity"): {"kind": "allclose", "rtol": 1e-8, "atol": 1e-9},
-    ("qr", "identity"): {"kind": "allclose", "rtol": 1e-8, "atol": 1e-9},
-    ("pinv_singular", "identity"): {"kind": "allclose", "rtol": 1e-7, "atol": 1e-8},
-}
+    op: str
+    family: str
+
+
+@dataclass
+class SuccessProbePayload:
+    """Raw probe payloads and residual measurements for one success-case sample."""
+
+    case_seed: int
+    inputs: dict[str, object]
+    direction: dict[str, object]
+    cotangent: dict[str, object]
+    pytorch_jvp: dict[str, object]
+    pytorch_vjp: dict[str, object]
+    fd_step: float
+    fd_jvp: dict[str, object]
+    max_rel_residual: float
+    max_abs_residual: float
+
 
 ERROR_REASON_CODES = {
     ("svd", "gauge_ill_defined"): "gauge_ill_defined",
@@ -175,15 +96,164 @@ SVD_FAMILY_BY_PROCESS_FN = {
     "fn_UVh": "uvh_product",
 }
 
+EIGH_PROCESS_FAMILY = "values_vectors_abs"
+EIG_PROCESS_FAMILY = "values_vectors_abs"
+
+UNSUPPORTED_UPSTREAM_KEYS = {
+    ("linalg.norm", "subgradients_at_zero"),
+}
+
+
+def _normalized_upstream_op_id(name: str, variant_name: str) -> str:
+    base = name.removeprefix("linalg.").replace(".", "_")
+    if variant_name:
+        return f"{base}_{variant_name}"
+    return base
+
+
+def build_supported_upstream_mapping_index() -> dict[tuple[str, str], tuple[UpstreamMappedFamily, ...]]:
+    """Map upstream AD-relevant OpInfo variants to planned DB families."""
+    mapping: dict[tuple[str, str], tuple[UpstreamMappedFamily, ...]] = {}
+    for row in collect_ad_relevant_linalg_opinfos():
+        key = (row.name, row.variant_name)
+        if key in UNSUPPORTED_UPSTREAM_KEYS:
+            continue
+        if row.name == "linalg.svd":
+            families = tuple(
+                UpstreamMappedFamily(op="svd", family=family)
+                for family in ("u_abs", "s", "vh_abs", "uvh_product")
+            )
+        elif row.name == "linalg.eigh":
+            families = (UpstreamMappedFamily(op="eigh", family=EIGH_PROCESS_FAMILY),)
+        elif row.name == "linalg.eig":
+            families = (UpstreamMappedFamily(op="eig", family=EIG_PROCESS_FAMILY),)
+        else:
+            families = (
+                UpstreamMappedFamily(
+                    op=_normalized_upstream_op_id(row.name, row.variant_name),
+                    family="identity",
+                ),
+            )
+        mapping[key] = families
+    return mapping
+
+
+def build_unsupported_upstream_mapping_index() -> dict[tuple[str, str], str]:
+    """Return explicitly classified upstream AD variants that are not DB success/error families yet."""
+    return {
+        key: "unsupported_or_xfail_family"
+        for key in UNSUPPORTED_UPSTREAM_KEYS
+    }
+
+
+def _observable_kind_for_target(
+    key: tuple[str, str], target: UpstreamMappedFamily
+) -> str:
+    if key[0] == "linalg.svd":
+        return {
+            "u_abs": "svd_u_abs",
+            "s": "svd_s",
+            "vh_abs": "svd_vh_abs",
+            "uvh_product": "svd_uvh_product",
+        }[target.family]
+    if key[0] == "linalg.eigh":
+        return "eigh_values_vectors_abs"
+    if key[0] == "linalg.eig":
+        return "eig_values_vectors_abs"
+    return "identity"
+
+
+def _sample_process_name_for_target(
+    key: tuple[str, str], target: UpstreamMappedFamily
+) -> str | None:
+    if key[0] == "linalg.svd":
+        return {
+            "u_abs": "fn_U",
+            "s": "fn_S",
+            "vh_abs": "fn_Vh",
+            "uvh_product": "fn_UVh",
+        }[target.family]
+    if key[0] in {"linalg.eigh", "linalg.eig"}:
+        return "out_fn"
+    return None
+
+
+def _build_success_case_specs() -> tuple[CaseFamilySpec, ...]:
+    inventory_rows = {
+        (row.name, row.variant_name): row
+        for row in collect_ad_relevant_linalg_opinfos()
+    }
+    specs: list[CaseFamilySpec] = []
+    for key, targets in build_supported_upstream_mapping_index().items():
+        row = inventory_rows[key]
+        for target in targets:
+            specs.append(
+                CaseFamilySpec(
+                    op=target.op,
+                    family=target.family,
+                    observable_kind=_observable_kind_for_target(key, target),
+                    expected_behavior="success",
+                    source_file="torch/testing/_internal/opinfo/definitions/linalg.py",
+                    source_function=row.sample_inputs_func_name,
+                    gradcheck_wrapper=row.gradcheck_wrapper_name,
+                    upstream_name=row.name,
+                    upstream_variant_name=row.variant_name,
+                    sample_process_name=_sample_process_name_for_target(key, target),
+                )
+            )
+    return tuple(specs)
+
+
+def _build_error_case_specs() -> tuple[CaseFamilySpec, ...]:
+    return (
+        CaseFamilySpec(
+            op="svd",
+            family="gauge_ill_defined",
+            observable_kind="svd_uvh_product",
+            expected_behavior="error",
+            source_file="test/test_linalg.py",
+            source_function="test_invariance_error_spectral_decompositions",
+            upstream_name="linalg.svd",
+        ),
+        CaseFamilySpec(
+            op="eigh",
+            family="gauge_ill_defined",
+            observable_kind="eigh_values_vectors_abs",
+            expected_behavior="error",
+            source_file="test/test_linalg.py",
+            source_function="test_invariance_error_spectral_decompositions",
+            gradcheck_wrapper="gradcheck_wrapper_hermitian_input",
+            upstream_name="linalg.eigh",
+        ),
+    )
+
+
+def _build_case_specs() -> tuple[CaseFamilySpec, ...]:
+    return _build_success_case_specs() + _build_error_case_specs()
+
+@lru_cache(maxsize=1)
+def _case_specs_cached() -> tuple[CaseFamilySpec, ...]:
+    return _build_case_specs()
+
+
+@lru_cache(maxsize=1)
+def _case_families_cached() -> dict[str, tuple[str, ...]]:
+    specs = _case_specs_cached()
+    target_ops = tuple(dict.fromkeys(spec.op for spec in specs))
+    return {
+        op: tuple(spec.family for spec in specs if spec.op == op)
+        for op in target_ops
+    }
+
 
 def build_case_families() -> dict[str, tuple[str, ...]]:
     """Return the fixed PyTorch-aligned v1 op/family registry."""
-    return CASE_FAMILIES.copy()
+    return _case_families_cached().copy()
 
 
 def build_case_spec_index() -> dict[tuple[str, str], CaseFamilySpec]:
     """Index the fixed v1 case specifications by `(op, family)`."""
-    return {(spec.op, spec.family): spec for spec in CASE_SPECS}
+    return {(spec.op, spec.family): spec for spec in _case_specs_cached()}
 
 
 def case_output_path(spec: CaseFamilySpec, *, cases_root: Path | None = None) -> Path:
@@ -328,14 +398,10 @@ def _case_id(spec: CaseFamilySpec, *, dtype: str, index: int) -> str:
     return f"{spec.op}_{dtype_tag}_{spec.family}_{index:03d}"
 
 
-def _comparison_for_spec(spec: CaseFamilySpec) -> dict:
-    return dict(SUCCESS_COMPARISONS[(spec.op, spec.family)])
-
-
 def _sample_matches_family(spec: CaseFamilySpec, sample) -> bool:
-    if spec.op != "svd":
+    if spec.sample_process_name is None:
         return True
-    return SVD_FAMILY_BY_PROCESS_FN[sample.output_process_fn_grad.__name__] == spec.family
+    return sample.output_process_fn_grad.__name__ == spec.sample_process_name
 
 
 def _validate_success_probe(
@@ -359,13 +425,25 @@ def _validate_success_probe(
 
     lhs = tensor_map_inner_product(torch, cotangent, fd_jvp)
     rhs = tensor_map_inner_product(torch, pytorch_vjp, direction)
+    residual = (lhs - rhs).abs()
     if not torch.allclose(
-        lhs,
-        rhs,
+        residual,
+        torch.zeros_like(residual),
         rtol=comparison["rtol"],
         atol=comparison["atol"],
-    ):
+        ):
         raise ValueError("probe failed adjoint consistency")
+
+
+def _measured_comparison(
+    payloads: list[SuccessProbePayload],
+) -> dict[str, float | str]:
+    max_rel_residual = max(payload.max_rel_residual for payload in payloads)
+    max_abs_residual = max(payload.max_abs_residual for payload in payloads)
+    return comparison_from_observed_residuals(
+        max_rel_residual=max_rel_residual,
+        max_abs_residual=max_abs_residual,
+    )
 
 
 def _generate_success_records(
@@ -378,19 +456,20 @@ def _generate_success_records(
     torch, linalg = import_generation_runtime()
     samples = sample_inputs_for_spec(torch, linalg, spec, seed=seed)
     source_commit = getattr(torch.version, "git_version", None) or torch.__version__
-    comparison = _comparison_for_spec(spec)
-    records: list[dict] = []
+    payloads: list[SuccessProbePayload] = []
 
     for sample in samples:
-        if limit is not None and len(records) >= limit:
+        if limit is not None and len(payloads) >= limit:
             break
         if not _sample_matches_family(spec, sample):
             continue
 
         inputs = build_input_map(torch, spec, sample)
         output = apply_spec_observable(torch, spec, sample, inputs)
+        if not output:
+            continue
 
-        case_seed = seed + len(records)
+        case_seed = seed + len(payloads)
         generator = torch.Generator(device="cpu")
         generator.manual_seed(case_seed)
 
@@ -405,21 +484,37 @@ def _generate_success_records(
 
         input_names = tuple(inputs.keys())
         output_names = tuple(output.keys())
-        observable_fn = build_observable_function(torch, spec, sample, input_names)
-
-        _, jvp_tuple = torch.func.jvp(
-            observable_fn,
-            tensor_map_to_tuple(inputs),
-            tensor_map_to_tuple(direction),
+        observable_fn = build_observable_function(
+            torch,
+            spec,
+            sample,
+            input_names,
+            output_names=output_names,
         )
+
+        try:
+            _, jvp_tuple = torch.func.jvp(
+                observable_fn,
+                tensor_map_to_tuple(inputs),
+                tensor_map_to_tuple(direction),
+            )
+        except RuntimeError as exc:
+            if "non-empty output" in str(exc):
+                continue
+            raise
         pytorch_jvp = tuple_to_tensor_map(output_names, jvp_tuple)
 
-        grads = torch.autograd.grad(
-            tensor_map_to_tuple(output),
-            tensor_map_to_tuple(inputs),
-            grad_outputs=tensor_map_to_tuple(cotangent),
-            allow_unused=True,
-        )
+        try:
+            grads = torch.autograd.grad(
+                tensor_map_to_tuple(output),
+                tensor_map_to_tuple(inputs),
+                grad_outputs=tensor_map_to_tuple(cotangent),
+                allow_unused=True,
+            )
+        except RuntimeError as exc:
+            if "does not require grad" in str(exc):
+                continue
+            raise
         pytorch_vjp = zeros_like_input_map(torch, inputs, grads)
 
         first_input = next(iter(inputs.values()))
@@ -439,37 +534,62 @@ def _generate_success_records(
             name: (plus_output[name] - minus_output[name]) / (2.0 * fd_step)
             for name in output_names
         }
+        jvp_abs = max_abs_diff(torch, pytorch_jvp, fd_jvp)
+        jvp_rel = max_rel_diff(torch, pytorch_jvp, fd_jvp)
+        lhs = tensor_map_inner_product(torch, cotangent, fd_jvp)
+        rhs = tensor_map_inner_product(torch, pytorch_vjp, direction)
+        adj_abs, adj_rel = scalar_residual(torch, lhs, rhs)
+        payloads.append(
+            SuccessProbePayload(
+                case_seed=case_seed,
+                inputs=inputs,
+                direction=direction,
+                cotangent=cotangent,
+                pytorch_jvp=pytorch_jvp,
+                pytorch_vjp=pytorch_vjp,
+                fd_step=fd_step,
+                fd_jvp=fd_jvp,
+                max_rel_residual=max(jvp_rel, adj_rel),
+                max_abs_residual=max(jvp_abs, adj_abs),
+            )
+        )
 
+    if not payloads:
+        return []
+
+    comparison = _measured_comparison(payloads)
+    records: list[dict] = []
+    for index, payload in enumerate(payloads, start=1):
         _validate_success_probe(
             torch,
             comparison=comparison,
-            direction=direction,
-            cotangent=cotangent,
-            pytorch_jvp=pytorch_jvp,
-            pytorch_vjp=pytorch_vjp,
-            fd_jvp=fd_jvp,
+            direction=payload.direction,
+            cotangent=payload.cotangent,
+            pytorch_jvp=payload.pytorch_jvp,
+            pytorch_vjp=payload.pytorch_vjp,
+            fd_jvp=payload.fd_jvp,
         )
 
         provenance = build_provenance(
             spec,
             source_commit=source_commit,
-            seed=case_seed,
+            seed=payload.case_seed,
             torch_version=normalize_torch_version(torch.__version__),
         )
         records.append(
             materialize_success_case(
                 spec,
-                case_id=_case_id(spec, dtype="float64", index=len(records) + 1),
+                case_id=_case_id(spec, dtype="float64", index=index),
                 dtype="float64",
-                raw_inputs=inputs,
+                raw_inputs=payload.inputs,
                 comparison=comparison,
                 probe_id="p0",
-                raw_direction=direction,
-                raw_cotangent=cotangent,
-                raw_pytorch_jvp=pytorch_jvp,
-                raw_pytorch_vjp=pytorch_vjp,
-                fd_step=fd_step,
-                raw_fd_jvp=fd_jvp,
+                raw_direction=payload.direction,
+                raw_cotangent=payload.cotangent,
+                raw_pytorch_jvp=payload.pytorch_jvp,
+                raw_pytorch_vjp=payload.pytorch_vjp,
+                fd_step=payload.fd_step,
+                raw_fd_jvp=payload.fd_jvp,
                 provenance=provenance,
             )
         )
@@ -569,7 +689,7 @@ def materialize_all_case_families(
 ) -> list[Path]:
     """Generate and write every fixed v1 case family."""
     paths: list[Path] = []
-    for spec in CASE_SPECS:
+    for spec in _case_specs_cached():
         paths.append(
             materialize_case_family(
                 spec.op,
@@ -610,8 +730,9 @@ def ensure_runtime_dependencies() -> None:
 
 
 def _iter_registry_lines() -> Iterable[str]:
-    for op in TARGET_OPS:
-        families = ", ".join(CASE_FAMILIES[op])
+    case_families = build_case_families()
+    for op in case_families:
+        families = ", ".join(case_families[op])
         yield f"{op}: {families}"
 
 
@@ -624,8 +745,13 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--materialize",
-        choices=TARGET_OPS,
+        choices=tuple(build_case_families()),
         help="Materialize one supported op family into JSONL.",
+    )
+    parser.add_argument(
+        "--materialize-all",
+        action="store_true",
+        help="Materialize the full supported case registry into JSONL files.",
     )
     parser.add_argument(
         "--family",
@@ -660,6 +786,15 @@ def main(argv: list[str] | None = None) -> int:
             cases_root=args.cases_root,
         )
         print(out_path)
+        return 0
+
+    if args.materialize_all:
+        paths = materialize_all_case_families(
+            limit=args.limit,
+            cases_root=args.cases_root,
+        )
+        for path in paths:
+            print(path)
         return 0
 
     ensure_runtime_dependencies()

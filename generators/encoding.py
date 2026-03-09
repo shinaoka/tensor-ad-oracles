@@ -28,10 +28,15 @@ def _flatten_complex_data(value) -> list[list[float]]:
 
 def encode_tensor(tensor) -> dict:
     """Encode a tensor-like object into the repository wire format."""
-    dtype = _canonical_dtype_name(tensor.dtype)
-    shape = list(tensor.shape)
-    raw = tensor.tolist()
-    data = _flatten_complex_data(raw) if tensor.is_complex() else _flatten_real_data(raw)
+    materialized = tensor.detach().clone().cpu()
+    dtype = _canonical_dtype_name(materialized.dtype)
+    shape = list(materialized.shape)
+    raw = materialized.tolist()
+    data = (
+        _flatten_complex_data(raw)
+        if materialized.is_complex()
+        else _flatten_real_data(raw)
+    )
     return {
         "dtype": dtype,
         "shape": shape,

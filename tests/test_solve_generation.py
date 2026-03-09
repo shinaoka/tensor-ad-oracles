@@ -18,17 +18,9 @@ class SolveGenerationTests(unittest.TestCase):
             paths = pytorch_v1.materialize_all_case_families(limit=1, cases_root=Path(tmpdir))
 
             expected = {
-                Path(tmpdir) / "svd" / "u_abs.jsonl",
-                Path(tmpdir) / "svd" / "s.jsonl",
-                Path(tmpdir) / "svd" / "vh_abs.jsonl",
-                Path(tmpdir) / "svd" / "uvh_product.jsonl",
-                Path(tmpdir) / "svd" / "gauge_ill_defined.jsonl",
-                Path(tmpdir) / "eigh" / "values_vectors_abs.jsonl",
-                Path(tmpdir) / "eigh" / "gauge_ill_defined.jsonl",
-                Path(tmpdir) / "solve" / "identity.jsonl",
-                Path(tmpdir) / "cholesky" / "identity.jsonl",
-                Path(tmpdir) / "qr" / "identity.jsonl",
-                Path(tmpdir) / "pinv_singular" / "identity.jsonl",
+                Path(tmpdir) / op / f"{family}.jsonl"
+                for op, families in pytorch_v1.build_case_families().items()
+                for family in families
             }
 
             self.assertEqual(set(paths), expected)

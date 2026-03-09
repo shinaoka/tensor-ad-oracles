@@ -29,6 +29,40 @@ class ObservableTests(unittest.TestCase):
         out = observables.apply_observable("identity", (FakeTensor("q"), FakeTensor("r")))
         self.assertEqual(out, {"output_0": FakeTensor("q"), "output_1": FakeTensor("r")})
 
+    def test_identity_preserves_requested_tuple_keys_without_grad_filtering(self) -> None:
+        out = observables.apply_observable(
+            "identity",
+            (FakeTensor("q"), FakeTensor("r")),
+            preserve_identity_keys=("output_0", "output_1"),
+        )
+        self.assertEqual(out, {"output_0": FakeTensor("q"), "output_1": FakeTensor("r")})
+
+    def test_identity_drops_nondifferentiable_integer_tuple_outputs(self) -> None:
+        try:
+            import torch
+        except Exception as exc:
+            self.skipTest(f"torch unavailable: {exc}")
+
+        out = observables.apply_observable(
+            "identity",
+            (
+                torch.ones(2, dtype=torch.float64),
+                torch.ones(2, dtype=torch.int64),
+            ),
+        )
+        self.assertEqual(tuple(out), ())
+
+    def test_identity_drops_float_outputs_without_grad_path(self) -> None:
+        try:
+            import torch
+        except Exception as exc:
+            self.skipTest(f"torch unavailable: {exc}")
+
+        a = torch.eye(3, dtype=torch.float64, requires_grad=True)
+        out = observables.apply_observable("identity", torch.linalg.lu(a))
+
+        self.assertLess(len(out), 3)
+
     def test_svd_u_abs_returns_abs_u(self) -> None:
         out = observables.apply_observable(
             "svd_u_abs",
@@ -66,6 +100,16 @@ class ObservableTests(unittest.TestCase):
     def test_eigh_values_vectors_abs_keeps_values_and_abs_vectors(self) -> None:
         out = observables.apply_observable(
             "eigh_values_vectors_abs",
+            (FakeTensor("values"), FakeTensor("vectors")),
+        )
+        self.assertEqual(
+            out,
+            {"values": FakeTensor("values"), "vectors": FakeTensor("abs(vectors)")},
+        )
+
+    def test_eig_values_vectors_abs_keeps_values_and_abs_vectors(self) -> None:
+        out = observables.apply_observable(
+            "eig_values_vectors_abs",
             (FakeTensor("values"), FakeTensor("vectors")),
         )
         self.assertEqual(

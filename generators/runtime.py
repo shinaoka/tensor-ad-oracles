@@ -5,7 +5,6 @@ from __future__ import annotations
 import math
 import random
 from collections.abc import Callable, Iterable
-from types import SimpleNamespace
 
 from . import observables
 
@@ -86,11 +85,26 @@ def tensor_map_inner_product(torch, left: dict[str, object], right: dict[str, ob
         if left_tensor.numel() == 0:
             continue
         term = torch.vdot(left_tensor.reshape(-1), right_tensor.reshape(-1))
+        if torch.is_complex(term):
+            term = term.real
         total = term if total is None else total + term
     if total is not None:
         return total
     first = left_items[0][1]
-    return torch.zeros((), dtype=first.dtype, device=first.device)
+    return torch.zeros((), dtype=first.real.dtype, device=first.device)
+
+
+def lookup_upstream_opinfo(linalg, spec):
+    """Resolve the pinned PyTorch OpInfo entry corresponding to one DB spec."""
+    for opinfo in linalg.op_db:
+        if opinfo.name != spec.upstream_name:
+            continue
+        if (getattr(opinfo, "variant_test_name", "") or "") != spec.upstream_variant_name:
+            continue
+        return opinfo
+    raise ValueError(
+        f"no upstream OpInfo found for {spec.upstream_name!r} variant {spec.upstream_variant_name!r}"
+    )
 
 
 def sample_inputs_for_spec(torch, linalg, spec, *, seed: int):
@@ -99,64 +113,11 @@ def sample_inputs_for_spec(torch, linalg, spec, *, seed: int):
     try:
         torch.manual_seed(seed)
         random.seed(seed)
-        if spec.op == "svd":
-            return list(
-                linalg.sample_inputs_svd(
-                    SimpleNamespace(name="linalg.svd"),
-                    "cpu",
-                    torch.float64,
-                    requires_grad=True,
-                )
-            )
-        if spec.op == "eigh":
-            return list(
-                linalg.sample_inputs_linalg_eigh(
-                    None,
-                    "cpu",
-                    torch.float64,
-                    requires_grad=True,
-                )
-            )
-        if spec.op == "solve":
-            return list(
-                linalg.sample_inputs_linalg_solve(
-                    None,
-                    "cpu",
-                    torch.float64,
-                    requires_grad=True,
-                )
-            )
-        if spec.op == "cholesky":
-            return list(
-                linalg.sample_inputs_linalg_cholesky(
-                    None,
-                    "cpu",
-                    torch.float64,
-                    requires_grad=True,
-                )
-            )
-        if spec.op == "qr":
-            return list(
-                linalg.sample_inputs_linalg_qr_geqrf(
-                    None,
-                    "cpu",
-                    torch.float64,
-                    requires_grad=True,
-                )
-            )
-        if spec.op == "pinv_singular":
-            return list(
-                linalg.sample_inputs_linalg_pinv_singular(
-                    None,
-                    "cpu",
-                    torch.float64,
-                    requires_grad=True,
-                )
-            )
+        opinfo = lookup_upstream_opinfo(linalg, spec)
+        return list(opinfo.sample_inputs("cpu", torch.float64, requires_grad=True))
     finally:
         torch.random.set_rng_state(rng_state)
         random.setstate(py_state)
-    raise ValueError(f"unsupported sample-input op: {spec.op}")
 
 
 def tensor_map_to_tuple(tensor_map: dict[str, object]) -> tuple[object, ...]:
@@ -171,22 +132,58 @@ def tuple_to_tensor_map(keys: Iterable[str], values) -> dict[str, object]:
     return dict(zip(keys, values_tuple, strict=True))
 
 
-def apply_spec_observable(torch, spec, sample, inputs: dict[str, object]) -> dict[str, object]:
-    if spec.op == "svd":
-        result = torch.linalg.svd(inputs["a"], **sample.kwargs)
-    elif spec.op == "eigh":
-        result = torch.linalg.eigh(inputs["a"], **sample.kwargs)
-    elif spec.op == "solve":
-        result = torch.linalg.solve(inputs["a"], inputs["b"], **sample.kwargs)
-    elif spec.op == "cholesky":
-        result = torch.linalg.cholesky(inputs["a"], **sample.kwargs)
-    elif spec.op == "qr":
-        result = torch.linalg.qr(inputs["a"], **sample.kwargs)
-    elif spec.op == "pinv_singular":
-        result = torch.linalg.pinv(inputs["a"] @ inputs["b"].mT, **sample.kwargs)
-    else:
-        raise ValueError(f"unsupported op for observable materialization: {spec.op}")
-    return observables.apply_observable(spec.observable_kind, result)
+def _is_differentiable_input_tensor(torch, value) -> bool:
+    return isinstance(value, torch.Tensor) and (
+        value.is_floating_point() or value.is_complex()
+    )
+
+
+def _bind_sample_tensors(torch, sample, inputs: dict[str, object]):
+    index_ref = [0]
+
+    def replace(value):
+        if _is_differentiable_input_tensor(torch, value):
+            name = _tensor_input_name(index_ref[0])
+            index_ref[0] += 1
+            return inputs[name]
+        if isinstance(value, tuple):
+            return tuple(replace(item) for item in value)
+        if isinstance(value, list):
+            return [replace(item) for item in value]
+        return value
+
+    return replace(sample.input), replace(sample.args)
+
+
+def _call_upstream_op(torch, opinfo, sample, inputs: dict[str, object]):
+    input_value, args = _bind_sample_tensors(torch, sample, inputs)
+    wrapper = getattr(opinfo, "gradcheck_wrapper", None)
+    wrapper_name = getattr(wrapper, "__name__", None)
+    if wrapper is not None and wrapper_name != "<lambda>":
+        return wrapper(opinfo.op, input_value, *args, **sample.kwargs)
+    return opinfo.op(input_value, *args, **sample.kwargs)
+
+
+def apply_spec_observable(
+    torch,
+    spec,
+    sample,
+    inputs: dict[str, object],
+    *,
+    linalg=None,
+    opinfo=None,
+    preserve_identity_keys: tuple[str, ...] | None = None,
+) -> dict[str, object]:
+    if opinfo is None:
+        if linalg is None:
+            _, linalg = import_generation_runtime()
+        opinfo = lookup_upstream_opinfo(linalg, spec)
+    result = _call_upstream_op(torch, opinfo, sample, inputs)
+    return observables.apply_observable(
+        spec.observable_kind,
+        result,
+        preserve_identity_keys=preserve_identity_keys,
+    )
 
 
 def zeros_like_input_map(torch, inputs: dict[str, object], grads) -> dict[str, object]:
@@ -205,45 +202,97 @@ def map_allclose(torch, expected: dict[str, object], actual: dict[str, object], 
     )
 
 
-def structured_input_tensor(torch, spec, tensor):
+def _uses_hermitian_wrapper(spec) -> bool:
+    return getattr(spec, "gradcheck_wrapper", None) in {
+        "hermitian_input",
+        "gradcheck_wrapper_hermitian_input",
+    }
+
+
+def structured_input_tensor(torch, spec, tensor, *, is_primary_input: bool):
     cloned = tensor.detach().clone()
-    if spec.op == "eigh":
+    if is_primary_input and _uses_hermitian_wrapper(spec):
         cloned = cloned + cloned.mH
     return cloned.requires_grad_(True)
 
 
-def structured_direction_tensor(torch, spec, tensor, *, generator):
+def structured_direction_tensor(torch, spec, tensor, *, generator, is_primary_input: bool):
     direction = randn_like(torch, tensor, generator=generator)
-    if spec.op in {"eigh", "cholesky"} and tensor.ndim >= 2:
+    if is_primary_input and _uses_hermitian_wrapper(spec) and tensor.ndim >= 2:
         direction = direction + direction.mH
     return direction
 
 
+def _tensor_input_name(index: int) -> str:
+    names = "abcdefghijklmnopqrstuvwxyz"
+    if index < len(names):
+        return names[index]
+    return f"t{index}"
+
+
+def _collect_tensor_inputs(torch, spec, value, out: dict[str, object], index_ref: list[int]) -> None:
+    if _is_differentiable_input_tensor(torch, value):
+        index = index_ref[0]
+        index_ref[0] += 1
+        out[_tensor_input_name(index)] = structured_input_tensor(
+            torch,
+            spec,
+            value,
+            is_primary_input=(index == 0),
+        )
+        return
+    if isinstance(value, (tuple, list)):
+        for item in value:
+            _collect_tensor_inputs(torch, spec, item, out, index_ref)
+
+
 def build_input_map(torch, spec, sample) -> dict[str, object]:
-    if spec.op in {"svd", "eigh", "cholesky", "qr"}:
-        return {"a": structured_input_tensor(torch, spec, sample.input)}
-    if spec.op in {"solve", "pinv_singular"}:
-        return {
-            "a": structured_input_tensor(torch, spec, sample.input),
-            "b": structured_input_tensor(torch, spec, sample.args[0]),
-        }
-    raise ValueError(f"unsupported op for input materialization: {spec.op}")
+    inputs: dict[str, object] = {}
+    index_ref = [0]
+    _collect_tensor_inputs(torch, spec, sample.input, inputs, index_ref)
+    _collect_tensor_inputs(torch, spec, sample.args, inputs, index_ref)
+    if not inputs:
+        raise ValueError(f"unsupported sample has no tensor inputs: {spec.op}")
+    return inputs
 
 
 def build_direction_map(torch, spec, inputs: dict[str, object], *, generator) -> dict[str, object]:
     return normalize_raw_tensor_map(
         torch,
         {
-            name: structured_direction_tensor(torch, spec, tensor, generator=generator)
-            for name, tensor in inputs.items()
+            name: structured_direction_tensor(
+                torch,
+                spec,
+                tensor,
+                generator=generator,
+                is_primary_input=(index == 0),
+            )
+            for index, (name, tensor) in enumerate(inputs.items())
         },
     )
 
 
-def build_observable_function(torch, spec, sample, input_names: tuple[str, ...]) -> Callable[..., tuple[object, ...]]:
+def build_observable_function(
+    torch,
+    spec,
+    sample,
+    input_names: tuple[str, ...],
+    *,
+    linalg=None,
+    opinfo=None,
+    output_names: tuple[str, ...] | None = None,
+) -> Callable[..., tuple[object, ...]]:
     def observable_fn(*args):
         inputs = dict(zip(input_names, args, strict=True))
-        output = apply_spec_observable(torch, spec, sample, inputs)
+        output = apply_spec_observable(
+            torch,
+            spec,
+            sample,
+            inputs,
+            linalg=linalg,
+            opinfo=opinfo,
+            preserve_identity_keys=output_names,
+        )
         return tensor_map_to_tuple(output)
 
     return observable_fn

@@ -115,30 +115,39 @@ def _replay_success_case_for_sample(
     comparison = record["comparison"]
     input_names = tuple(inputs.keys())
 
-    observable = apply_spec_observable(torch, spec, sample, inputs)
-    output_names = tuple(observable.keys())
-    observable_fn = build_observable_function(torch, spec, sample, input_names)
-    _, jvp_tuple = torch.func.jvp(
-        observable_fn,
-        tensor_map_to_tuple(inputs),
-        tensor_map_to_tuple(direction),
-    )
-    pytorch_jvp = tuple_to_tensor_map(output_names, jvp_tuple)
-    grads = torch.autograd.grad(
-        tensor_map_to_tuple(observable),
-        tensor_map_to_tuple(inputs),
-        grad_outputs=tuple(cotangent[name] for name in output_names),
-        allow_unused=True,
-    )
-    pytorch_vjp = zeros_like_input_map(torch, inputs, grads)
-    plus_inputs = {name: tensor + fd_step * direction[name] for name, tensor in inputs.items()}
-    minus_inputs = {name: tensor - fd_step * direction[name] for name, tensor in inputs.items()}
-    plus_output = apply_spec_observable(torch, spec, sample, plus_inputs)
-    minus_output = apply_spec_observable(torch, spec, sample, minus_inputs)
-    fd_jvp = {
-        name: (plus_output[name] - minus_output[name]) / (2.0 * fd_step)
-        for name in output_names
-    }
+    try:
+        observable = apply_spec_observable(torch, spec, sample, inputs)
+        output_names = tuple(observable.keys())
+        observable_fn = build_observable_function(
+            torch,
+            spec,
+            sample,
+            input_names,
+            output_names=output_names,
+        )
+        _, jvp_tuple = torch.func.jvp(
+            observable_fn,
+            tensor_map_to_tuple(inputs),
+            tensor_map_to_tuple(direction),
+        )
+        pytorch_jvp = tuple_to_tensor_map(output_names, jvp_tuple)
+        grads = torch.autograd.grad(
+            tensor_map_to_tuple(observable),
+            tensor_map_to_tuple(inputs),
+            grad_outputs=tuple(cotangent[name] for name in output_names),
+            allow_unused=True,
+        )
+        pytorch_vjp = zeros_like_input_map(torch, inputs, grads)
+        plus_inputs = {name: tensor + fd_step * direction[name] for name, tensor in inputs.items()}
+        minus_inputs = {name: tensor - fd_step * direction[name] for name, tensor in inputs.items()}
+        plus_output = apply_spec_observable(torch, spec, sample, plus_inputs)
+        minus_output = apply_spec_observable(torch, spec, sample, minus_inputs)
+        fd_jvp = {
+            name: (plus_output[name] - minus_output[name]) / (2.0 * fd_step)
+            for name in output_names
+        }
+    except Exception as exc:
+        return str(exc)
 
     if not map_allclose(
         torch,

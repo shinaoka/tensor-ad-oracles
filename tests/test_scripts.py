@@ -159,6 +159,41 @@ class CheckRegenerationTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "content mismatch"):
                 check_regeneration.compare_case_trees(expected, actual)
 
+    def test_compare_case_trees_ignores_regenerated_comparison_threshold_drift(self) -> None:
+        expected_record = {
+            "schema_version": 1,
+            "case_id": "eig_f64_values_vectors_abs_001",
+            "op": "eig",
+            "dtype": "float64",
+            "family": "values_vectors_abs",
+            "expected_behavior": "success",
+            "inputs": {},
+            "observable": {"kind": "eig_values_vectors_abs"},
+            "comparison": {"kind": "allclose", "rtol": 1e-2, "atol": 1e-6},
+            "probes": [],
+            "provenance": {},
+        }
+        actual_record = json.loads(json.dumps(expected_record))
+        actual_record["comparison"]["rtol"] = 1e-3
+        actual_record["comparison"]["atol"] = 1e-7
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            expected = root / "expected"
+            actual = root / "actual"
+            (expected / "eig").mkdir(parents=True)
+            (actual / "eig").mkdir(parents=True)
+            (expected / "eig" / "values_vectors_abs.jsonl").write_text(
+                json.dumps(expected_record) + "\n",
+                encoding="utf-8",
+            )
+            (actual / "eig" / "values_vectors_abs.jsonl").write_text(
+                json.dumps(actual_record) + "\n",
+                encoding="utf-8",
+            )
+
+            check_regeneration.compare_case_trees(expected, actual)
+
 
 class ValidateSchemaTests(unittest.TestCase):
     def test_require_jsonschema_dependency_raises_clear_error(self) -> None:
