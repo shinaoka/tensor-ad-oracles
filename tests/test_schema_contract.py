@@ -3,7 +3,7 @@ import unittest
 from pathlib import Path
 
 
-SCHEMA_PATH = Path("/sharehome/shinaoka/projects/tensor4all/tensor-ad-oracles/schema/case.schema.json")
+SCHEMA_PATH = Path(__file__).resolve().parents[1] / "schema" / "case.schema.json"
 
 
 class SchemaContractTests(unittest.TestCase):
@@ -20,6 +20,7 @@ class SchemaContractTests(unittest.TestCase):
                 "svd_vh_abs",
                 "svd_uvh_product",
                 "eigh_values_vectors_abs",
+                "eig_values_vectors_abs",
             ],
         )
 

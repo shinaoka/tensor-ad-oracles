@@ -2,13 +2,41 @@
 
 `tensor-ad-oracles` is a machine-readable JSON database for derivative-correctness validation of tensor and linear algebra operations.
 
-Version 1 targets the PyTorch-aligned case families for:
+Version 1 targets the full PyTorch `OpInfo`-backed AD-relevant linalg family set currently materialized in this repository, including:
 
+- `cross`
+- `det`
+- `diagonal`
+- `eig`
 - `svd`
 - `eigh`
+- `eigvals`
+- `eigvalsh`
 - `solve`
+- `solve_ex`
+- `solve_triangular`
 - `cholesky`
+- `cholesky_ex`
 - `qr`
+- `lu`
+- `lu_factor`
+- `lu_factor_ex`
+- `lu_solve`
+- `inv`
+- `inv_ex`
+- `matrix_power`
+- `matrix_norm`
+- `multi_dot`
+- `norm`
+- `slogdet`
+- `svdvals`
+- `tensorinv`
+- `tensorsolve`
+- `vecdot`
+- `vector_norm`
+- `vander`
+- `pinv`
+- `pinv_hermitian`
 - `pinv_singular`
 
 ## Environment
@@ -25,11 +53,13 @@ Typical commands:
 uv run python -m unittest discover -s tests -v
 uv run python -m generators.pytorch_v1 --list
 uv run python -m generators.pytorch_v1 --materialize solve --family identity --limit 1
+uv run python -m generators.pytorch_v1 --materialize-all --limit 1
 uv run python -m unittest tests.test_db_replay -v
 uv run python scripts/validate_schema.py
 uv run python scripts/verify_cases.py
 uv run python scripts/check_replay.py
 uv run python scripts/check_regeneration.py
+uv run python scripts/check_tolerances.py
 ```
 
 Repository-managed environment files:
@@ -99,17 +129,9 @@ cases/
 
 Version 1 materializes these family files:
 
-- `cases/svd/u_abs.jsonl`
-- `cases/svd/s.jsonl`
-- `cases/svd/vh_abs.jsonl`
-- `cases/svd/uvh_product.jsonl`
+- `cases/*/*.jsonl` for every supported `(op, family)` in `generators.pytorch_v1.build_case_families()`
 - `cases/svd/gauge_ill_defined.jsonl`
-- `cases/eigh/values_vectors_abs.jsonl`
 - `cases/eigh/gauge_ill_defined.jsonl`
-- `cases/solve/identity.jsonl`
-- `cases/cholesky/identity.jsonl`
-- `cases/qr/identity.jsonl`
-- `cases/pinv_singular/identity.jsonl`
 
 ## Verification Contract
 
@@ -149,6 +171,8 @@ The repository ships two CI lanes:
 - `oracle-regeneration`
   - full regeneration of `cases/`
   - semantic comparison against the checked-in database using each case tolerance
+- `tolerance-audit`
+  - verifies published family tolerances are not more than ten orders of magnitude looser than stored cross-oracle residuals
 
 `CODEOWNERS` covers `cases/`, `generators/`, `validators/`, `scripts/`,
 `schema/`, and workflow files. To make this effective, GitHub branch protection

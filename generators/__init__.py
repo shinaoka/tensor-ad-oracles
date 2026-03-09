@@ -6,5 +6,6 @@ __all__ = [
     "observables",
     "probes",
     "pytorch_v1",
+    "tolerance_audit",
     "upstream_inventory",
 ]

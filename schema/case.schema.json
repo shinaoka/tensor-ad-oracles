@@ -20,15 +20,7 @@
       ]
     },
     "op": {
-      "type": "string",
-      "enum": [
-        "svd",
-        "eigh",
-        "solve",
-        "cholesky",
-        "qr",
-        "pinv_singular"
-      ]
+      "type": "string"
     },
     "observable_kind": {
       "type": "string",
@@ -38,7 +30,8 @@
         "svd_s",
         "svd_vh_abs",
         "svd_uvh_product",
-        "eigh_values_vectors_abs"
+        "eigh_values_vectors_abs",
+        "eig_values_vectors_abs"
       ]
     },
     "tensor_real_data": {

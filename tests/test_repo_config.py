@@ -3,7 +3,7 @@ import unittest
 from pathlib import Path
 
 
-REPO_ROOT = Path("/sharehome/shinaoka/projects/tensor4all/tensor-ad-oracles")
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 class RepoConfigTests(unittest.TestCase):
@@ -61,6 +61,13 @@ class RepoConfigTests(unittest.TestCase):
         self.assertIn("push:\n    branches:\n      - main", workflow)
         self.assertNotIn("pull_request:\n    paths:", workflow)
         self.assertNotIn("push:\n    branches:\n      - main\n    paths:", workflow)
+
+    def test_oracle_integrity_workflow_runs_tolerance_audit(self) -> None:
+        workflow = (
+            REPO_ROOT / ".github" / "workflows" / "oracle-integrity.yml"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn("uv run python scripts/check_tolerances.py", workflow)
 
 
 if __name__ == "__main__":

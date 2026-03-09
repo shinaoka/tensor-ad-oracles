@@ -3,6 +3,26 @@
 from __future__ import annotations
 
 
+def _is_differentiable_output(value) -> bool:
+    dtype = getattr(value, "dtype", None)
+    if dtype is None:
+        return True
+    try:
+        import torch
+    except Exception:
+        return True
+    if not (
+        isinstance(value, torch.Tensor)
+        and (value.is_floating_point() or value.is_complex())
+    ):
+        return False
+    requires_grad = getattr(value, "requires_grad", None)
+    grad_fn = getattr(value, "grad_fn", None)
+    if requires_grad is None:
+        return True
+    return bool(requires_grad or grad_fn is not None)
+
+
 def _svd_parts(result):
     try:
         return result
@@ -25,11 +45,25 @@ def _eigh_parts(result):
         raise ValueError("expected an eigh result tuple of (values, vectors)") from exc
 
 
-def apply_observable(kind: str, result):
+def apply_observable(
+    kind: str,
+    result,
+    *,
+    preserve_identity_keys: tuple[str, ...] | None = None,
+):
     """Project a raw op result into a derivative-comparison observable."""
     if kind == "identity":
         if isinstance(result, tuple):
-            return {f"output_{index}": value for index, value in enumerate(result)}
+            if preserve_identity_keys is not None:
+                return {
+                    key: result[int(key.removeprefix("output_"))]
+                    for key in preserve_identity_keys
+                }
+            return {
+                f"output_{index}": value
+                for index, value in enumerate(result)
+                if _is_differentiable_output(value)
+            }
         return {"value": result}
 
     if kind == "svd_u_abs":
@@ -49,6 +83,10 @@ def apply_observable(kind: str, result):
         return {"uvh": u @ vh, "s": s}
 
     if kind == "eigh_values_vectors_abs":
+        values, vectors = _eigh_parts(result)
+        return {"values": values, "vectors": vectors.abs()}
+
+    if kind == "eig_values_vectors_abs":
         values, vectors = _eigh_parts(result)
         return {"values": values, "vectors": vectors.abs()}
 

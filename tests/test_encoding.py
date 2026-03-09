@@ -28,6 +28,15 @@ class FakeTensor:
     def is_complex(self) -> bool:
         return "complex" in str(self.dtype)
 
+    def detach(self):
+        return self
+
+    def clone(self):
+        return self
+
+    def cpu(self):
+        return self
+
     def tolist(self):
         return self._data
 
@@ -64,6 +73,24 @@ class EncodingTests(unittest.TestCase):
         tensor = FakeTensor([[1.0]], dtype="torch.float64")
 
         encoded = encoding.encode_tensor(tensor)
+
+        self.assertEqual(encoded["dtype"], "float64")
+
+    def test_encode_tensor_materializes_unallocated_torch_storage(self) -> None:
+        try:
+            import torch
+        except Exception as exc:
+            self.skipTest(f"torch unavailable: {exc}")
+
+        a = torch.eye(3, dtype=torch.float64, requires_grad=True)
+        da = torch.ones_like(a)
+
+        def fn(x):
+            return torch.linalg.slogdet(x)
+
+        _, jvp = torch.func.jvp(fn, (a,), (da,))
+
+        encoded = encoding.encode_tensor(jvp[0])
 
         self.assertEqual(encoded["dtype"], "float64")
 
