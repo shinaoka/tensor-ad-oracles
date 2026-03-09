@@ -25,6 +25,7 @@ Typical commands:
 uv run python -m unittest discover -s tests -v
 uv run python -m generators.pytorch_v1 --list
 uv run python -m generators.pytorch_v1 --materialize solve --family identity --limit 1
+uv run python -m unittest tests.test_db_replay -v
 ```
 
 Repository-managed environment files:
@@ -110,3 +111,18 @@ For every paired probe in every `success` case:
 - check adjoint consistency with `<bar_y, Jv_fd> ~= <J*bar_y_torch, v>`
 
 All probe directions and cotangents are normalized to unit Frobenius norm after any required structure-preserving projection.
+
+## Database Replay Validation
+
+The repository includes a replay validator in `validators/replay.py`. It re-executes the stored PyTorch case families from the published JSON database and checks that:
+
+- stored `pytorch_ref.jvp` is reproducible
+- stored `pytorch_ref.vjp` is reproducible
+- stored `fd_ref.jvp` is reproducible
+- expected gauge-ill-defined spectral failures still raise
+
+The end-to-end replay coverage is exercised by:
+
+```bash
+uv run python -m unittest tests.test_db_replay -v
+```
