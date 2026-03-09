@@ -30,6 +30,7 @@ from .runtime import (
     tuple_to_tensor_map,
     zeros_like_input_map,
 )
+from .upstream_inventory import collect_ad_relevant_linalg_opinfos
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -56,6 +57,14 @@ class CaseFamilySpec:
     source_file: str
     source_function: str
     gradcheck_wrapper: str | None = None
+
+
+@dataclass(frozen=True)
+class UpstreamMappedFamily:
+    """DB family target associated with one upstream OpInfo variant."""
+
+    op: str
+    family: str
 
 
 CASE_SPECS = (
@@ -174,6 +183,55 @@ SVD_FAMILY_BY_PROCESS_FN = {
     "fn_Vh": "vh_abs",
     "fn_UVh": "uvh_product",
 }
+
+EIGH_PROCESS_FAMILY = "values_vectors_abs"
+EIG_PROCESS_FAMILY = "values_vectors_abs"
+
+UNSUPPORTED_UPSTREAM_KEYS = {
+    ("linalg.norm", "subgradients_at_zero"),
+}
+
+
+def _normalized_upstream_op_id(name: str, variant_name: str) -> str:
+    base = name.removeprefix("linalg.").replace(".", "_")
+    if variant_name:
+        return f"{base}_{variant_name}"
+    return base
+
+
+def build_supported_upstream_mapping_index() -> dict[tuple[str, str], tuple[UpstreamMappedFamily, ...]]:
+    """Map upstream AD-relevant OpInfo variants to planned DB families."""
+    mapping: dict[tuple[str, str], tuple[UpstreamMappedFamily, ...]] = {}
+    for row in collect_ad_relevant_linalg_opinfos():
+        key = (row.name, row.variant_name)
+        if key in UNSUPPORTED_UPSTREAM_KEYS:
+            continue
+        if row.name == "linalg.svd":
+            families = tuple(
+                UpstreamMappedFamily(op="svd", family=family)
+                for family in ("u_abs", "s", "vh_abs", "uvh_product")
+            )
+        elif row.name == "linalg.eigh":
+            families = (UpstreamMappedFamily(op="eigh", family=EIGH_PROCESS_FAMILY),)
+        elif row.name == "linalg.eig":
+            families = (UpstreamMappedFamily(op="eig", family=EIG_PROCESS_FAMILY),)
+        else:
+            families = (
+                UpstreamMappedFamily(
+                    op=_normalized_upstream_op_id(row.name, row.variant_name),
+                    family="identity",
+                ),
+            )
+        mapping[key] = families
+    return mapping
+
+
+def build_unsupported_upstream_mapping_index() -> dict[tuple[str, str], str]:
+    """Return explicitly classified upstream AD variants that are not DB success/error families yet."""
+    return {
+        key: "unsupported_or_xfail_family"
+        for key in UNSUPPORTED_UPSTREAM_KEYS
+    }
 
 
 def build_case_families() -> dict[str, tuple[str, ...]]:
