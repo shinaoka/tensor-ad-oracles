@@ -12,6 +12,7 @@ from . import encoding
 from .fd import FD_POLICY_VERSION, compute_step
 from .probes import make_probe_record, normalize_tensor_map
 from .runtime import (
+    PINNED_TORCH_VERSION,
     apply_spec_observable,
     build_direction_map,
     build_input_map,
@@ -20,6 +21,7 @@ from .runtime import (
     dtype_name,
     import_generation_runtime,
     map_allclose,
+    normalize_torch_version,
     normalize_raw_tensor_map,
     randn_like,
     sample_inputs_for_spec,
@@ -452,7 +454,7 @@ def _generate_success_records(
             spec,
             source_commit=source_commit,
             seed=case_seed,
-            torch_version=torch.__version__,
+            torch_version=normalize_torch_version(torch.__version__),
         )
         records.append(
             materialize_success_case(
@@ -522,7 +524,7 @@ def _generate_error_records(
             spec,
             source_commit=source_commit,
             seed=case_seed,
-            torch_version=torch.__version__,
+            torch_version=normalize_torch_version(torch.__version__),
         )
         records.append(
             make_error_case(
@@ -596,6 +598,14 @@ def ensure_runtime_dependencies() -> None:
         deps = ", ".join(missing)
         raise RuntimeError(
             "PyTorch v1 case generation requires optional dependencies: " f"{deps}"
+        )
+
+    import torch
+
+    actual = normalize_torch_version(torch.__version__)
+    if actual != PINNED_TORCH_VERSION:
+        raise RuntimeError(
+            f"tensor-ad-oracles requires torch=={PINNED_TORCH_VERSION}, got {torch.__version__}"
         )
 
 

@@ -9,11 +9,28 @@ from types import SimpleNamespace
 
 from . import observables
 
+PINNED_TORCH_VERSION = "2.10.0"
+
+
+def normalize_torch_version(version: str) -> str:
+    """Strip local build metadata from a torch version string."""
+    return version.split("+", 1)[0]
+
+
+def ensure_pinned_torch_version(torch) -> None:
+    """Raise when the active torch runtime does not match the repository pin."""
+    actual = normalize_torch_version(torch.__version__)
+    if actual != PINNED_TORCH_VERSION:
+        raise RuntimeError(
+            f"tensor-ad-oracles requires torch=={PINNED_TORCH_VERSION}, got {torch.__version__}"
+        )
+
 
 def import_generation_runtime():
     import torch
     from torch.testing._internal.opinfo.definitions import linalg
 
+    ensure_pinned_torch_version(torch)
     return torch, linalg
 
 

@@ -26,6 +26,10 @@ uv run python -m unittest discover -s tests -v
 uv run python -m generators.pytorch_v1 --list
 uv run python -m generators.pytorch_v1 --materialize solve --family identity --limit 1
 uv run python -m unittest tests.test_db_replay -v
+uv run python scripts/validate_schema.py
+uv run python scripts/verify_cases.py
+uv run python scripts/check_replay.py
+uv run python scripts/check_regeneration.py
 ```
 
 Repository-managed environment files:
@@ -33,6 +37,10 @@ Repository-managed environment files:
 - `.python-version`
 - `pyproject.toml`
 - `uv.lock`
+
+The repository requires an exact PyTorch dependency pin: `torch==2.10.0`.
+Generated provenance stores the public version string `2.10.0`, not local
+build suffixes such as `+cpu` or `+cu128`.
 
 ## What Counts As a Case
 
@@ -119,10 +127,29 @@ The repository includes a replay validator in `validators/replay.py`. It re-exec
 - stored `pytorch_ref.jvp` is reproducible
 - stored `pytorch_ref.vjp` is reproducible
 - stored `fd_ref.jvp` is reproducible
+- replayed `pytorch_ref.jvp` still matches replayed `fd_ref.jvp` within the case tolerance
+- replayed probes still satisfy adjoint consistency within the case tolerance
 - expected gauge-ill-defined spectral failures still raise
 
 The end-to-end replay coverage is exercised by:
 
 ```bash
 uv run python -m unittest tests.test_db_replay -v
+uv run python scripts/check_replay.py
 ```
+
+## CI Guard Rails
+
+The repository ships two CI lanes:
+
+- `oracle-integrity`
+  - schema validation
+  - duplicate `case_id` detection
+  - full replay of the published database
+- `oracle-regeneration`
+  - full regeneration of `cases/`
+  - byte-for-byte comparison against the checked-in database
+
+`CODEOWNERS` covers `cases/`, `generators/`, `validators/`, `scripts/`,
+`schema/`, and workflow files. To make this effective, GitHub branch protection
+must require CODEOWNERS review.

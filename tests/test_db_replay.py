@@ -1,11 +1,37 @@
 import unittest
 from pathlib import Path
 
+import torch
+
 from validators import replay
 from validators.case_loader import iter_case_files, load_case_file
 
 
 class DbReplayTests(unittest.TestCase):
+    def test_validate_live_success_probe_requires_cross_oracle_jvp_agreement(self) -> None:
+        with self.assertRaisesRegex(ValueError, "live PyTorch JVP and live FD-JVP disagree"):
+            replay.validate_live_success_probe(
+                torch,
+                comparison={"rtol": 1e-8, "atol": 1e-9},
+                direction={"a": torch.tensor([1.0], dtype=torch.float64)},
+                cotangent={"value": torch.tensor([1.0], dtype=torch.float64)},
+                pytorch_jvp={"value": torch.tensor([0.0], dtype=torch.float64)},
+                pytorch_vjp={"a": torch.tensor([1.0], dtype=torch.float64)},
+                fd_jvp={"value": torch.tensor([1.0], dtype=torch.float64)},
+            )
+
+    def test_validate_live_success_probe_requires_adjoint_consistency(self) -> None:
+        with self.assertRaisesRegex(ValueError, "live probe failed adjoint consistency"):
+            replay.validate_live_success_probe(
+                torch,
+                comparison={"rtol": 1e-8, "atol": 1e-9},
+                direction={"a": torch.tensor([2.0], dtype=torch.float64)},
+                cotangent={"value": torch.tensor([3.0], dtype=torch.float64)},
+                pytorch_jvp={"value": torch.tensor([6.0], dtype=torch.float64)},
+                pytorch_vjp={"a": torch.tensor([5.0], dtype=torch.float64)},
+                fd_jvp={"value": torch.tensor([6.0], dtype=torch.float64)},
+            )
+
     def test_replay_solve_identity_case_matches_stored_references(self) -> None:
         result = replay.replay_case_file(
             Path("/sharehome/shinaoka/projects/tensor4all/tensor-ad-oracles/cases/solve/identity.jsonl"),

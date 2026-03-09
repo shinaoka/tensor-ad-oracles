@@ -25,11 +25,20 @@ uv sync --locked --all-groups
 - Real case generation depends on PyTorch internal OpInfo modules, not just public `torch`.
 - In addition to `torch`, `numpy`, and `jsonschema`, the environment must include `expecttest`.
 - Without `expecttest`, imports such as `torch.testing._internal.opinfo.definitions.linalg` fail before `sample_inputs_*` can be used.
+- Keep `torch` exactly pinned to `torch==2.10.0`.
+- Treat the public version string `2.10.0` as the repository contract. Local build suffixes
+  such as `+cu128` or `+cpu` should not appear in generated provenance.
 
 ## Operational Notes
 
 - Do not run `uv lock` and `uv sync --locked --all-groups` in parallel. Update the lockfile first, then sync.
 - When changing `pyproject.toml`, `.python-version`, or dependency policy, refresh `uv.lock`.
+- The repository contract now includes:
+  - `uv run python scripts/validate_schema.py`
+  - `uv run python scripts/verify_cases.py`
+  - `uv run python scripts/check_replay.py`
+  - `uv run python scripts/check_regeneration.py`
+- `CODEOWNERS` only helps if GitHub branch protection requires CODEOWNERS review. Keep that enabled on the public repository.
 - Useful smoke checks:
 
 ```bash

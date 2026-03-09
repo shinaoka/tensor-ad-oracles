@@ -14,6 +14,7 @@ from generators.runtime import (
     map_allclose,
     sample_inputs_for_spec,
     tensor_map_to_tuple,
+    tensor_map_inner_product,
     tuple_to_tensor_map,
     zeros_like_input_map,
 )
@@ -53,6 +54,37 @@ def _decode_success_probe(record: dict) -> tuple[dict[str, object], dict[str, ob
         decode_tensor_map(probe["pytorch_ref"]["vjp"]),
         float(probe["fd_ref"]["step"]),
     )
+
+
+def validate_live_success_probe(
+    torch,
+    *,
+    comparison: dict,
+    direction: dict[str, object],
+    cotangent: dict[str, object],
+    pytorch_jvp: dict[str, object],
+    pytorch_vjp: dict[str, object],
+    fd_jvp: dict[str, object],
+) -> None:
+    """Validate live cross-oracle agreement for one success-case probe."""
+    if not map_allclose(
+        torch,
+        pytorch_jvp,
+        fd_jvp,
+        rtol=comparison["rtol"],
+        atol=comparison["atol"],
+    ):
+        raise ValueError("live PyTorch JVP and live FD-JVP disagree")
+
+    lhs = tensor_map_inner_product(torch, cotangent, fd_jvp)
+    rhs = tensor_map_inner_product(torch, pytorch_vjp, direction)
+    if not torch.allclose(
+        lhs,
+        rhs,
+        rtol=comparison["rtol"],
+        atol=comparison["atol"],
+    ):
+        raise ValueError("live probe failed adjoint consistency")
 
 
 def _find_candidate_samples(torch, spec, record_inputs: dict[str, object]) -> list[object]:
@@ -132,6 +164,18 @@ def _replay_success_case_for_sample(
         atol=comparison["atol"],
     ):
         return "stored and replayed FD-JVP disagree"
+    try:
+        validate_live_success_probe(
+            torch,
+            comparison=comparison,
+            direction=direction,
+            cotangent=cotangent,
+            pytorch_jvp=pytorch_jvp,
+            pytorch_vjp=pytorch_vjp,
+            fd_jvp=fd_jvp,
+        )
+    except ValueError as exc:
+        return str(exc)
     return None
 
 

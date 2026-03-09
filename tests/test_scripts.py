@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from scripts import validate_schema, verify_cases
+from scripts import check_regeneration, validate_schema, verify_cases
 
 
 class VerifyCasesTests(unittest.TestCase):
@@ -36,6 +36,27 @@ class VerifyCasesTests(unittest.TestCase):
             records = verify_cases.load_jsonl_records(path)
 
             self.assertEqual([record["case_id"] for record in records], ["a", "b"])
+
+
+class CheckRegenerationTests(unittest.TestCase):
+    def test_compare_case_trees_detects_content_mismatch(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            expected = root / "expected"
+            actual = root / "actual"
+            (expected / "solve").mkdir(parents=True)
+            (actual / "solve").mkdir(parents=True)
+            (expected / "solve" / "identity.jsonl").write_text(
+                json.dumps({"case_id": "solve_f64_identity_001"}) + "\n",
+                encoding="utf-8",
+            )
+            (actual / "solve" / "identity.jsonl").write_text(
+                json.dumps({"case_id": "solve_f64_identity_999"}) + "\n",
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(ValueError, "content mismatch"):
+                check_regeneration.compare_case_trees(expected, actual)
 
 
 class ValidateSchemaTests(unittest.TestCase):
