@@ -151,6 +151,23 @@ For every paired probe in every `success` case:
 
 All probe directions and cotangents are normalized to unit Frobenius norm after any required structure-preserving projection.
 
+## Structured Input Semantics
+
+Some published families are interpreted under upstream gradcheck-wrapper semantics
+rather than naive raw-operator semantics.
+
+In v1, this applies to the Hermitian-wrapper families for `eigh` and
+`cholesky`. Their serialized `inputs` and probe `direction` payloads are stored
+as raw tensor payloads, but oracle evaluation interprets them through the same
+structure-preserving Hermitian wrapper semantics used by the upstream PyTorch
+AD tests. Downstream replay consumers must not assume that these families are
+published against the unconstrained raw operator on the serialized tensor
+alone.
+
+This is a documentation-level contract clarification only. v1 does not yet add
+a machine-readable `input_structure` or `gradcheck_wrapper` field to the public
+schema or case records.
+
 ## Database Replay Validation
 
 The repository includes a replay validator in `validators/replay.py`. It re-executes the stored PyTorch case families from the published JSON database and checks that:

@@ -41,6 +41,26 @@ def _map_equal(torch, expected: dict[str, object], actual: dict[str, object]) ->
     return all(torch.equal(expected[name], actual[name]) for name in expected)
 
 
+def _map_close(
+    torch,
+    expected: dict[str, object],
+    actual: dict[str, object],
+    *,
+    comparison: dict,
+) -> bool:
+    if expected.keys() != actual.keys():
+        return False
+    first_order = _first_order_comparison(comparison)
+    rtol = max(float(first_order["rtol"]), 1e-8)
+    atol = max(float(first_order["atol"]), 1e-9)
+    return all(
+        expected[name].shape == actual[name].shape
+        and expected[name].dtype == actual[name].dtype
+        and torch.allclose(expected[name], actual[name], rtol=rtol, atol=atol)
+        for name in expected
+    )
+
+
 def _decode_record_inputs(record: dict) -> dict[str, object]:
     return {
         name: tensor.detach().clone().requires_grad_(True)
@@ -126,13 +146,24 @@ def validate_live_success_probe(
         raise ValueError("live PyTorch HVP and live FD-HVP disagree")
 
 
-def _find_candidate_samples(torch, spec, record_inputs: dict[str, object]) -> list[object]:
+def _find_candidate_samples(
+    torch,
+    spec,
+    record_inputs: dict[str, object],
+    *,
+    comparison: dict,
+) -> list[object]:
     _, linalg = import_generation_runtime()
     samples = sample_inputs_for_spec(torch, linalg, spec, seed=SAMPLE_INPUT_SEED)
     candidates: list[object] = []
     for sample in samples:
         sample_inputs = build_input_map(torch, spec, sample)
-        if _map_equal(torch, record_inputs, sample_inputs):
+        if _map_close(
+            torch,
+            record_inputs,
+            sample_inputs,
+            comparison=comparison,
+        ):
             candidates.append(sample)
     return candidates
 
@@ -292,7 +323,12 @@ def _replay_success_case(record: dict) -> None:
     )
     stored_fd_jvp = decode_tensor_map(record["probes"][0]["fd_ref"]["jvp"])
 
-    candidates = _find_candidate_samples(torch, spec, inputs)
+    candidates = _find_candidate_samples(
+        torch,
+        spec,
+        inputs,
+        comparison=record["comparison"],
+    )
     if not candidates:
         raise ValueError("no matching PyTorch SampleInput found for record inputs")
 
