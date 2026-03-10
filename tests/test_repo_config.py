@@ -31,6 +31,14 @@ class RepoConfigTests(unittest.TestCase):
         self.assertIn("uv run python -m generators.pytorch_v1 --list", readme)
         self.assertIn("uv run python scripts/check_upstream_ad_tolerances.py", readme)
 
+    def test_readme_documents_structured_input_semantics(self) -> None:
+        readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+
+        self.assertIn("Structured Input Semantics", readme)
+        self.assertIn("gradcheck-wrapper semantics", readme)
+        self.assertIn("eigh", readme)
+        self.assertIn("cholesky", readme)
+
     def test_uv_lock_is_checked_in(self) -> None:
         self.assertTrue((REPO_ROOT / "uv.lock").exists())
 
