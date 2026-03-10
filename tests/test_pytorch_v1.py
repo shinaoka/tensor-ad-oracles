@@ -106,6 +106,38 @@ class PytorchV1RegistryTests(unittest.TestCase):
         self.assertEqual(registry["multi_dot"], ("identity",))
         self.assertEqual(registry["eig"], ("values_vectors_abs",))
 
+    def test_build_supported_scalar_mapping_index_includes_representative_families(
+        self,
+    ) -> None:
+        supported = pytorch_v1.build_supported_scalar_mapping_index()
+
+        self.assertEqual(
+            {(spec.op, spec.family) for spec in supported[("abs", "")]},
+            {("abs", "identity")},
+        )
+        self.assertEqual(
+            {(spec.op, spec.family) for spec in supported[("add", "")]},
+            {("add", "identity")},
+        )
+        self.assertEqual(
+            {(spec.op, spec.family) for spec in supported[("sum", "")]},
+            {("sum", "identity")},
+        )
+        self.assertEqual(
+            {(spec.op, spec.family) for spec in supported[("nn.functional.prelu", "")]},
+            {("nn_functional_prelu", "identity")},
+        )
+
+    def test_build_scalar_case_spec_index_preserves_upstream_metadata(self) -> None:
+        index = pytorch_v1.build_scalar_case_spec_index()
+
+        self.assertEqual(index[("abs", "identity")].observable_kind, "identity")
+        self.assertEqual(index[("add", "identity")].source_function, "sample_inputs_add_sub")
+        self.assertEqual(index[("sum", "identity")].source_function, "sample_inputs_func")
+        self.assertEqual(index[("nn_functional_prelu", "identity")].upstream_name, "nn.functional.prelu")
+        self.assertEqual(index[("sum", "identity")].inventory_kind, "scalar")
+        self.assertTrue(index[("add", "identity")].hvp_enabled)
+
     def test_main_materialize_solve_identity_writes_file(self) -> None:
         try:
             import torch  # noqa: F401

@@ -41,6 +41,7 @@ from .tolerance_audit import (
     max_rel_diff,
     scalar_residual,
 )
+from .upstream_scalar_inventory import collect_ad_relevant_scalar_opinfos
 from .upstream_inventory import collect_ad_relevant_linalg_opinfos
 
 
@@ -63,6 +64,7 @@ class CaseFamilySpec:
     upstream_variant_name: str = ""
     sample_process_name: str | None = None
     hvp_enabled: bool = False
+    inventory_kind: str = "linalg"
 
 
 @dataclass(frozen=True)
@@ -116,6 +118,13 @@ UNSUPPORTED_UPSTREAM_KEYS = {
 
 def _normalized_upstream_op_id(name: str, variant_name: str) -> str:
     base = name.removeprefix("linalg.").replace(".", "_")
+    if variant_name:
+        return f"{base}_{variant_name}"
+    return base
+
+
+def _normalized_scalar_upstream_op_id(name: str, variant_name: str) -> str:
+    base = name.replace(".", "_")
     if variant_name:
         return f"{base}_{variant_name}"
     return base
@@ -175,6 +184,20 @@ def build_unsupported_upstream_mapping_index() -> dict[tuple[str, str], str]:
         key: "unsupported_or_xfail_family"
         for key in UNSUPPORTED_UPSTREAM_KEYS
     }
+
+
+def build_supported_scalar_mapping_index() -> dict[tuple[str, str], tuple[UpstreamMappedFamily, ...]]:
+    """Map dense scalar upstream OpInfo variants to planned DB families."""
+    mapping: dict[tuple[str, str], tuple[UpstreamMappedFamily, ...]] = {}
+    for row in collect_ad_relevant_scalar_opinfos():
+        mapping[(row.name, row.variant_name)] = (
+            UpstreamMappedFamily(
+                op=_normalized_scalar_upstream_op_id(row.name, row.variant_name),
+                family="identity",
+                hvp_enabled=row.supports_fwgrad_bwgrad,
+            ),
+        )
+    return mapping
 
 
 def _observable_kind_for_target(
@@ -260,6 +283,33 @@ def _build_error_case_specs() -> tuple[CaseFamilySpec, ...]:
     )
 
 
+def _build_scalar_case_specs() -> tuple[CaseFamilySpec, ...]:
+    inventory_rows = {
+        (row.name, row.variant_name): row
+        for row in collect_ad_relevant_scalar_opinfos()
+    }
+    specs: list[CaseFamilySpec] = []
+    for key, targets in build_supported_scalar_mapping_index().items():
+        row = inventory_rows[key]
+        for target in targets:
+            specs.append(
+                CaseFamilySpec(
+                    op=target.op,
+                    family=target.family,
+                    observable_kind="identity",
+                    expected_behavior="success",
+                    source_file="torch/testing/_internal/common_methods_invocations.py",
+                    source_function=row.sample_inputs_func_name,
+                    gradcheck_wrapper=row.gradcheck_wrapper_name,
+                    upstream_name=row.name,
+                    upstream_variant_name=row.variant_name,
+                    hvp_enabled=target.hvp_enabled,
+                    inventory_kind="scalar",
+                )
+            )
+    return tuple(specs)
+
+
 def _build_case_specs() -> tuple[CaseFamilySpec, ...]:
     return _build_success_case_specs() + _build_error_case_specs()
 
@@ -286,6 +336,11 @@ def build_case_families() -> dict[str, tuple[str, ...]]:
 def build_case_spec_index() -> dict[tuple[str, str], CaseFamilySpec]:
     """Index the fixed v1 case specifications by `(op, family)`."""
     return {(spec.op, spec.family): spec for spec in _case_specs_cached()}
+
+
+def build_scalar_case_spec_index() -> dict[tuple[str, str], CaseFamilySpec]:
+    """Index the planned scalar case specifications by `(op, family)`."""
+    return {(spec.op, spec.family): spec for spec in _build_scalar_case_specs()}
 
 
 def case_output_path(spec: CaseFamilySpec, *, cases_root: Path | None = None) -> Path:
