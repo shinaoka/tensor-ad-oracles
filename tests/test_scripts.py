@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from scripts import check_regeneration, validate_schema, verify_cases
+from scripts import check_regeneration, check_replay, validate_schema, verify_cases
 
 
 class VerifyCasesTests(unittest.TestCase):
@@ -198,6 +198,48 @@ class CheckRegenerationTests(unittest.TestCase):
 
             check_regeneration.compare_case_trees(expected, actual)
 
+    def test_compare_case_trees_treats_nan_payloads_as_equal(self) -> None:
+        expected_record = {
+            "schema_version": 1,
+            "case_id": "nanmean_f32_identity_001",
+            "op": "nanmean",
+            "dtype": "float32",
+            "family": "identity",
+            "expected_behavior": "success",
+            "inputs": {
+                "a": {
+                    "dtype": "float32",
+                    "shape": [2],
+                    "order": "row_major",
+                    "data": [1.0, float("nan")],
+                }
+            },
+            "observable": {"kind": "identity"},
+            "comparison": {
+                "first_order": {"kind": "allclose", "rtol": 1e-4, "atol": 1e-6}
+            },
+            "probes": [],
+            "provenance": {},
+        }
+        actual_record = json.loads(json.dumps(expected_record))
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            expected = root / "expected"
+            actual = root / "actual"
+            (expected / "nanmean").mkdir(parents=True)
+            (actual / "nanmean").mkdir(parents=True)
+            (expected / "nanmean" / "identity.jsonl").write_text(
+                json.dumps(expected_record) + "\n",
+                encoding="utf-8",
+            )
+            (actual / "nanmean" / "identity.jsonl").write_text(
+                json.dumps(actual_record) + "\n",
+                encoding="utf-8",
+            )
+
+            check_regeneration.compare_case_trees(expected, actual)
+
 
 class ValidateSchemaTests(unittest.TestCase):
     def test_require_jsonschema_dependency_raises_clear_error(self) -> None:
@@ -211,6 +253,29 @@ class ValidateSchemaTests(unittest.TestCase):
         with patch("builtins.__import__", side_effect=fake_import):
             with self.assertRaisesRegex(RuntimeError, "jsonschema is required"):
                 validate_schema.require_jsonschema()
+
+
+class CheckReplayScriptTests(unittest.TestCase):
+    def test_main_reports_checked_count(self) -> None:
+        with patch.object(
+            check_replay,
+            "replay_case_tree",
+            return_value=type("ReplayResult", (), {"checked": 7, "failures": []})(),
+        ):
+            self.assertEqual(check_replay.main(), 0)
+
+    def test_main_raises_on_failures(self) -> None:
+        with patch.object(
+            check_replay,
+            "replay_case_tree",
+            return_value=type(
+                "ReplayResult",
+                (),
+                {"checked": 3, "failures": ["bad_case: mismatch"]},
+            )(),
+        ):
+            with self.assertRaisesRegex(SystemExit, "bad_case: mismatch"):
+                check_replay.main()
 
 
 if __name__ == "__main__":

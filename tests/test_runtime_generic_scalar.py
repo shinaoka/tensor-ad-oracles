@@ -57,6 +57,7 @@ class RuntimeGenericScalarTests(unittest.TestCase):
 
         result = runtime.call_upstream_op(
             torch,
+            spec,
             op,
             sample,
             inputs,
@@ -72,6 +73,61 @@ class RuntimeGenericScalarTests(unittest.TestCase):
 
         self.assertEqual(runtime.dtype_name(torch, torch.float32), "float32")
         self.assertEqual(runtime.dtype_name(torch, torch.complex64), "complex64")
+
+    def test_build_call_metadata_canonicalizes_memory_format_kwargs(self) -> None:
+        torch, op = self._load_scalar_op("double")
+        sample = self._first_sample_with_kwargs(op, torch)
+
+        op_args, op_kwargs = runtime.build_call_metadata(torch, sample)
+
+        self.assertEqual(op_args, [])
+        self.assertEqual(op_kwargs, {"memory_format": "contiguous_format"})
+
+    def test_call_upstream_op_restores_stringified_dtype_kwargs(self) -> None:
+        torch, op = self._load_scalar_op("prod")
+        sample = self._first_sample_with_kwargs(op, torch)
+        spec = SimpleNamespace(
+            op="prod",
+            upstream_name="prod",
+            gradcheck_wrapper=None,
+        )
+        inputs = runtime.build_input_map(torch, spec, sample)
+        op_args, op_kwargs = runtime.build_call_metadata(torch, sample)
+
+        result = runtime.call_upstream_op(
+            torch,
+            spec,
+            op,
+            sample,
+            inputs,
+            op_args=op_args,
+            op_kwargs=op_kwargs,
+        )
+        expected = op.op(sample.input, *sample.args, **sample.kwargs)
+
+        self.assertEqual(op_kwargs, {"dtype": "float64"})
+        self.assertTrue(torch.equal(result, expected))
+
+    def test_call_upstream_op_accepts_native_memory_format_when_metadata_is_omitted(self) -> None:
+        torch, op = self._load_scalar_op("double")
+        sample = self._first_sample_with_kwargs(op, torch)
+        spec = SimpleNamespace(
+            op="double",
+            upstream_name="double",
+            gradcheck_wrapper=None,
+        )
+        inputs = runtime.build_input_map(torch, spec, sample)
+
+        result = runtime.call_upstream_op(
+            torch,
+            spec,
+            op,
+            sample,
+            inputs,
+        )
+        expected = op.op(sample.input, *sample.args, **sample.kwargs)
+
+        self.assertTrue(torch.equal(result, expected))
 
 
 if __name__ == "__main__":

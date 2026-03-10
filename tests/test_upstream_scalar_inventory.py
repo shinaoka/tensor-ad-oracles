@@ -15,6 +15,9 @@ class UpstreamScalarInventoryTests(unittest.TestCase):
         self.assertIn(("special.i0e", ""), keys)
         self.assertNotIn(("linalg.svd", ""), keys)
         self.assertNotIn(("masked.sum", ""), keys)
+        self.assertNotIn(("__rand__", ""), keys)
+        self.assertNotIn(("__ror__", ""), keys)
+        self.assertNotIn(("__rxor__", ""), keys)
 
     def test_inventory_preserves_class_and_sample_metadata(self) -> None:
         rows = upstream_scalar_inventory.collect_ad_relevant_scalar_opinfos()

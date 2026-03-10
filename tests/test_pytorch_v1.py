@@ -18,6 +18,9 @@ class PytorchV1RegistryTests(unittest.TestCase):
         )
         self.assertEqual(registry["solve"], ("identity",))
         self.assertEqual(registry["qr"], ("identity",))
+        self.assertEqual(registry["abs"], ("identity",))
+        self.assertEqual(registry["add"], ("identity",))
+        self.assertEqual(registry["sum"], ("identity",))
 
     def test_ensure_runtime_dependencies_raises_clear_error_when_missing(self) -> None:
         real_import = __import__
@@ -58,7 +61,7 @@ class PytorchV1RegistryTests(unittest.TestCase):
     def test_build_case_spec_index_returns_expected_specs(self) -> None:
         index = pytorch_v1.build_case_spec_index()
 
-        self.assertEqual(len(index), 42)
+        self.assertGreater(len(index), 42)
         self.assertEqual(
             index[("svd", "u_abs")].observable_kind,
             "svd_u_abs",
@@ -85,6 +88,9 @@ class PytorchV1RegistryTests(unittest.TestCase):
         )
         self.assertTrue(index[("solve", "identity")].hvp_enabled)
         self.assertTrue(index[("svd", "u_abs")].hvp_enabled)
+        self.assertEqual(index[("abs", "identity")].inventory_kind, "scalar")
+        self.assertEqual(index[("sum", "identity")].upstream_name, "sum")
+        self.assertTrue(index[("add", "identity")].hvp_enabled)
 
     def test_main_list_prints_case_registry(self) -> None:
         stdout = io.StringIO()
@@ -98,6 +104,9 @@ class PytorchV1RegistryTests(unittest.TestCase):
         self.assertIn("pinv_singular: identity", output)
         self.assertIn("inv: identity", output)
         self.assertIn("eig: values_vectors_abs", output)
+        self.assertIn("abs: identity", output)
+        self.assertIn("add: identity", output)
+        self.assertIn("sum: identity", output)
 
     def test_build_case_families_includes_full_supported_mapping_subset(self) -> None:
         registry = pytorch_v1.build_case_families()
@@ -242,6 +251,31 @@ class PytorchV1RegistryTests(unittest.TestCase):
             self.assertTrue(
                 (Path(tmpdir) / "eig" / "values_vectors_abs.jsonl").exists()
             )
+
+    def test_main_materialize_abs_identity_writes_file(self) -> None:
+        try:
+            import torch  # noqa: F401
+            import expecttest  # noqa: F401
+        except Exception as exc:
+            self.skipTest(f"uv generation dependencies unavailable: {exc}")
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            with redirect_stdout(io.StringIO()):
+                exit_code = pytorch_v1.main(
+                    [
+                        "--materialize",
+                        "abs",
+                        "--family",
+                        "identity",
+                        "--limit",
+                        "1",
+                        "--cases-root",
+                        tmpdir,
+                    ]
+                )
+
+            self.assertEqual(exit_code, 0)
+            self.assertTrue((Path(tmpdir) / "abs" / "identity.jsonl").exists())
 
     def test_main_materialize_all_writes_every_family(self) -> None:
         try:

@@ -97,6 +97,8 @@ def collect_ad_relevant_scalar_opinfos() -> list[UpstreamScalarOpInfoRecord]:
     for op in cmi.op_db:
         if not _is_supported_scalar_opinfo(op):
             continue
+        if _probe_dtype(torch, op) is None:
+            continue
         rows.append(
             UpstreamScalarOpInfoRecord(
                 name=op.name,
