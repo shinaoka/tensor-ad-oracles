@@ -33,9 +33,21 @@ def import_generation_runtime():
     return torch, linalg
 
 
+def import_scalar_generation_runtime():
+    import torch
+    from torch.testing._internal import common_methods_invocations as cmi
+
+    ensure_pinned_torch_version(torch)
+    return torch, cmi
+
+
 def dtype_name(torch, dtype) -> str:
+    if dtype == torch.float32:
+        return "float32"
     if dtype == torch.float64:
         return "float64"
+    if dtype == torch.complex64:
+        return "complex64"
     if dtype == torch.complex128:
         return "complex128"
     raise ValueError(f"unsupported torch dtype for v1 generation: {dtype}")
@@ -138,7 +150,69 @@ def _is_differentiable_input_tensor(torch, value) -> bool:
     )
 
 
-def _bind_sample_tensors(torch, sample, inputs: dict[str, object]):
+def _contains_input_tensor(torch, value) -> bool:
+    if _is_differentiable_input_tensor(torch, value):
+        return True
+    if isinstance(value, tuple):
+        return any(_contains_input_tensor(torch, item) for item in value)
+    if isinstance(value, list):
+        return any(_contains_input_tensor(torch, item) for item in value)
+    if isinstance(value, dict):
+        return any(_contains_input_tensor(torch, item) for item in value.values())
+    return False
+
+
+def _json_compatible_value(value):
+    if isinstance(value, tuple):
+        return [_json_compatible_value(item) for item in value]
+    if isinstance(value, list):
+        return [_json_compatible_value(item) for item in value]
+    if isinstance(value, dict):
+        return {key: _json_compatible_value(item) for key, item in value.items()}
+    return value
+
+
+def _restore_metadata_like(sample_value, metadata_value):
+    if isinstance(sample_value, tuple):
+        return tuple(
+            _restore_metadata_like(sample_item, metadata_item)
+            for sample_item, metadata_item in zip(sample_value, metadata_value, strict=True)
+        )
+    if isinstance(sample_value, list):
+        return [
+            _restore_metadata_like(sample_item, metadata_item)
+            for sample_item, metadata_item in zip(sample_value, metadata_value, strict=True)
+        ]
+    if isinstance(sample_value, dict):
+        return {
+            key: _restore_metadata_like(sample_value[key], metadata_value[key])
+            for key in sample_value
+        }
+    return metadata_value
+
+
+def build_call_metadata(torch, sample) -> tuple[list[object], dict[str, object]]:
+    op_args = [
+        _json_compatible_value(arg)
+        for arg in sample.args
+        if not _contains_input_tensor(torch, arg)
+    ]
+    op_kwargs = {
+        key: _json_compatible_value(value)
+        for key, value in sample.kwargs.items()
+        if not _contains_input_tensor(torch, value)
+    }
+    return op_args, op_kwargs
+
+
+def _bind_sample_tensors(
+    torch,
+    sample,
+    inputs: dict[str, object],
+    *,
+    op_args: list[object] | tuple[object, ...] | None = None,
+    op_kwargs: dict[str, object] | None = None,
+):
     index_ref = [0]
 
     def replace(value):
@@ -150,18 +224,54 @@ def _bind_sample_tensors(torch, sample, inputs: dict[str, object]):
             return tuple(replace(item) for item in value)
         if isinstance(value, list):
             return [replace(item) for item in value]
+        if isinstance(value, dict):
+            return {key: replace(item) for key, item in value.items()}
         return value
 
-    return replace(sample.input), replace(sample.args)
+    input_value = replace(sample.input)
+    arg_iter = iter(op_args or ())
+    args = []
+    for value in sample.args:
+        if _contains_input_tensor(torch, value):
+            args.append(replace(value))
+        else:
+            metadata_value = next(arg_iter, value)
+            args.append(_restore_metadata_like(value, metadata_value))
+    kwargs = {}
+    metadata_kwargs = op_kwargs or {}
+    for key, value in sample.kwargs.items():
+        if _contains_input_tensor(torch, value):
+            kwargs[key] = replace(value)
+        else:
+            metadata_value = metadata_kwargs.get(key, value)
+            kwargs[key] = _restore_metadata_like(value, metadata_value)
+    for key, value in metadata_kwargs.items():
+        if key not in kwargs:
+            kwargs[key] = value
+    return input_value, tuple(args), kwargs
 
 
-def _call_upstream_op(torch, opinfo, sample, inputs: dict[str, object]):
-    input_value, args = _bind_sample_tensors(torch, sample, inputs)
+def call_upstream_op(
+    torch,
+    opinfo,
+    sample,
+    inputs: dict[str, object],
+    *,
+    op_args: list[object] | tuple[object, ...] | None = None,
+    op_kwargs: dict[str, object] | None = None,
+):
+    input_value, args, kwargs = _bind_sample_tensors(
+        torch,
+        sample,
+        inputs,
+        op_args=op_args,
+        op_kwargs=op_kwargs,
+    )
     wrapper = getattr(opinfo, "gradcheck_wrapper", None)
     wrapper_name = getattr(wrapper, "__name__", None)
     if wrapper is not None and wrapper_name != "<lambda>":
-        return wrapper(opinfo.op, input_value, *args, **sample.kwargs)
-    return opinfo.op(input_value, *args, **sample.kwargs)
+        return wrapper(opinfo.op, input_value, *args, **kwargs)
+    return opinfo.op(input_value, *args, **kwargs)
 
 
 def apply_spec_observable(
@@ -178,7 +288,7 @@ def apply_spec_observable(
         if linalg is None:
             _, linalg = import_generation_runtime()
         opinfo = lookup_upstream_opinfo(linalg, spec)
-    result = _call_upstream_op(torch, opinfo, sample, inputs)
+    result = call_upstream_op(torch, opinfo, sample, inputs)
     return observables.apply_observable(
         spec.observable_kind,
         result,
@@ -241,6 +351,10 @@ def _collect_tensor_inputs(torch, spec, value, out: dict[str, object], index_ref
             is_primary_input=(index == 0),
         )
         return
+    if isinstance(value, dict):
+        for item in value.values():
+            _collect_tensor_inputs(torch, spec, item, out, index_ref)
+        return
     if isinstance(value, (tuple, list)):
         for item in value:
             _collect_tensor_inputs(torch, spec, item, out, index_ref)
@@ -251,6 +365,7 @@ def build_input_map(torch, spec, sample) -> dict[str, object]:
     index_ref = [0]
     _collect_tensor_inputs(torch, spec, sample.input, inputs, index_ref)
     _collect_tensor_inputs(torch, spec, sample.args, inputs, index_ref)
+    _collect_tensor_inputs(torch, spec, sample.kwargs, inputs, index_ref)
     if not inputs:
         raise ValueError(f"unsupported sample has no tensor inputs: {spec.op}")
     return inputs
