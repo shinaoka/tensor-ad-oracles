@@ -1,43 +1,49 @@
 # tensor-ad-oracles
 
-`tensor-ad-oracles` is a machine-readable JSON database for derivative-correctness validation of tensor and linear algebra operations.
+`tensor-ad-oracles` is a machine-readable JSON database for derivative-correctness validation of dense tensor operations, including both scalar-style `OpInfo` families and linear algebra operations.
 
-Version 1 targets the full PyTorch `OpInfo`-backed AD-relevant linalg family set currently materialized in this repository, including:
+Version 1 targets the full PyTorch `OpInfo`-backed AD-relevant dense family set currently materialized in this repository, including:
 
-- `cross`
-- `det`
-- `diagonal`
-- `eig`
-- `svd`
-- `eigh`
-- `eigvals`
-- `eigvalsh`
-- `solve`
-- `solve_ex`
-- `solve_triangular`
-- `cholesky`
-- `cholesky_ex`
-- `qr`
-- `lu`
-- `lu_factor`
-- `lu_factor_ex`
-- `lu_solve`
-- `inv`
-- `inv_ex`
-- `matrix_power`
-- `matrix_norm`
-- `multi_dot`
-- `norm`
-- `slogdet`
-- `svdvals`
-- `tensorinv`
-- `tensorsolve`
-- `vecdot`
-- `vector_norm`
-- `vander`
-- `pinv`
-- `pinv_hermitian`
-- `pinv_singular`
+- dense unary elementwise ops such as `abs`, `exp`, `log`, `sin`, `cos`, `tanh`, `conj`
+- dense binary elementwise ops such as `add`, `mul`, `div`, `pow`, `xlogy`
+- dense reduction ops such as `sum`, `prod`, `mean`, `std`, `var`
+- dense functional scalarizable ops such as `nn.functional.prelu`
+- the full AD-relevant linalg family set, including:
+
+  - `cross`
+  - `det`
+  - `diagonal`
+  - `eig`
+  - `svd`
+  - `eigh`
+  - `eigvals`
+  - `eigvalsh`
+  - `solve`
+  - `solve_ex`
+  - `solve_triangular`
+  - `cholesky`
+  - `cholesky_ex`
+  - `qr`
+  - `lu`
+  - `lu_factor`
+  - `lu_factor_ex`
+  - `lu_solve`
+  - `inv`
+  - `inv_ex`
+  - `matrix_power`
+  - `matrix_norm`
+  - `multi_dot`
+  - `norm`
+  - `slogdet`
+  - `svdvals`
+  - `tensorinv`
+  - `tensorsolve`
+  - `vecdot`
+  - `vector_norm`
+  - `vander`
+  - `pinv`
+  - `pinv_hermitian`
+  - `pinv_singular`
 
 ## Environment
 
@@ -95,7 +101,9 @@ Every published `success` case must satisfy:
 - `Jv_torch ~= Jv_fd`
 - `<bar_y, Jv_fd> ~= <J*bar_y_torch, v>`
 
-For upstream second-order families, `success` probes also carry scalarized HVP data:
+First-order data is published for `float32`, `float64`, `complex64`, and `complex128`.
+
+For upstream second-order families that remain numerically stable enough to publish, `success` probes also carry scalarized HVP data:
 
 - `pytorch_ref.hvp`
 - `fd_ref.hvp`
@@ -127,6 +135,10 @@ generators/
   __init__.py
   pytorch_v1.py
 cases/
+  abs/
+  add/
+  sum/
+  ...
   svd/
   eigh/
   solve/
