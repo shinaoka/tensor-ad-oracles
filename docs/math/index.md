@@ -26,3 +26,9 @@ Published DB families are linked to the note corpus through
 - [pinv.md](./pinv.md)
 - [lstsq.md](./lstsq.md)
 - [norm.md](./norm.md)
+
+## Shared And Cross-Cutting Notes
+
+- [scalar_ops.md](./scalar_ops.md)
+- [matrix_exp.md](./matrix_exp.md)
+- [dyadtensor_reverse.md](./dyadtensor_reverse.md)

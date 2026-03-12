@@ -184,6 +184,25 @@ class MathRegistryTests(unittest.TestCase):
         self.assertIn("General", eig_text)
         self.assertIn("Hermitian", eigen_text)
 
+    def test_repo_contains_remaining_known_rule_notes(self) -> None:
+        note_dir = Path(__file__).resolve().parents[1] / "docs" / "math"
+        expected = {"matrix_exp.md", "scalar_ops.md", "dyadtensor_reverse.md"}
+
+        self.assertTrue(expected.issubset({path.name for path in note_dir.glob("*.md")}))
+
+    def test_repo_scalar_ops_note_exposes_representative_op_anchors(self) -> None:
+        note_path = Path(__file__).resolve().parents[1] / "docs" / "math" / "scalar_ops.md"
+        anchors = math_registry.extract_markdown_anchors(note_path.read_text(encoding="utf-8"))
+
+        self.assertEqual({"op-abs", "op-add", "op-sum", "op-var"} - anchors, set())
+
+    def test_repo_matrix_exp_note_marks_db_status(self) -> None:
+        text = (
+            Path(__file__).resolve().parents[1] / "docs" / "math" / "matrix_exp.md"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn("not yet materialized", text)
+
 
 if __name__ == "__main__":
     unittest.main()
