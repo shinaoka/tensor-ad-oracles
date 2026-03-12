@@ -12,4 +12,4 @@ if ! command -v quarto >/dev/null 2>&1; then
 fi
 
 quarto render "$ROOT_DIR/docs"
-uv run python "$ROOT_DIR/scripts/check_docs_site.py" --site-root "$OUT_DIR"
+python3 "$ROOT_DIR/scripts/check_docs_site.py" --site-root "$OUT_DIR"
