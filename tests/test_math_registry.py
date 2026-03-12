@@ -203,6 +203,28 @@ class MathRegistryTests(unittest.TestCase):
 
         self.assertIn("not yet materialized", text)
 
+    def test_repo_registry_contains_representative_family_mappings(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        entries = math_registry.load_registry(root)["entries"]
+        index = {(row["op"], row["family"]): row for row in entries}
+
+        self.assertEqual(index[("svd", "u_abs")]["note_path"], "docs/math/svd.md")
+        self.assertEqual(index[("svd", "u_abs")]["anchor"], "family-u-abs")
+        self.assertEqual(index[("eig", "values_vectors_abs")]["note_path"], "docs/math/eig.md")
+        self.assertEqual(
+            index[("eig", "values_vectors_abs")]["anchor"],
+            "family-values-vectors-abs",
+        )
+        self.assertEqual(index[("solve", "identity")]["note_path"], "docs/math/solve.md")
+        self.assertEqual(index[("solve", "identity")]["anchor"], "family-solve-identity")
+        self.assertEqual(index[("abs", "identity")]["note_path"], "docs/math/scalar_ops.md")
+        self.assertEqual(index[("abs", "identity")]["anchor"], "op-abs")
+        self.assertEqual(index[("sum", "identity")]["note_path"], "docs/math/scalar_ops.md")
+        self.assertEqual(index[("sum", "identity")]["anchor"], "op-sum")
+
+    def test_repo_registry_covers_materialized_case_families(self) -> None:
+        math_registry.validate_registry(Path(__file__).resolve().parents[1])
+
 
 if __name__ == "__main__":
     unittest.main()

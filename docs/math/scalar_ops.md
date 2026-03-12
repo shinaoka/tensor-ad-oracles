@@ -93,6 +93,7 @@ yet justify a dedicated note:
 - <a id="op-asin"></a>`asin`
 - <a id="op-asinh"></a>`asinh`
 - <a id="op-atan"></a>`atan`
+- <a id="op-atan2"></a>`atan2`
 - <a id="op-atanh"></a>`atanh`
 - <a id="op-cdouble"></a>`cdouble`
 - <a id="op-ceil"></a>`ceil`
@@ -115,6 +116,8 @@ yet justify a dedicated note:
 - <a id="op-expm1"></a>`expm1`
 - <a id="op-fill"></a>`fill`
 - <a id="op-floor"></a>`floor`
+- <a id="op-fmax"></a>`fmax`
+- <a id="op-fmin"></a>`fmin`
 - <a id="op-frac"></a>`frac`
 - <a id="op-frexp"></a>`frexp`
 - <a id="op-i0"></a>`i0`
