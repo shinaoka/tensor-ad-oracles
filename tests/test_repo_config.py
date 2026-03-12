@@ -63,6 +63,7 @@ class RepoConfigTests(unittest.TestCase):
         gitignore = (REPO_ROOT / ".gitignore").read_text(encoding="utf-8")
         self.assertIn(".venv/", gitignore)
         self.assertIn(".venv31212/", gitignore)
+        self.assertIn("target/", gitignore)
 
     def test_agents_documents_uv_interpreter_and_expecttest_rules(self) -> None:
         agents = (REPO_ROOT / "AGENTS.md").read_text(encoding="utf-8")
