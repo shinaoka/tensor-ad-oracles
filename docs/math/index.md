@@ -12,6 +12,9 @@ where that keeps the corpus easier to maintain.
 Published DB families are linked to the note corpus through
 `docs/math/registry.json`.
 
+For the human-facing explanation of that linkage, see
+[math-registry.md](../math-registry.md).
+
 ## Core Linalg Notes
 
 - [svd.md](./svd.md)
