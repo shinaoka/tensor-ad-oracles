@@ -31,6 +31,8 @@ class DocsSiteContractTests(unittest.TestCase):
         self.assertIn("quarto render", script)
         self.assertIn("target/docs-site", script)
         self.assertIn("check_docs_site.py", script)
+        self.assertIn("python3", script)
+        self.assertNotIn("uv run python", script)
 
 
 if __name__ == "__main__":
