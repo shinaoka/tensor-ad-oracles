@@ -1,6 +1,13 @@
 # tensor-ad-oracles
 
-`tensor-ad-oracles` is a machine-readable JSON database for derivative-correctness validation of dense tensor operations, including both scalar-style `OpInfo` families and linear algebra operations.
+`tensor-ad-oracles` publishes two first-class artifacts for dense tensor AD
+validation:
+
+- mathematical AD notes
+- a machine-readable JSON oracle database
+
+The oracle database covers both scalar-style `OpInfo` families and linear
+algebra operations.
 
 Version 1 targets the full PyTorch `OpInfo`-backed AD-relevant dense family set currently materialized in this repository, including:
 
@@ -78,6 +85,18 @@ Repository-managed environment files:
 The repository requires an exact PyTorch dependency pin: `torch==2.10.0`.
 Generated provenance stores the public version string `2.10.0`, not local
 build suffixes such as `+cpu` or `+cu128`.
+
+## Math Notes
+
+The mathematical AD notes live under `docs/math/`.
+
+- `docs/math/index.md` is the note corpus entrypoint
+- `docs/math/registry.json` is the central mapping from published `(op, family)`
+  DB families to note locations
+
+The note corpus and the oracle database are maintained as separate artifacts so
+that math-note updates do not require schema or JSONL churn unless the DB
+contract itself changes.
 
 ## What Counts As a Case
 

@@ -39,6 +39,15 @@ class RepoConfigTests(unittest.TestCase):
         self.assertIn("eigh", readme)
         self.assertIn("cholesky", readme)
 
+    def test_readme_documents_math_notes_and_registry(self) -> None:
+        readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+
+        self.assertIn("mathematical AD notes", readme)
+        self.assertIn("oracle database", readme)
+        self.assertIn("docs/math/registry.json", readme)
+        self.assertTrue((REPO_ROOT / "docs" / "math" / "index.md").exists())
+        self.assertTrue((REPO_ROOT / "docs" / "math" / "registry.json").exists())
+
     def test_uv_lock_is_checked_in(self) -> None:
         self.assertTrue((REPO_ROOT / "uv.lock").exists())
 
