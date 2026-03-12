@@ -49,6 +49,13 @@ class RepoConfigTests(unittest.TestCase):
         self.assertTrue((REPO_ROOT / "docs" / "math" / "index.md").exists())
         self.assertTrue((REPO_ROOT / "docs" / "math" / "registry.json").exists())
 
+    def test_readme_documents_pages_deployment(self) -> None:
+        readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+
+        self.assertIn("GitHub Pages", readme)
+        self.assertIn("docs/math/", readme)
+        self.assertIn("docs/math/registry.json", readme)
+
     def test_uv_lock_is_checked_in(self) -> None:
         self.assertTrue((REPO_ROOT / "uv.lock").exists())
 

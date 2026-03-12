@@ -95,6 +95,10 @@ The mathematical AD notes live under `docs/math/`.
 - `docs/math/registry.json` is the central mapping from published `(op, family)`
   DB families to note locations
 
+The note corpus is intended to be published as a GitHub Pages docs site. The
+editable source stays in `docs/math/`, and the deployable web surface is a
+rendered view of that same corpus rather than a separate source tree.
+
 The note corpus and the oracle database are maintained as separate artifacts so
 that math-note updates do not require schema or JSONL churn unless the DB
 contract itself changes.
