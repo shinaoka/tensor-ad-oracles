@@ -29,6 +29,7 @@ class RepoConfigTests(unittest.TestCase):
         self.assertIn("uv sync --locked --all-groups", readme)
         self.assertIn("uv run python -m unittest", readme)
         self.assertIn("uv run python -m generators.pytorch_v1 --list", readme)
+        self.assertIn("uv run python scripts/check_math_registry.py", readme)
         self.assertIn("uv run python scripts/check_upstream_ad_tolerances.py", readme)
 
     def test_readme_documents_structured_input_semantics(self) -> None:
@@ -85,6 +86,7 @@ class RepoConfigTests(unittest.TestCase):
             REPO_ROOT / ".github" / "workflows" / "oracle-integrity.yml"
         ).read_text(encoding="utf-8")
 
+        self.assertIn("uv run python scripts/check_math_registry.py", workflow)
         self.assertIn("uv run python scripts/check_tolerances.py", workflow)
         self.assertIn("uv run python scripts/check_upstream_ad_tolerances.py", workflow)
 

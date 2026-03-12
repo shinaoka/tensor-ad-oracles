@@ -68,6 +68,7 @@ uv run python -m generators.pytorch_v1 --list
 uv run python -m generators.pytorch_v1 --materialize solve --family identity --limit 1
 uv run python -m generators.pytorch_v1 --materialize-all --limit 1
 uv run python -m unittest tests.test_db_replay -v
+uv run python scripts/check_math_registry.py
 uv run python scripts/validate_schema.py
 uv run python scripts/verify_cases.py
 uv run python scripts/check_replay.py
@@ -97,6 +98,13 @@ The mathematical AD notes live under `docs/math/`.
 The note corpus and the oracle database are maintained as separate artifacts so
 that math-note updates do not require schema or JSONL churn unless the DB
 contract itself changes.
+
+Use the registry check to verify that every published `(op, family)` case has a
+valid note target:
+
+```bash
+uv run python scripts/check_math_registry.py
+```
 
 ## What Counts As a Case
 
