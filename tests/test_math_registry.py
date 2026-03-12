@@ -146,6 +146,44 @@ class MathRegistryTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "missing registry entries"):
             math_registry.validate_registry(root)
 
+    def test_repo_contains_core_linalg_math_notes(self) -> None:
+        note_dir = Path(__file__).resolve().parents[1] / "docs" / "math"
+        expected = {
+            "svd.md",
+            "solve.md",
+            "qr.md",
+            "lu.md",
+            "cholesky.md",
+            "inv.md",
+            "det.md",
+            "eig.md",
+            "eigen.md",
+            "pinv.md",
+            "lstsq.md",
+            "norm.md",
+        }
+
+        self.assertTrue(expected.issubset({path.name for path in note_dir.glob("*.md")}))
+
+    def test_repo_svd_note_exposes_family_anchors(self) -> None:
+        note_path = Path(__file__).resolve().parents[1] / "docs" / "math" / "svd.md"
+        text = note_path.read_text(encoding="utf-8")
+        anchors = math_registry.extract_markdown_anchors(text)
+
+        self.assertIn("## DB Families", text)
+        self.assertEqual(
+            {"family-u-abs", "family-s", "family-vh-abs", "family-uvh-product"} - anchors,
+            set(),
+        )
+
+    def test_repo_eig_and_eigen_notes_are_distinct(self) -> None:
+        note_dir = Path(__file__).resolve().parents[1] / "docs" / "math"
+        eig_text = (note_dir / "eig.md").read_text(encoding="utf-8")
+        eigen_text = (note_dir / "eigen.md").read_text(encoding="utf-8")
+
+        self.assertIn("General", eig_text)
+        self.assertIn("Hermitian", eigen_text)
+
 
 if __name__ == "__main__":
     unittest.main()
