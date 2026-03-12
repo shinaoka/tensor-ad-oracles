@@ -95,13 +95,20 @@ The mathematical AD notes live under `docs/math/`.
 - `docs/math/registry.json` is the central mapping from published `(op, family)`
   DB families to note locations
 
+`docs/math/*.md` is the mathematical source of truth for known operator rules in
+this repository. The note corpus is maintained as a non-lossy migration target
+for `tenferro-rs/docs/AD`, and operator notes are cross-checked against
+PyTorch's manual autograd formulas where those exist.
+
 The note corpus is intended to be published as a GitHub Pages docs site. The
 editable source stays in `docs/math/`, and the deployable web surface is a
 rendered view of that same corpus rather than a separate source tree.
 
 The note corpus and the oracle database are maintained as separate artifacts so
 that math-note updates do not require schema or JSONL churn unless the DB
-contract itself changes.
+contract itself changes. In steady state, the DB should reference math notes via
+stable registry anchors rather than duplicating mathematical definitions inside
+case files.
 
 Use the registry check to verify that every published `(op, family)` case has a
 valid note target:

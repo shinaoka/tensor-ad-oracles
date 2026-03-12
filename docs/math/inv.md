@@ -2,34 +2,73 @@
 
 ## Forward Definition
 
-For
+$$
+B = A^{-1},
+\qquad
+A \in \mathbb{C}^{N \times N}
+$$
+
+## Forward Rule
+
+Differentiate $A B = I$:
 
 $$
-Y = A^{-1},
+\dot{A} B + A \dot{B} = 0
 $$
 
-the differential follows from $A Y = I$:
+so
 
 $$
-dY = -A^{-1}(dA)A^{-1}.
+\dot{B} = -B\,\dot{A}\,B.
 $$
 
 ## Reverse Rule
 
-Given a cotangent $\bar Y$ on the inverse output,
+Given a cotangent $\bar{B}$:
 
 $$
-\bar A = -A^{-H}\bar Y A^{-H}.
+\bar{A} = -B^{\mathsf{H}}\,\bar{B}\,B^{\mathsf{H}}.
 $$
 
-This identity is reused by explicit inverse families and by operators whose
-derivative is most naturally expressed through an inverse solve.
+This is the adjoint of the JVP under the Frobenius inner product.
+
+## Relationship to solve
+
+`inv(A)` is the special case of `solve(A, I)`. Reusing the solve notation
+immediately recovers
+
+- JVP: $\dot{B} = -B\,\dot{A}\,B$
+- VJP: $\bar{A} = -B^{\mathsf{H}}\,\bar{B}\,B^{\mathsf{H}}$
+
+The same relationship is used in PyTorch and downstream libraries to avoid
+duplicating logic.
+
+## Implementation Correspondence
+
+- `tenferro-rs/docs/AD/inv.md` writes the inverse rule directly and then points
+  back to solve as the conceptual source.
+- PyTorch exposes the inverse derivative via solve-style formulas in
+  `derivatives.yaml` and related linear-solve kernels.
+- For higher-order AD, prefer `solve` over explicit multiplication by a cached
+  inverse.
 
 ## Verification
 
-- Reconstruction: check $A A^{-1} \approx I$.
-- Derivatives: compare JVP/VJP against finite differences on scalar functionals
-  of the inverse.
+### Forward reconstruction
+
+$$
+A B \approx I.
+$$
+
+### Backward checks
+
+Compare JVP/VJP against finite differences on scalar losses of the inverse.
+
+## References
+
+1. M. B. Giles, "An extended collection of matrix derivative results for
+   forward and reverse mode AD," 2008.
+2. P. S. Dwyer and M. S. Macphail, "Symbolic Matrix Derivatives," 1948.
 
 ## DB Families
 

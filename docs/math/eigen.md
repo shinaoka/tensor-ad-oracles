@@ -2,53 +2,130 @@
 
 ## Forward Definition
 
-For a Hermitian matrix
-
 $$
-A Q = Q \Lambda,
+A = U \operatorname{diag}(E) U^\dagger,
+\qquad
+A \in \mathbb{C}^{N \times N},
+\qquad
+A = A^\dagger
 $$
 
-with real eigenvalues collected in the diagonal matrix $\Lambda$ and unitary
-eigenvectors $Q$.
+- $U \in \mathbb{C}^{N \times N}$ is unitary
+- $E \in \mathbb{R}^N$ contains the real eigenvalues
 
 ## Reverse Rule
 
-Because the eigenbasis is orthonormal, the reverse rule simplifies to
+Given cotangents $\bar{E}$ and $\bar{U}$, compute a Hermitian cotangent
+$\bar{A}$.
+
+### Step 1: Build the $F$ matrix
 
 $$
-\bar A = Q \, G \, Q^H,
+F_{ij} =
+\begin{cases}
+\dfrac{E_i - E_j}{(E_i - E_j)^2 + \eta}
+\approx \dfrac{1}{E_i - E_j}, & i \neq j, \\
+0, & i = j.
+\end{cases}
 $$
 
-where $G$ contains:
+Regularization $\eta > 0$ avoids division by zero for degenerate eigenvalues.
 
-- the diagonal eigenvalue cotangent
-- the off-diagonal eigenvector sensitivity mixed by the Hermitian spectral-gap
-  matrix
+### Step 2: Build the inner matrix $D$
 
 $$
-F_{ij} \approx \frac{1}{\lambda_j - \lambda_i}, \qquad F_{ii} = 0.
+D =
+\frac{1}{2}
+\left(
+F \odot (\bar{U}^\dagger U)
++ (F \odot (\bar{U}^\dagger U))^\dagger
+\right)
++ \operatorname{diag}(\bar{E}).
 $$
 
-The Hermitian structure of $A$ is preserved by symmetrizing the assembled inner
-matrix before projecting back.
+The symmetrization ensures that $D$ is Hermitian.
+
+### Step 3: Conjugate back to the input basis
+
+$$
+\bar{A} = U D U^\dagger.
+$$
+
+The diagonal imaginary gauge of $U^\dagger dU$ drops out after symmetrization,
+so the final cotangent stays inside the Hermitian tangent space.
+
+## Derivation Sketch
+
+Differentiate
+
+$$
+A U = U \operatorname{diag}(E)
+$$
+
+to obtain
+
+$$
+dA \, U + A \, dU = dU \, \operatorname{diag}(E) + U \, \operatorname{diag}(dE).
+$$
+
+Left-multiplying by $U^\dagger$ yields
+
+$$
+U^\dagger dA \, U =
+U^\dagger dU \, \operatorname{diag}(E)
+- \operatorname{diag}(E) U^\dagger dU
++ \operatorname{diag}(dE).
+$$
+
+If $\Omega = U^\dagger dU$, then $\Omega$ is skew-Hermitian, the diagonal of
+$U^\dagger dA U$ gives $dE$, and the off-diagonal entries are divided by
+$E_j - E_i$. Applying the adjoint of that split yields the formula above.
 
 ## Forward Rule
 
-Forward mode differentiates the Hermitian eigen equation and solves the same
-gap-weighted system for $d\Lambda$ and $dQ$.
+The Hermitian forward rule is the simplification of the general eigendecomposition
+JVP:
 
-## Numerical Notes
+$$
+dE = \operatorname{diag}(U^\dagger dA U),
+$$
 
-- Repeated eigenvalues create gauge freedom in the eigenvectors.
-- The DB therefore uses `vectors.abs()` for the published vector observable.
-- Gauge-noninvariant losses are intentionally represented by explicit error
-  families.
+$$
+dU = U \left(F \odot (U^\dagger dA U - \operatorname{diag}(dE))\right),
+$$
+
+with the understanding that the skew-Hermitian gauge is projected away.
+
+## Implementation Correspondence
+
+- `tenferro-rs/docs/AD/eigen.md` writes the reverse rule through the explicit
+  Hermitian inner matrix $D$; this note keeps that structure.
+- PyTorch does not have a separate Hermitian kernel. It calls
+  `linalg_eig_backward(..., is_hermitian=true)` and
+  `linalg_eig_jvp(..., is_hermitian=true)`, which reduce to the same formulas
+  with $V^{-1} = V^\dagger$.
 
 ## Verification
 
-- Reconstruction: check $A Q \approx Q \Lambda$.
-- Hermitian invariance: ensure the primal input stays in the structured domain.
-- Derivatives: compare JVP/VJP against finite differences.
+### Forward reconstruction
+
+$$
+\|A - U \operatorname{diag}(E) U^\dagger\|_F < \varepsilon,
+\qquad
+U^\dagger U \approx I.
+$$
+
+### Backward checks
+
+- eigenvalues only: $f(A) = \sum_i E_i$
+- eigenvectors only: scalar losses on a column of $U$
+- compare JVP/VJP against finite differences on Hermitian perturbations
+
+## References
+
+1. M. Seeger et al., "Auto-Differentiating Linear Algebra," 2018.
+2. M. B. Giles, "An extended collection of matrix derivative results for
+   forward and reverse mode automatic differentiation," 2008.
 
 ## DB Families
 

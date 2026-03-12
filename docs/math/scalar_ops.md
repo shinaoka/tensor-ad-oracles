@@ -2,62 +2,90 @@
 
 ## Scope
 
-This note covers the shared scalar, pointwise, reduction, and small tensor
-wrapper rules that do not need one dedicated note file per operation.
+This note records the shared scalar AD formulas implemented in
+`chainrules-scalarops` together with the tensor-level wrappers used by
+`tenferro-dyadtensor`.
+
+## PyTorch Baseline
+
+The local comparison baseline is PyTorch's manual autograd formulas:
+
+- `tools/autograd/derivatives.yaml`
+- `torch/csrc/autograd/FunctionsManual.cpp`
+- `docs/source/notes/autograd.rst`
+
+In particular, the scalar wrappers here follow the same `handle_r_to_c`
+real-input projection convention used by PyTorch.
 
 ## Complex Gradient Convention
 
-For real-valued losses, the rules follow the conjugate-Wirtinger convention used
-by PyTorch:
+For real-valued losses:
 
-- VJP formulas conjugate the primal factors where required
+- gradients follow the conjugate-Wirtinger convention
+- VJP formulas include complex conjugation where required
 - real inputs project complex intermediates back to the real domain
+  (`handle_r_to_c`)
 
 ## Scalar Basis Rules
 
-Let `g` be the output cotangent.
+Let `g` be the output cotangent, `x` the primal input, and `y = f(x)` the
+primal output.
+
+### Core arithmetic
 
 - `add`: $(dx_1, dx_2) = (g, g)$
 - `sub`: $(dx_1, dx_2) = (g, -g)$
 - `mul`: $(dx_1, dx_2) = (g \cdot \overline{x_2}, g \cdot \overline{x_1})$
 - `div`: quotient rule with conjugated denominator factors
+
+### Analytic unary wrappers
+
 - `conj`: $dx = \overline{g}$
 - `sqrt`: $dx = g / (2 \overline{\sqrt{x}})$
-- `exp`: $dx = g \cdot \overline{\exp(x)}$
+- `exp`: $dx = g \cdot \overline{y}$
 - `log`: $dx = g / \overline{x}$
-- `atan2`: use the standard real partial derivatives over $a^2 + b^2$
-- `pow`: differentiate both the base and exponent branches when both are
-  differentiable
+- `expm1`: derivative factor `exp(x)`
+- `log1p`: derivative factor `1 / (1 + x)`
+- `sin`: derivative factor `cos(x)`
+- `cos`: derivative factor `-sin(x)`
+- `tanh`: derivative factor `1 - y^2`
 
-## Tensor Composite Wrappers
+### Parameterized wrappers
 
-Many published DB families are thin wrappers around the scalar basis:
+- `atan2`: standard real partials over $a^2 + b^2$
+- `powf`: fixed scalar-exponent rule
+- `powi`: integer-exponent specialization of `powf`
+- `pow`:
+  - base path: $dx = g \cdot \overline{a x^{a-1}}$
+  - exponent path: $da = g \cdot \overline{x^a \log(x)}$
 
-- unary analytic wrappers such as `sin`, `cos`, `tanh`, `asin`, `acos`, `atan`,
-  `sinh`, `cosh`, `asinh`, `acosh`, `atanh`
-- numerically specialized wrappers such as `log1p`, `expm1`, `rsqrt`, `sinc`
-- reduction wrappers such as `sum`, `mean`, `var`, `std`, `nanmean`, `nansum`
-- broadcasted binary wrappers such as `hypot`, `xlogy`, `maximum`, `minimum`
+## Tensor-Composite Rules
 
-Some tensor families currently routed here are not purely scalar pointwise
-operators, but they still share a compact differentiable contract that does not
-yet justify a dedicated note:
+Tensor-level wrappers built on top of the scalar basis include:
 
-- `cross`
-- `diagonal`
-- `matrix_power`
-- `multi_dot`
-- `vander`
-- `vecdot`
-- `householder_product`
+- pointwise unary analytic families
+- broadcasted binary analytic families
+- small tensor wrappers such as `cross`, `diagonal`, `matrix_power`,
+  `multi_dot`, `vander`, `vecdot`, and `householder_product`
 
-## Reduction Rules
+## Tensor Reduction Wrappers
 
-- `sum`: every element receives the same cotangent
-- `mean`: every element receives the cotangent divided by the number of reduced
-  entries
-- `var`: differentiate through the centered residual $x - \operatorname{mean}(x)$
-- `std`: combine the variance rule with the derivative of `sqrt`
+### `sum_ad`
+
+Every element receives the same cotangent.
+
+### `mean_ad`
+
+Every element receives the cotangent divided by the number of reduced entries.
+
+### `var_ad`
+
+Differentiate through the centered residual
+$x - \operatorname{mean}(x)$.
+
+### `std_ad`
+
+Combine the variance rule with the derivative of `sqrt`.
 
 ## Published DB Families Using This Note
 
