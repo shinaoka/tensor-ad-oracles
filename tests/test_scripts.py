@@ -4,7 +4,13 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from scripts import check_regeneration, check_replay, validate_schema, verify_cases
+from scripts import (
+    check_math_registry,
+    check_regeneration,
+    check_replay,
+    validate_schema,
+    verify_cases,
+)
 
 
 class VerifyCasesTests(unittest.TestCase):
@@ -276,6 +282,59 @@ class CheckReplayScriptTests(unittest.TestCase):
         ):
             with self.assertRaisesRegex(SystemExit, "bad_case: mismatch"):
                 check_replay.main()
+
+
+class CheckMathRegistryScriptTests(unittest.TestCase):
+    def test_main_reports_success_for_valid_repo(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            (root / "docs" / "math").mkdir(parents=True)
+            (root / "cases" / "solve").mkdir(parents=True)
+            (root / "docs" / "math" / "solve.md").write_text(
+                "<a id=\"family-identity\"></a>\n",
+                encoding="utf-8",
+            )
+            (root / "docs" / "math" / "registry.json").write_text(
+                json.dumps(
+                    {
+                        "version": 1,
+                        "entries": [
+                            {
+                                "op": "solve",
+                                "family": "identity",
+                                "note_path": "docs/math/solve.md",
+                                "anchor": "family-identity",
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            (root / "cases" / "solve" / "identity.jsonl").write_text(
+                "{}\n",
+                encoding="utf-8",
+            )
+
+            with patch.object(check_math_registry, "REPO_ROOT", root):
+                self.assertEqual(check_math_registry.main(), 0)
+
+    def test_main_raises_on_invalid_registry(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            (root / "docs" / "math").mkdir(parents=True)
+            (root / "docs" / "math" / "registry.json").write_text(
+                json.dumps({"version": 1, "entries": []}),
+                encoding="utf-8",
+            )
+            (root / "cases" / "solve").mkdir(parents=True)
+            (root / "cases" / "solve" / "identity.jsonl").write_text(
+                "{}\n",
+                encoding="utf-8",
+            )
+
+            with patch.object(check_math_registry, "REPO_ROOT", root):
+                with self.assertRaisesRegex(SystemExit, "missing registry entries"):
+                    check_math_registry.main()
 
 
 if __name__ == "__main__":
