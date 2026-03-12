@@ -2,52 +2,92 @@
 
 ## Forward Definition
 
-For a square matrix
-
 $$
 B = \exp(A),
+\qquad
+A \in \mathbb{C}^{N \times N}
 $$
 
-the Fr\'echet derivative in direction $E$ is
+The Fr\'echet derivative in direction $E$ is
 
 $$
-L(A, E) = \int_0^1 \exp(sA)\,E\,\exp((1-s)A)\,ds.
+L(A, E) =
+\int_0^1 \exp(sA)\,E\,\exp((1-s)A)\,ds.
 $$
 
-## Block-Matrix Formula
+## Block Matrix Formula (Mathias 1996)
 
-Both forward and reverse mode can be expressed through a single exponential of a
-block upper-triangular matrix:
+Both JVP and VJP can be written through a single exponential of a
+$2N \times 2N$ block upper-triangular matrix:
 
 $$
 \exp\!\begin{pmatrix} A & E \\ 0 & A \end{pmatrix}
 = \begin{pmatrix} \exp(A) & L(A, E) \\ 0 & \exp(A) \end{pmatrix}.
 $$
 
-This gives a direct JVP by using $E = dA$ and a direct VJP by using
-$A^H$ on the diagonal and the output cotangent in the upper-right block.
+The upper-right block is the Fr\'echet derivative.
+
+## Forward Rule
+
+Given $\dot{A}$:
+
+$$
+\dot{B} = L(A, \dot{A}),
+$$
+
+which is the upper-right block of the block exponential above.
 
 ## Reverse Rule
 
-Given an output cotangent $\bar B$,
+Given a cotangent $\bar{B}$:
 
 $$
-\bar A = L(A^H, \bar B).
+\bar{A} = L(A^{\mathsf{H}}, \bar{B}),
 $$
 
-That is the adjoint of the linear map $E \mapsto L(A, E)$ under the standard
-Frobenius inner product.
+which is the adjoint of the Fr\'echet derivative map under the Frobenius inner
+product.
 
-## Numerical Notes
+## Generality
 
-- The block-matrix construction is simple but more expensive than a dedicated
+The same block-matrix technique works for any analytic matrix function
+$f$, not just the exponential:
+
+$$
+f\!\begin{pmatrix} A & E \\ 0 & A \end{pmatrix}
+= \begin{pmatrix} f(A) & L_f(A, E) \\ 0 & f(A) \end{pmatrix}.
+$$
+
+PyTorch factors this pattern through the helper
+`differential_analytic_matrix_function`.
+
+## Computational cost
+
+| Method | Cost relative to $\exp(A)$ |
+|---|---|
+| Block matrix ($2N \times 2N$) | about $8\times$ |
+| Dedicated Fr\'echet scaling-and-squaring | about $3\times$ |
+| Eigendecomposition shortcut | cheaper on paper, but unstable for non-normal $A$ |
+
+## Implementation Correspondence
+
+- `tenferro-rs/docs/AD/matrix_exp.md` uses the block-exponential construction
+  as the main derivation.
+- PyTorch's `differential_analytic_matrix_function` and
+  `linalg_matrix_exp_differential` implement the same Mathias 1996 identity.
+- The block matrix approach is simple but more expensive than a dedicated
   scaling-and-squaring Fr\'echet implementation.
-- Non-normal matrices remain numerically delicate.
 
 ## Verification
 
-- Compare the block-matrix Fr\'echet derivative against finite differences.
-- Check JVP/VJP agreement on scalar losses of `matrix_exp(A)`.
+- compare the block-matrix Fr\'echet derivative against finite differences
+- check JVP/VJP agreement on scalar losses of `matrix_exp(A)`
+
+## References
+
+1. R. Mathias, "A Chain Rule for Matrix Functions and Applications," 1996.
+2. A. H. Al-Mohy and N. J. Higham, "Computing the Frechet Derivative of the
+   Matrix Exponential," 2009.
 
 ## DB Status
 

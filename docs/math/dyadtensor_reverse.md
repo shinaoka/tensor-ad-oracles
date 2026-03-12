@@ -3,11 +3,11 @@
 ## Purpose
 
 This note records how higher-level dyadtensor APIs attach reverse-mode pullbacks
-to user-visible tensor values without exposing tape internals.
+to tensor values without exposing tape internals.
 
-## Reverse Registration Model
+## Registered `.run()` pullbacks
 
-Builder or eager entrypoints such as:
+For reverse-mode outputs, builders such as
 
 - `einsum_ad(...).run()`
 - `svd_ad(...).run()`
@@ -15,6 +15,8 @@ Builder or eager entrypoints such as:
 - `lu_ad(...).run()`
 - `eigen_ad(...).run()`
 - `lstsq_ad(...).run()`
+- `solve_triangular_ad(...).run()`
+- `cholesky_ad(...).run()`
 - `solve_ad(...).run()`
 - `inv_ad(...).run()`
 - `det_ad(...).run()`
@@ -24,23 +26,35 @@ Builder or eager entrypoints such as:
 - `matrix_exp_ad(...).run()`
 - `norm_ad(...).run()`
 
-register a local pullback on the tensor-local tape node. User code then asks for
-pullbacks through wrapper helpers instead of manipulating tape objects directly.
+register a local pullback on the tensor-local tape node.
 
-## Mixed-Type Pullbacks
+## Pullback APIs
 
-Most pullbacks stay in one scalar domain. A small number of operators, notably
-general `eig`, need a mixed-domain bridge because the primal input and output
-scalar domains differ.
+- same scalar domain:
+  - `ad::pullback`
+  - `ad::pullback_wrt`
+- mixed scalar domain:
+  - `ad::pullback_wrt_mixed`
 
-## Why This Note Exists Here
+The mixed-domain entrypoint is needed for operators such as `eig_ad(...).run()`
+whose outputs are complex while the primal input may be real.
 
-The math corpus needs one place that explains how raw operator rules become
-higher-level tensor-facing reverse APIs. This note is the bridge between:
+## Why the bridge exists
+
+The reverse rule corpus needs one place that explains how raw operator rules
+become tensor-facing reverse APIs. This note bridges
 
 - raw operator notes such as [eig.md](./eig.md)
-- shared wrapper formulas in [scalar_ops.md](./scalar_ops.md)
-- eventual downstream DB replay or frontend documentation
+- shared scalar wrappers in [scalar_ops.md](./scalar_ops.md)
+- higher-level DB replay and frontend documentation
+
+## Current limits
+
+- Mixed-type pullback is bridge-based and only applies to operators that
+  explicitly register a cross-domain reverse bridge, currently through
+  `register_bridge_rule`.
+- Same-domain `ad::pullback` remains intentionally strict; use
+  `ad::pullback_wrt_mixed` when output and input scalar domains differ.
 
 ## DB Status
 

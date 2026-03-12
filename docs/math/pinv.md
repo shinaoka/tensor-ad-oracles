@@ -2,36 +2,88 @@
 
 ## Forward Definition
 
-For the Moore-Penrose pseudoinverse
+$$
+A^+ = \operatorname{pinv}(A),
+\qquad
+A \in \mathbb{C}^{M \times N}
+$$
+
+where $A^+$ satisfies the Moore-Penrose identities. We assume the rank of $A$
+is locally constant; the pseudoinverse is not continuous at rank-changing
+points.
+
+## Notation
+
+- $P_{\mathrm{col}} = A A^+$: projector onto the column space of $A$
+- $P_{\mathrm{row}} = A^+ A$: projector onto the row space of $A$
+
+## Forward Rule
+
+Given a tangent $\dot{A}$:
 
 $$
-A^+,
+\dot{A}^+ =
+-A^+ \dot{A} A^+
++ (I - A^+ A)\dot{A}^\dagger (A^+)^\dagger A^+
++ A^+ (A^+)^\dagger \dot{A}^\dagger (I - A A^+).
 $$
 
-the differential can be written in terms of projector corrections onto the row
-and column spaces of $A$.
+### Three-term interpretation
+
+1. $-A^+ \dot{A} A^+$ is the inverse-like core term.
+2. $(I - P_{\mathrm{row}})\dot{A}^\dagger (A^+)^\dagger A^+$ corrects the row
+   space.
+3. $A^+ (A^+)^\dagger \dot{A}^\dagger (I - P_{\mathrm{col}})$ corrects the
+   column space.
+
+For full-rank square $A$, the projector corrections vanish and the rule reduces
+to the usual inverse derivative.
 
 ## Reverse Rule
 
-The reverse rule combines three terms:
+Given a cotangent $\bar{A}^+$:
 
-- a core inverse-like contribution
-- a row-space projector correction
-- a column-space projector correction
+$$
+\bar{A} =
+-(A^+)^\dagger \bar{A}^+ (A^+)^\dagger
++ (I - A A^+) (\bar{A}^+)^\dagger A^+ (A^+)^\dagger
++ (A^+)^\dagger A^+ (\bar{A}^+)^\dagger (I - A^+ A).
+$$
 
-This is the stable extension of the inverse rule to rank-deficient or
-rectangular matrices.
+This is the adjoint counterpart of the same three-term structure.
 
-## Numerical Notes
+## Implementation Correspondence
 
-- Small singular values dominate the sensitivity.
-- Hermitian and singular variants differ in the primal convention, but the
-  cotangent structure is still governed by the pseudoinverse projectors.
+- `tenferro-rs/docs/AD/pinv.md` follows the classical Golub-Pereyra formulas and
+  makes the projector interpretation explicit.
+- PyTorch's `pinv_jvp` and `pinv_backward` implement algebraically equivalent
+  forms but branch on $M \leq N$ versus $M > N$ to reduce intermediate matrix
+  sizes.
+- The `atol` / `rtol` thresholding used to define the primal pseudoinverse is
+  treated as fixed metadata, not as a differentiable branch.
 
 ## Verification
 
-- Moore-Penrose identities: check the standard projector equalities.
-- Derivatives: compare JVP/VJP against finite differences.
+### Moore-Penrose identities
+
+Check the standard projector equalities:
+
+$$
+A A^+ A \approx A,
+\qquad
+A^+ A A^+ \approx A^+.
+$$
+
+### Backward checks
+
+Compare JVP/VJP against finite differences away from rank changes.
+
+## References
+
+1. G. H. Golub and V. Pereyra, "The Differentiation of Pseudo-Inverses and
+   Nonlinear Least Squares Problems Whose Variables Separate," 1973.
+2. M. B. Giles, "An extended collection of matrix derivative results for
+   forward and reverse mode automatic differentiation," 2008.
 
 ## DB Families
 

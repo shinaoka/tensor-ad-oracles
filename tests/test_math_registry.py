@@ -176,6 +176,166 @@ class MathRegistryTests(unittest.TestCase):
             set(),
         )
 
+    def test_repo_svd_note_retains_nonlossy_core_derivation_details(self) -> None:
+        text = (
+            Path(__file__).resolve().parents[1] / "docs" / "math" / "svd.md"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn("F_{ij}", text)
+        self.assertIn("S_{\\text{inv},i}", text)
+        self.assertIn("\\Gamma_{\\bar{U}}", text)
+        self.assertIn("\\Gamma_{\\bar{V}}", text)
+        self.assertIn("Non-square corrections", text)
+        self.assertIn("gauge", text)
+
+    def test_repo_qr_note_retains_nonlossy_case_split_and_helpers(self) -> None:
+        text = (
+            Path(__file__).resolve().parents[1] / "docs" / "math" / "qr.md"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn("copyltu", text)
+        self.assertIn("Full-rank", text)
+        self.assertIn("Wide Reduced QR", text)
+        self.assertIn("R^{-\\dagger}", text)
+        self.assertIn("trilImInvAdjSkew", text)
+        self.assertIn("Triangular solve", text)
+
+    def test_repo_lu_note_retains_case_split_and_triangular_helpers(self) -> None:
+        text = (
+            Path(__file__).resolve().parents[1] / "docs" / "math" / "lu.md"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn("\\mathrm{tril}_-(X)", text)
+        self.assertIn("Square case", text)
+        self.assertIn("Wide case", text)
+        self.assertIn("Tall case", text)
+        self.assertIn("triangular solves", text)
+
+    def test_repo_eig_note_retains_gap_and_normalization_details(self) -> None:
+        text = (
+            Path(__file__).resolve().parents[1] / "docs" / "math" / "eig.md"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn("V^{-1}\\dot{A}\\,V", text)
+        self.assertIn("Normalization correction", text)
+        self.assertIn("Gauge invariance check", text)
+        self.assertIn("values_vectors_abs", text)
+
+    def test_repo_eigen_note_retains_hermitian_inner_matrix_details(self) -> None:
+        text = (
+            Path(__file__).resolve().parents[1] / "docs" / "math" / "eigen.md"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn("Step 2: Build the inner matrix $D$", text)
+        self.assertIn("\\bar{A} = U D U^\\dagger", text)
+        self.assertIn("symmetrization", text)
+        self.assertIn("gauge_ill_defined", text)
+
+    def test_repo_solve_note_retains_triangular_and_right_solve_details(self) -> None:
+        text = (
+            Path(__file__).resolve().parents[1] / "docs" / "math" / "solve.md"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn("A^{-\\mathsf{H}}", text)
+        self.assertIn("Right-side solve", text)
+        self.assertIn("unit-triangular", text)
+        self.assertIn("lu_solve", text)
+
+    def test_repo_lstsq_note_retains_qr_residual_derivation(self) -> None:
+        text = (
+            Path(__file__).resolve().parents[1] / "docs" / "math" / "lstsq.md"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn("y = R^{-\\dagger} \\bar{x}", text)
+        self.assertIn("z = R^{-1} y", text)
+        self.assertIn("r = b - Ax", text)
+        self.assertIn("gradient-oriented upstream variant", text)
+
+    def test_repo_pinv_note_retains_projector_and_three_term_formulas(self) -> None:
+        text = (
+            Path(__file__).resolve().parents[1] / "docs" / "math" / "pinv.md"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn("P_{\\mathrm{col}}", text)
+        self.assertIn("P_{\\mathrm{row}}", text)
+        self.assertIn("Three-term interpretation", text)
+        self.assertIn("Golub", text)
+
+    def test_repo_norm_note_retains_vector_matrix_and_spectral_cases(self) -> None:
+        text = (
+            Path(__file__).resolve().parents[1] / "docs" / "math" / "norm.md"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn("Vector $p$-norm", text)
+        self.assertIn("Frobenius norm", text)
+        self.assertIn("Nuclear norm", text)
+        self.assertIn("Spectral norm", text)
+
+    def test_repo_cholesky_note_retains_phi_operator_details(self) -> None:
+        text = (
+            Path(__file__).resolve().parents[1] / "docs" / "math" / "cholesky.md"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn("\\varphi(X) = \\mathrm{tril}(X) - \\tfrac{1}{2}\\mathrm{diag}(X)", text)
+        self.assertIn("\\varphi^*", text)
+        self.assertIn("L^{-1}\\dot{A}\\,L^{-\\mathsf{H}}", text)
+
+    def test_repo_inv_note_retains_solve_relationship(self) -> None:
+        text = (
+            Path(__file__).resolve().parents[1] / "docs" / "math" / "inv.md"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn("\\dot{B} = -B\\,\\dot{A}\\,B", text)
+        self.assertIn("Relationship to solve", text)
+        self.assertIn("B^{\\mathsf{H}}\\,\\bar{B}\\,B^{\\mathsf{H}}", text)
+
+    def test_repo_det_note_retains_slogdet_and_singular_handling(self) -> None:
+        text = (
+            Path(__file__).resolve().parents[1] / "docs" / "math" / "det.md"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn("Jacobi", text)
+        self.assertIn("Singular matrix handling", text)
+        self.assertIn("slogdet", text)
+        self.assertIn("orientation/phase factor", text)
+
+    def test_repo_matrix_exp_note_retains_block_matrix_and_pytorch_mapping(self) -> None:
+        text = (
+            Path(__file__).resolve().parents[1] / "docs" / "math" / "matrix_exp.md"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn("Mathias 1996", text)
+        self.assertIn("2N \\times 2N", text)
+        self.assertIn("differential_analytic_matrix_function", text)
+        self.assertIn("Computational cost", text)
+
+    def test_repo_dyadtensor_reverse_note_retains_pullback_bridge_details(self) -> None:
+        text = (
+            Path(__file__).resolve().parents[1]
+            / "docs"
+            / "math"
+            / "dyadtensor_reverse.md"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn("register a local pullback", text)
+        self.assertIn("ad::pullback_wrt_mixed", text)
+        self.assertIn("eig_ad(...).run()", text)
+        self.assertIn("register_bridge_rule", text)
+
+    def test_repo_scalar_ops_note_retains_pytorch_baseline_and_reduction_wrappers(self) -> None:
+        text = (
+            Path(__file__).resolve().parents[1] / "docs" / "math" / "scalar_ops.md"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn("PyTorch Baseline", text)
+        self.assertIn("handle_r_to_c", text)
+        self.assertIn("mean_ad", text)
+        self.assertIn("var_ad", text)
+        self.assertIn("std_ad", text)
+        self.assertIn("powf", text)
+        self.assertIn("powi", text)
+        self.assertIn("Tensor-Composite Rules", text)
+
     def test_repo_eig_and_eigen_notes_are_distinct(self) -> None:
         note_dir = Path(__file__).resolve().parents[1] / "docs" / "math"
         eig_text = (note_dir / "eig.md").read_text(encoding="utf-8")
