@@ -73,6 +73,7 @@ class RepoConfigTests(unittest.TestCase):
 
     def test_github_policy_files_are_present(self) -> None:
         self.assertTrue((REPO_ROOT / ".github" / "CODEOWNERS").exists())
+        self.assertTrue((REPO_ROOT / ".github" / "workflows" / "docs.yml").exists())
         self.assertTrue((REPO_ROOT / ".github" / "workflows" / "oracle-integrity.yml").exists())
         self.assertTrue(
             (REPO_ROOT / ".github" / "workflows" / "oracle-regeneration.yml").exists()
@@ -96,6 +97,20 @@ class RepoConfigTests(unittest.TestCase):
         self.assertIn("uv run python scripts/check_math_registry.py", workflow)
         self.assertIn("uv run python scripts/check_tolerances.py", workflow)
         self.assertIn("uv run python scripts/check_upstream_ad_tolerances.py", workflow)
+
+    def test_docs_workflow_deploys_github_pages(self) -> None:
+        workflow = (REPO_ROOT / ".github" / "workflows" / "docs.yml").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("push:\n    branches:\n      - main", workflow)
+        self.assertIn("workflow_dispatch:\n", workflow)
+        self.assertIn("pages: write", workflow)
+        self.assertIn("id-token: write", workflow)
+        self.assertIn("actions/configure-pages@v5", workflow)
+        self.assertIn("actions/upload-pages-artifact@v3", workflow)
+        self.assertIn("actions/deploy-pages@v4", workflow)
+        self.assertIn("./scripts/build_docs_site.sh", workflow)
 
 
 if __name__ == "__main__":
