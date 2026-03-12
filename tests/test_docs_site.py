@@ -25,6 +25,13 @@ class DocsSiteContractTests(unittest.TestCase):
 
         self.assertIn("../math-registry.md", index_text)
 
+    def test_build_script_renders_quarto_site(self) -> None:
+        script = (REPO_ROOT / "scripts" / "build_docs_site.sh").read_text(encoding="utf-8")
+
+        self.assertIn("quarto render", script)
+        self.assertIn("target/docs-site", script)
+        self.assertIn("check_docs_site.py", script)
+
 
 if __name__ == "__main__":
     unittest.main()

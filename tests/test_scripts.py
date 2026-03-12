@@ -5,6 +5,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from scripts import (
+    check_docs_site,
     check_math_registry,
     check_regeneration,
     check_replay,
@@ -335,6 +336,30 @@ class CheckMathRegistryScriptTests(unittest.TestCase):
             with patch.object(check_math_registry, "REPO_ROOT", root):
                 with self.assertRaisesRegex(SystemExit, "missing registry entries"):
                     check_math_registry.main()
+
+
+class CheckDocsSiteScriptTests(unittest.TestCase):
+    def test_main_reports_success_for_valid_site(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            site_root = Path(tmpdir)
+            (site_root / "math").mkdir(parents=True)
+            (site_root / "index.html").write_text("<h1>Home</h1>\n", encoding="utf-8")
+            (site_root / "math" / "index.html").write_text("<h1>Math</h1>\n", encoding="utf-8")
+            (site_root / "math" / "svd.html").write_text("<h1>SVD</h1>\n", encoding="utf-8")
+            (site_root / "math" / "registry.json").write_text("{}", encoding="utf-8")
+
+            self.assertEqual(check_docs_site.main(["--site-root", str(site_root)]), 0)
+
+    def test_main_raises_for_missing_required_page(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            site_root = Path(tmpdir)
+            (site_root / "math").mkdir(parents=True)
+            (site_root / "index.html").write_text("<h1>Home</h1>\n", encoding="utf-8")
+            (site_root / "math" / "index.html").write_text("<h1>Math</h1>\n", encoding="utf-8")
+            (site_root / "math" / "registry.json").write_text("{}", encoding="utf-8")
+
+            with self.assertRaisesRegex(SystemExit, "math/svd.html"):
+                check_docs_site.main(["--site-root", str(site_root)])
 
 
 if __name__ == "__main__":
