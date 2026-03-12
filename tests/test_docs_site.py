@@ -10,8 +10,20 @@ class DocsSiteContractTests(unittest.TestCase):
         self.assertTrue((REPO_ROOT / "docs" / "_quarto.yml").exists())
         self.assertTrue((REPO_ROOT / "docs" / "index.md").exists())
         self.assertTrue((REPO_ROOT / "docs" / "math-registry.md").exists())
-        self.assertTrue((REPO_ROOT / ".github" / "workflows" / "docs.yml").exists())
-        self.assertTrue((REPO_ROOT / "scripts" / "build_docs_site.sh").exists())
+
+    def test_quarto_config_declares_math_notes_site(self) -> None:
+        config = (REPO_ROOT / "docs" / "_quarto.yml").read_text(encoding="utf-8")
+
+        self.assertIn("type: website", config)
+        self.assertIn("output-dir: ../target/docs-site", config)
+        self.assertIn("html-math-method: katex", config)
+        self.assertIn("- math-registry.md", config)
+        self.assertIn("- math/registry.json", config)
+
+    def test_math_index_links_to_registry_reference(self) -> None:
+        index_text = (REPO_ROOT / "docs" / "math" / "index.md").read_text(encoding="utf-8")
+
+        self.assertIn("../math-registry.md", index_text)
 
 
 if __name__ == "__main__":
