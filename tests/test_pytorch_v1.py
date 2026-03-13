@@ -1,4 +1,5 @@
 import io
+import json
 import tempfile
 import unittest
 from contextlib import redirect_stdout
@@ -91,6 +92,16 @@ class PytorchV1RegistryTests(unittest.TestCase):
         self.assertEqual(index[("abs", "identity")].inventory_kind, "scalar")
         self.assertEqual(index[("sum", "identity")].upstream_name, "sum")
         self.assertTrue(index[("add", "identity")].hvp_enabled)
+
+    def test_build_case_spec_index_tracks_publishable_dtype_coverage(self) -> None:
+        index = pytorch_v1.build_case_spec_index()
+
+        self.assertIn("float64", index[("svd", "u_abs")].supported_dtype_names)
+        self.assertIn("complex128", index[("svd", "u_abs")].supported_dtype_names)
+        self.assertEqual(
+            index[("svd", "gauge_ill_defined")].supported_dtype_names,
+            ("complex128",),
+        )
 
     def test_main_list_prints_case_registry(self) -> None:
         stdout = io.StringIO()
@@ -198,7 +209,8 @@ class PytorchV1RegistryTests(unittest.TestCase):
             lines = (Path(tmpdir) / "solve" / "identity.jsonl").read_text(
                 encoding="utf-8"
             ).splitlines()
-            self.assertEqual(len(lines), 24)
+            spec = pytorch_v1.build_case_spec_index()[("solve", "identity")]
+            self.assertEqual(len(lines), 24 * len(spec.supported_dtype_names))
 
     def test_main_materialize_inv_identity_writes_file(self) -> None:
         try:
@@ -250,6 +262,44 @@ class PytorchV1RegistryTests(unittest.TestCase):
             self.assertEqual(exit_code, 0)
             self.assertTrue(
                 (Path(tmpdir) / "eig" / "values_vectors_abs.jsonl").exists()
+            )
+
+    def test_main_materialize_svd_u_abs_writes_complex_success_record_with_comment(
+        self,
+    ) -> None:
+        try:
+            import torch  # noqa: F401
+            import expecttest  # noqa: F401
+        except Exception as exc:
+            self.skipTest(f"uv generation dependencies unavailable: {exc}")
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            with redirect_stdout(io.StringIO()):
+                exit_code = pytorch_v1.main(
+                    [
+                        "--materialize",
+                        "svd",
+                        "--family",
+                        "u_abs",
+                        "--limit",
+                        "1",
+                        "--cases-root",
+                        tmpdir,
+                    ]
+                )
+
+            self.assertEqual(exit_code, 0)
+            lines = (Path(tmpdir) / "svd" / "u_abs.jsonl").read_text(
+                encoding="utf-8"
+            ).splitlines()
+            records = [json.loads(line) for line in lines]
+            complex_record = next(
+                record for record in records if record["dtype"] == "complex128"
+            )
+            self.assertEqual(complex_record["observable"]["kind"], "svd_u_abs")
+            self.assertEqual(
+                complex_record["provenance"]["comment"],
+                "from PyTorch OpInfo complex SVD success coverage",
             )
 
     def test_main_materialize_abs_identity_writes_file(self) -> None:

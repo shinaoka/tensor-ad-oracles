@@ -75,6 +75,7 @@ uv run python scripts/check_replay.py
 uv run python scripts/check_regeneration.py
 uv run python scripts/check_tolerances.py
 uv run python scripts/check_upstream_ad_tolerances.py
+uv run python scripts/report_upstream_publish_coverage.py
 ```
 
 Repository-managed environment files:
@@ -162,6 +163,10 @@ At your option, you may use this repository under either license.
 ## PyTorch Provenance
 
 Version 1 uses the same AD-relevant case families as PyTorch. Each case stores upstream provenance, including the source file, source function, and source commit used to generate the record.
+
+Publish-surface coverage against the pinned PyTorch upstream inventory is tracked in:
+
+- `docs/generated/pytorch-upstream-publish-coverage.md`
 
 ## Repository Layout
 

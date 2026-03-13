@@ -69,6 +69,7 @@ class CaseFamilySpec:
     sample_process_name: str | None = None
     hvp_enabled: bool = False
     inventory_kind: str = "linalg"
+    supported_dtype_names: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -78,6 +79,7 @@ class UpstreamMappedFamily:
     op: str
     family: str
     hvp_enabled: bool
+    supported_dtype_names: tuple[str, ...]
 
 
 @dataclass
@@ -164,6 +166,7 @@ def build_supported_upstream_mapping_index() -> dict[tuple[str, str], tuple[Upst
                     op="svd",
                     family=family,
                     hvp_enabled=row.supports_fwgrad_bwgrad,
+                    supported_dtype_names=row.supported_dtype_names,
                 )
                 for family in ("u_abs", "s", "vh_abs", "uvh_product")
             )
@@ -173,6 +176,7 @@ def build_supported_upstream_mapping_index() -> dict[tuple[str, str], tuple[Upst
                     op="eigh",
                     family=EIGH_PROCESS_FAMILY,
                     hvp_enabled=row.supports_fwgrad_bwgrad,
+                    supported_dtype_names=row.supported_dtype_names,
                 ),
             )
         elif row.name == "linalg.eig":
@@ -181,6 +185,7 @@ def build_supported_upstream_mapping_index() -> dict[tuple[str, str], tuple[Upst
                     op="eig",
                     family=EIG_PROCESS_FAMILY,
                     hvp_enabled=row.supports_fwgrad_bwgrad,
+                    supported_dtype_names=row.supported_dtype_names,
                 ),
             )
         else:
@@ -189,6 +194,7 @@ def build_supported_upstream_mapping_index() -> dict[tuple[str, str], tuple[Upst
                     op=_normalized_upstream_op_id(row.name, row.variant_name),
                     family="identity",
                     hvp_enabled=row.supports_fwgrad_bwgrad,
+                    supported_dtype_names=row.supported_dtype_names,
                 ),
             )
         mapping[key] = families
@@ -214,6 +220,7 @@ def build_supported_scalar_mapping_index() -> dict[tuple[str, str], tuple[Upstre
                 op=_normalized_scalar_upstream_op_id(row.name, row.variant_name),
                 family="identity",
                 hvp_enabled=row.supports_fwgrad_bwgrad,
+                supported_dtype_names=row.supported_dtype_names,
             ),
         )
     return mapping
@@ -281,6 +288,7 @@ def _build_success_case_specs() -> tuple[CaseFamilySpec, ...]:
                     upstream_variant_name=row.variant_name,
                     sample_process_name=_sample_process_name_for_target(key, target),
                     hvp_enabled=target.hvp_enabled,
+                    supported_dtype_names=target.supported_dtype_names,
                 )
             )
     return tuple(specs)
@@ -296,6 +304,7 @@ def _build_error_case_specs() -> tuple[CaseFamilySpec, ...]:
             source_file="test/test_linalg.py",
             source_function="test_invariance_error_spectral_decompositions",
             upstream_name="linalg.svd",
+            supported_dtype_names=("complex128",),
         ),
         CaseFamilySpec(
             op="eigh",
@@ -306,6 +315,7 @@ def _build_error_case_specs() -> tuple[CaseFamilySpec, ...]:
             source_function="test_invariance_error_spectral_decompositions",
             gradcheck_wrapper="gradcheck_wrapper_hermitian_input",
             upstream_name="linalg.eigh",
+            supported_dtype_names=("complex128",),
         ),
     )
 
@@ -332,6 +342,7 @@ def _build_scalar_case_specs() -> tuple[CaseFamilySpec, ...]:
                     upstream_variant_name=row.variant_name,
                     hvp_enabled=target.hvp_enabled,
                     inventory_kind="scalar",
+                    supported_dtype_names=target.supported_dtype_names,
                 )
             )
     return tuple(specs)
@@ -399,9 +410,10 @@ def build_provenance(
     seed: int,
     torch_version: str,
     generator: str = "python-pytorch-v1",
+    comment: str | None = None,
 ) -> dict:
     """Build the common provenance block for a materialized case record."""
-    return {
+    provenance = {
         "source_repo": "pytorch",
         "source_file": spec.source_file,
         "source_function": spec.source_function,
@@ -411,6 +423,9 @@ def build_provenance(
         "torch_version": torch_version,
         "fd_policy_version": FD_POLICY_VERSION,
     }
+    if comment is not None:
+        provenance["comment"] = comment
+    return provenance
 
 
 def make_success_case(
@@ -554,6 +569,14 @@ def _materialize_hvp_for_spec(spec: CaseFamilySpec, *, dtype_name: str) -> bool:
     return True
 
 
+def _is_skippable_hvp_runtime_error(exc: RuntimeError) -> bool:
+    message = str(exc)
+    return (
+        "forward differentiable view operations" in message
+        or "has_fw_view" in message
+    )
+
+
 def _resolve_runtime_for_spec(spec: CaseFamilySpec):
     if spec.inventory_kind == "scalar":
         return import_scalar_generation_runtime()
@@ -568,7 +591,18 @@ def _supported_dtype_names_for_spec(torch, opinfo, spec: CaseFamilySpec) -> tupl
             for dtype_name in SCALAR_PROBE_DTYPE_NAMES
             if getattr(torch, dtype_name) in supported
         )
-    return ("float64",)
+    supported = opinfo.supported_dtypes("cpu")
+    return tuple(
+        dtype_name
+        for dtype_name in spec.supported_dtype_names
+        if getattr(torch, dtype_name) in supported
+    )
+
+
+def _success_provenance_comment(spec: CaseFamilySpec, *, dtype_name: str) -> str | None:
+    if spec.op == "svd" and dtype_name in {"complex64", "complex128"}:
+        return "from PyTorch OpInfo complex SVD success coverage"
+    return None
 
 
 def _validate_success_probe(
@@ -791,19 +825,24 @@ def _generate_success_records(
                     output_names=output_names,
                     cotangent=cotangent,
                 )
-                pytorch_hvp = compute_pytorch_hvp(
-                    torch,
-                    scalarized_fn,
-                    inputs=inputs,
-                    direction=direction,
-                )
-                fd_hvp = compute_fd_hvp(
-                    torch,
-                    scalarized_fn,
-                    inputs=inputs,
-                    direction=direction,
-                    step=fd_step,
-                )
+                try:
+                    pytorch_hvp = compute_pytorch_hvp(
+                        torch,
+                        scalarized_fn,
+                        inputs=inputs,
+                        direction=direction,
+                    )
+                    fd_hvp = compute_fd_hvp(
+                        torch,
+                        scalarized_fn,
+                        inputs=inputs,
+                        direction=direction,
+                        step=fd_step,
+                    )
+                except RuntimeError as exc:
+                    if _is_skippable_hvp_runtime_error(exc):
+                        continue
+                    raise
                 if not tensor_map_isfinite(pytorch_hvp) or not tensor_map_isfinite(fd_hvp):
                     continue
                 second_order_abs, second_order_rel = hvp_residuals(
@@ -860,6 +899,7 @@ def _generate_success_records(
                 source_commit=source_commit,
                 seed=payload.case_seed,
                 torch_version=normalize_torch_version(torch.__version__),
+                comment=_success_provenance_comment(spec, dtype_name=payload.dtype_name),
             )
             records.append(
                 materialize_success_case(

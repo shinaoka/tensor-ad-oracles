@@ -242,6 +242,7 @@ class DbReplayTests(unittest.TestCase):
             with mock.patch.object(replay, "sample_inputs_for_spec", side_effect=counting_sample_inputs):
                 result = replay.replay_case_file(generated)
 
+            spec = pytorch_v1.build_case_spec_index()[("solve", "identity")]
             self.assertEqual(result.failures, [])
-            self.assertEqual(result.checked, 3)
-            self.assertEqual(call_count, 1)
+            self.assertEqual(result.checked, 3 * len(spec.supported_dtype_names))
+            self.assertEqual(call_count, len(spec.supported_dtype_names))
