@@ -299,14 +299,15 @@ class MathRegistryTests(unittest.TestCase):
         self.assertIn("slogdet", text)
         self.assertIn("orientation/phase factor", text)
 
-    def test_repo_matrix_exp_note_retains_block_matrix_and_pytorch_mapping(self) -> None:
+    def test_repo_matrix_exp_note_retains_block_matrix_and_generality(self) -> None:
         text = (
             Path(__file__).resolve().parents[1] / "docs" / "math" / "matrix_exp.md"
         ).read_text(encoding="utf-8")
 
         self.assertIn("Mathias 1996", text)
         self.assertIn("2N \\times 2N", text)
-        self.assertIn("differential_analytic_matrix_function", text)
+        self.assertIn("The same block-matrix technique works for any analytic matrix function", text)
+        self.assertIn("L_f(A, E)", text)
         self.assertIn("Computational cost", text)
 
     def test_repo_dyadtensor_reverse_note_retains_pullback_bridge_details(self) -> None:
@@ -322,19 +323,28 @@ class MathRegistryTests(unittest.TestCase):
         self.assertIn("eig_ad(...).run()", text)
         self.assertIn("register_bridge_rule", text)
 
-    def test_repo_scalar_ops_note_retains_pytorch_baseline_and_reduction_wrappers(self) -> None:
+    def test_repo_scalar_ops_note_retains_complex_convention_and_reduction_wrappers(self) -> None:
         text = (
             Path(__file__).resolve().parents[1] / "docs" / "math" / "scalar_ops.md"
         ).read_text(encoding="utf-8")
 
-        self.assertIn("PyTorch Baseline", text)
-        self.assertIn("handle_r_to_c", text)
+        self.assertIn("Complex Gradient Convention", text)
+        self.assertIn("conjugate-Wirtinger", text)
+        self.assertIn("real inputs project complex intermediates back to the real domain", text)
         self.assertIn("mean_ad", text)
         self.assertIn("var_ad", text)
         self.assertIn("std_ad", text)
+        self.assertIn("correction", text)
+        self.assertIn("atan2", text)
         self.assertIn("powf", text)
         self.assertIn("powi", text)
         self.assertIn("Tensor-Composite Rules", text)
+
+    def test_repo_math_notes_omit_implementation_correspondence_sections(self) -> None:
+        note_dir = Path(__file__).resolve().parents[1] / "docs" / "math"
+        for note_path in note_dir.glob("*.md"):
+            text = note_path.read_text(encoding="utf-8")
+            self.assertNotIn("## Implementation Correspondence", text, note_path.name)
 
     def test_repo_eig_and_eigen_notes_are_distinct(self) -> None:
         note_dir = Path(__file__).resolve().parents[1] / "docs" / "math"

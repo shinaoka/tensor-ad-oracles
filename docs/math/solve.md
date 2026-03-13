@@ -32,8 +32,6 @@ $$
 \dot{X} = A^{-1}(\dot{B} - \dot{A} X).
 $$
 
-This is exactly the JVP implemented by PyTorch's `linalg_solve_jvp`.
-
 ## Reverse Rule
 
 Given a cotangent $\bar{X}$:
@@ -59,8 +57,6 @@ $$
 \bar{A} = -G X^{\mathsf{H}}.
 $$
 
-This is the same adjoint implemented by PyTorch's `linalg_solve_backward`.
-
 ## Triangular Solve
 
 When $A$ is triangular, the same formulas apply with triangular solves replacing
@@ -79,8 +75,6 @@ $$
 $$
 
 For unit-triangular matrices, the diagonal of $\bar{A}$ is additionally zeroed.
-This matches PyTorch's `triangular_solve_jvp` and
-`linalg_solve_triangular_backward`.
 
 ## Right-side solve
 
@@ -106,15 +100,6 @@ $$
 - `tensorsolve` is the indexed tensor analogue of the same implicit-system
   rule.
 
-## Implementation Correspondence
-
-- `tenferro-rs/docs/AD/solve.md` writes both the left/right solve identities and
-  the triangular projection rules explicitly.
-- PyTorch's `linalg_solve_jvp` and `linalg_solve_backward` implement the same
-  two equations $dX = A^{-1}(dB - dA X)$ and $gA = -gB X^H$.
-- Higher-order AD should solve against $A^\dagger$ directly rather than expose
-  saved LU factors as differentiable objects.
-
 ## Verification
 
 ### Forward residual
@@ -134,9 +119,6 @@ $$
 
 1. M. B. Giles, "An extended collection of matrix derivative results for
    forward and reverse mode AD," 2008.
-2. PyTorch `FunctionsManual.cpp`: `linalg_solve_jvp`,
-   `linalg_solve_backward`, `triangular_solve_jvp`,
-   `linalg_solve_triangular_backward`.
 
 ## DB Families
 

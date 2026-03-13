@@ -95,16 +95,6 @@ $$
 For multiplicity $k > 1$, the subgradient is the average over the active
 singular-vector dyads.
 
-## Implementation Correspondence
-
-- `tenferro-rs/docs/AD/norm.md` separates vector norms, Frobenius norm, nuclear
-  norm, and spectral norm explicitly. This note preserves that structure.
-- PyTorch's `norm_backward` and `norm_jvp` implement the scalar/vector $p$-norm
-  cases directly, including the tie-handling for $p = \infty$.
-- `linalg_vector_norm_backward` is a thin wrapper around the same formulas.
-- Matrix nuclear and spectral norms are implemented in PyTorch by decomposition
-  into SVD-derived primitives rather than a dedicated manual formula.
-
 ## Numerical Notes
 
 - Nonsmooth points, especially zero inputs and repeated top singular values,
