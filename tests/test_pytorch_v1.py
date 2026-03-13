@@ -92,6 +92,16 @@ class PytorchV1RegistryTests(unittest.TestCase):
         self.assertEqual(index[("sum", "identity")].upstream_name, "sum")
         self.assertTrue(index[("add", "identity")].hvp_enabled)
 
+    def test_build_case_spec_index_tracks_publishable_dtype_coverage(self) -> None:
+        index = pytorch_v1.build_case_spec_index()
+
+        self.assertIn("float64", index[("svd", "u_abs")].supported_dtype_names)
+        self.assertIn("complex128", index[("svd", "u_abs")].supported_dtype_names)
+        self.assertEqual(
+            index[("svd", "gauge_ill_defined")].supported_dtype_names,
+            ("complex128",),
+        )
+
     def test_main_list_prints_case_registry(self) -> None:
         stdout = io.StringIO()
         with redirect_stdout(stdout):

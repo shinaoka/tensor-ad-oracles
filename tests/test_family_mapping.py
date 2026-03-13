@@ -44,6 +44,22 @@ class FamilyMappingTests(unittest.TestCase):
         solve = supported[("linalg.solve", "")]
         self.assertTrue(all(spec.hvp_enabled for spec in solve))
 
+    def test_supported_mapping_tracks_publishable_dtypes(self) -> None:
+        supported = pytorch_v1.build_supported_upstream_mapping_index()
+
+        svd = supported[("linalg.svd", "")]
+        self.assertTrue(
+            all("float64" in spec.supported_dtype_names for spec in svd)
+        )
+        self.assertTrue(
+            all("complex128" in spec.supported_dtype_names for spec in svd)
+        )
+
+        eig = supported[("linalg.eig", "")]
+        self.assertTrue(
+            all("complex128" in spec.supported_dtype_names for spec in eig)
+        )
+
     def test_known_upstream_xfail_family_is_explicitly_classified(self) -> None:
         unsupported = pytorch_v1.build_unsupported_upstream_mapping_index()
 

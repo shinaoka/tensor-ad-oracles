@@ -69,6 +69,7 @@ class CaseFamilySpec:
     sample_process_name: str | None = None
     hvp_enabled: bool = False
     inventory_kind: str = "linalg"
+    supported_dtype_names: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -78,6 +79,7 @@ class UpstreamMappedFamily:
     op: str
     family: str
     hvp_enabled: bool
+    supported_dtype_names: tuple[str, ...]
 
 
 @dataclass
@@ -164,6 +166,7 @@ def build_supported_upstream_mapping_index() -> dict[tuple[str, str], tuple[Upst
                     op="svd",
                     family=family,
                     hvp_enabled=row.supports_fwgrad_bwgrad,
+                    supported_dtype_names=row.supported_dtype_names,
                 )
                 for family in ("u_abs", "s", "vh_abs", "uvh_product")
             )
@@ -173,6 +176,7 @@ def build_supported_upstream_mapping_index() -> dict[tuple[str, str], tuple[Upst
                     op="eigh",
                     family=EIGH_PROCESS_FAMILY,
                     hvp_enabled=row.supports_fwgrad_bwgrad,
+                    supported_dtype_names=row.supported_dtype_names,
                 ),
             )
         elif row.name == "linalg.eig":
@@ -181,6 +185,7 @@ def build_supported_upstream_mapping_index() -> dict[tuple[str, str], tuple[Upst
                     op="eig",
                     family=EIG_PROCESS_FAMILY,
                     hvp_enabled=row.supports_fwgrad_bwgrad,
+                    supported_dtype_names=row.supported_dtype_names,
                 ),
             )
         else:
@@ -189,6 +194,7 @@ def build_supported_upstream_mapping_index() -> dict[tuple[str, str], tuple[Upst
                     op=_normalized_upstream_op_id(row.name, row.variant_name),
                     family="identity",
                     hvp_enabled=row.supports_fwgrad_bwgrad,
+                    supported_dtype_names=row.supported_dtype_names,
                 ),
             )
         mapping[key] = families
@@ -214,6 +220,7 @@ def build_supported_scalar_mapping_index() -> dict[tuple[str, str], tuple[Upstre
                 op=_normalized_scalar_upstream_op_id(row.name, row.variant_name),
                 family="identity",
                 hvp_enabled=row.supports_fwgrad_bwgrad,
+                supported_dtype_names=row.supported_dtype_names,
             ),
         )
     return mapping
@@ -281,6 +288,7 @@ def _build_success_case_specs() -> tuple[CaseFamilySpec, ...]:
                     upstream_variant_name=row.variant_name,
                     sample_process_name=_sample_process_name_for_target(key, target),
                     hvp_enabled=target.hvp_enabled,
+                    supported_dtype_names=target.supported_dtype_names,
                 )
             )
     return tuple(specs)
@@ -296,6 +304,7 @@ def _build_error_case_specs() -> tuple[CaseFamilySpec, ...]:
             source_file="test/test_linalg.py",
             source_function="test_invariance_error_spectral_decompositions",
             upstream_name="linalg.svd",
+            supported_dtype_names=("complex128",),
         ),
         CaseFamilySpec(
             op="eigh",
@@ -306,6 +315,7 @@ def _build_error_case_specs() -> tuple[CaseFamilySpec, ...]:
             source_function="test_invariance_error_spectral_decompositions",
             gradcheck_wrapper="gradcheck_wrapper_hermitian_input",
             upstream_name="linalg.eigh",
+            supported_dtype_names=("complex128",),
         ),
     )
 
@@ -332,6 +342,7 @@ def _build_scalar_case_specs() -> tuple[CaseFamilySpec, ...]:
                     upstream_variant_name=row.variant_name,
                     hvp_enabled=target.hvp_enabled,
                     inventory_kind="scalar",
+                    supported_dtype_names=target.supported_dtype_names,
                 )
             )
     return tuple(specs)
