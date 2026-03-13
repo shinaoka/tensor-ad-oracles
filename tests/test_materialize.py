@@ -8,6 +8,36 @@ from tests.test_encoding import FakeTensor
 
 
 class MaterializeTests(unittest.TestCase):
+    def test_supported_dtype_names_for_linalg_spec_follow_spec_metadata(self) -> None:
+        class FakeTorch:
+            float64 = "float64"
+            complex128 = "complex128"
+            float32 = "float32"
+            complex64 = "complex64"
+
+        class FakeOpInfo:
+            @staticmethod
+            def supported_dtypes(device_type):
+                self = None
+                del self
+                assert device_type == "cpu"
+                return {
+                    "float64",
+                    "complex128",
+                    "float32",
+                    "complex64",
+                }
+
+        spec = pytorch_v1.build_case_spec_index()[("svd", "u_abs")]
+
+        dtype_names = pytorch_v1._supported_dtype_names_for_spec(  # noqa: SLF001
+            FakeTorch(),
+            FakeOpInfo(),
+            spec,
+        )
+
+        self.assertEqual(dtype_names, spec.supported_dtype_names)
+
     def test_build_provenance_preserves_optional_comment(self) -> None:
         spec = pytorch_v1.build_case_spec_index()[("solve", "identity")]
 

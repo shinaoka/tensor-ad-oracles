@@ -583,7 +583,18 @@ def _supported_dtype_names_for_spec(torch, opinfo, spec: CaseFamilySpec) -> tupl
             for dtype_name in SCALAR_PROBE_DTYPE_NAMES
             if getattr(torch, dtype_name) in supported
         )
-    return ("float64",)
+    supported = opinfo.supported_dtypes("cpu")
+    return tuple(
+        dtype_name
+        for dtype_name in spec.supported_dtype_names
+        if getattr(torch, dtype_name) in supported
+    )
+
+
+def _success_provenance_comment(spec: CaseFamilySpec, *, dtype_name: str) -> str | None:
+    if spec.op == "svd" and dtype_name in {"complex64", "complex128"}:
+        return "from PyTorch OpInfo complex SVD success coverage"
+    return None
 
 
 def _validate_success_probe(
@@ -875,6 +886,7 @@ def _generate_success_records(
                 source_commit=source_commit,
                 seed=payload.case_seed,
                 torch_version=normalize_torch_version(torch.__version__),
+                comment=_success_provenance_comment(spec, dtype_name=payload.dtype_name),
             )
             records.append(
                 materialize_success_case(
