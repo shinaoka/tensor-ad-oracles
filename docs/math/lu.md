@@ -201,15 +201,9 @@ P^T
 U^{-\dagger}.
 $$
 
-## Implementation Correspondence
-
-- `tenferro-rs/docs/AD/lu.md` writes the rule in exactly this block-structured
-  way, with separate square, wide, and tall cases.
-- PyTorch's `linalg_lu_backward` and `linalg_lu_jvp` implement the same three
-  cases using `tril(-1)` / `triu()` projections and triangular solves rather
-  than explicit inverses.
-- All $L^{-1} X$ and $X U^{-1}$ operations should be implemented as triangular
-  solves.
+All appearances of $L^{-1}X$, $XU^{-1}$, $L^{-\dagger}X$, and $XU^{-\dagger}$
+should be interpreted as triangular solves rather than as explicit inverse
+formation.
 
 ## Verification
 

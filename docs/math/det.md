@@ -31,7 +31,7 @@ $$
 - complex case:
 
 $$
-\bar{A} = \overline{\bar{d} \cdot \det(A)} \cdot A^{-\mathsf{H}}.
+\bar{A} = \bar{d} \cdot \overline{\det(A)} \cdot A^{-\mathsf{H}}.
 $$
 
 ## Singular matrix handling
@@ -42,9 +42,9 @@ still makes sense:
 - rank $N-1$: the adjugate is rank 1 and can be reconstructed from an SVD
 - rank $\le N-2$: the adjugate vanishes
 
-PyTorch's `linalg_det_backward` handles this regime by reconstructing the
-leave-one-out singular-value products together with the orientation/phase factor
-coming from $U$ and $V^{\mathsf{H}}$.
+The rank-$N-1$ adjugate can be reconstructed from the leave-one-out singular
+value products together with the orientation/phase factor carried by the
+singular vectors.
 
 ## 2. `slogdet`
 
@@ -64,12 +64,13 @@ $$
 
 ### Reverse Rule
 
-For the differentiable log-magnitude path:
+Given cotangents $\bar{s}$ for the sign output and $\bar{\ell}$ for the
+log-magnitude output:
 
 - real case:
 
 $$
-\bar{A} = \overline{\operatorname{logabsdet}} \cdot A^{-\mathsf{T}}
+\bar{A} = \bar{\ell} \cdot A^{-\mathsf{T}}
 $$
 
 - complex case:
@@ -77,20 +78,13 @@ $$
 $$
 \bar{A} = g \cdot A^{-\mathsf{H}},
 \qquad
-g = \overline{\operatorname{logabsdet}}
-- i \operatorname{Im}(\overline{\operatorname{sign}}^* \operatorname{sign}).
+g = \bar{\ell} - i \operatorname{Im}(\bar{s}^* s),
 $$
+
+where $s = \operatorname{sign}(A)$.
 
 `slogdet` is not differentiable at singular matrices because
 $\operatorname{logabsdet} = -\infty$ there.
-
-## Implementation Correspondence
-
-- `tenferro-rs/docs/AD/det.md` keeps both `det` and `slogdet` in one note and
-  discusses the singular adjugate path explicitly.
-- PyTorch's `linalg_det_jvp`, `linalg_det_backward`, `slogdet_jvp`, and
-  `slogdet_backward` implement the same split and use solves rather than
-  explicit inverses.
 
 ## Verification
 

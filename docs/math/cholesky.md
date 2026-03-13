@@ -65,13 +65,7 @@ $$
 
 This is the adjoint of the JVP map and keeps $\bar{A}$ Hermitian.
 
-## Implementation Correspondence
-
-- `tenferro-rs/docs/AD/cholesky.md` uses the same $\varphi / \varphi^*$ pair to
-  express both JVP and VJP.
-- PyTorch's `cholesky_jvp` and `cholesky_backward` implement the same
-  triangular-solve sandwich rather than explicit inverses.
-- Never form $L^{-1}$ explicitly; use triangular solves on the left and right.
+Never form $L^{-1}$ explicitly; use triangular solves on the left and right.
 
 ## Verification
 

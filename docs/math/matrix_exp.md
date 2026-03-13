@@ -58,9 +58,6 @@ f\!\begin{pmatrix} A & E \\ 0 & A \end{pmatrix}
 = \begin{pmatrix} f(A) & L_f(A, E) \\ 0 & f(A) \end{pmatrix}.
 $$
 
-PyTorch factors this pattern through the helper
-`differential_analytic_matrix_function`.
-
 ## Computational cost
 
 | Method | Cost relative to $\exp(A)$ |
@@ -68,15 +65,6 @@ PyTorch factors this pattern through the helper
 | Block matrix ($2N \times 2N$) | about $8\times$ |
 | Dedicated Fr\'echet scaling-and-squaring | about $3\times$ |
 | Eigendecomposition shortcut | cheaper on paper, but unstable for non-normal $A$ |
-
-## Implementation Correspondence
-
-- `tenferro-rs/docs/AD/matrix_exp.md` uses the block-exponential construction
-  as the main derivation.
-- PyTorch's `differential_analytic_matrix_function` and
-  `linalg_matrix_exp_differential` implement the same Mathias 1996 identity.
-- The block matrix approach is simple but more expensive than a dedicated
-  scaling-and-squaring Fr\'echet implementation.
 
 ## Verification
 

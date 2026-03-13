@@ -59,8 +59,8 @@ $$
 
 ### Normalization correction
 
-PyTorch and `tenferro-rs` both normalize eigenvectors to unit norm. Therefore
-the raw tangent must be projected back onto that gauge:
+If eigenvectors are normalized to unit norm, the raw tangent must be projected
+back onto that gauge:
 
 $$
 \dot{V} =
@@ -114,25 +114,14 @@ $$
 \operatorname{Im}(\operatorname{diag}(V^\dagger \bar{V})) = 0.
 $$
 
-PyTorch's `linalg_eig_backward` checks this condition numerically and raises for
-ill-defined losses.
+Losses that violate this condition are ill-defined for derivatives through the
+eigenvector phase gauge.
 
 ## Relationship to the Hermitian Case
 
 When $A$ is Hermitian, $V$ is unitary, $V^{-1} = V^\dagger$, and eigenvalues are
 real. The formulas simplify to the structured rule documented in
 [`eigen.md`](./eigen.md).
-
-## Implementation Correspondence
-
-- `tenferro-rs/docs/AD/eig.md` uses the $V^{-1}\dot{A}V$ and
-  $V^{-\dagger} G V^\dagger$ formulation with an explicit normalization
-  correction.
-- PyTorch's `linalg_eig_jvp` and `linalg_eig_backward` implement the same rule.
-  Their comments explicitly note that the uncorrected textbook formulas are
-  missing the normalization term.
-- For real inputs with complex outputs, PyTorch applies the usual
-  `handle_r_to_c` projection back to the real cotangent domain.
 
 ## Verification
 

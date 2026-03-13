@@ -52,15 +52,8 @@ $$
 
 This is the adjoint counterpart of the same three-term structure.
 
-## Implementation Correspondence
-
-- `tenferro-rs/docs/AD/pinv.md` follows the classical Golub-Pereyra formulas and
-  makes the projector interpretation explicit.
-- PyTorch's `pinv_jvp` and `pinv_backward` implement algebraically equivalent
-  forms but branch on $M \leq N$ versus $M > N$ to reduce intermediate matrix
-  sizes.
-- The `atol` / `rtol` thresholding used to define the primal pseudoinverse is
-  treated as fixed metadata, not as a differentiable branch.
+The `atol` / `rtol` thresholding used to define the primal pseudoinverse is
+treated as fixed metadata, not as a differentiable branch.
 
 ## Verification
 

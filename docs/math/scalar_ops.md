@@ -2,20 +2,8 @@
 
 ## Scope
 
-This note records the shared scalar AD formulas implemented in
-`chainrules-scalarops` together with the tensor-level wrappers used by
-`tenferro-dyadtensor`.
-
-## PyTorch Baseline
-
-The local comparison baseline is PyTorch's manual autograd formulas:
-
-- `tools/autograd/derivatives.yaml`
-- `torch/csrc/autograd/FunctionsManual.cpp`
-- `docs/source/notes/autograd.rst`
-
-In particular, the scalar wrappers here follow the same `handle_r_to_c`
-real-input projection convention used by PyTorch.
+This note records shared scalar AD formulas together with the tensor-level
+wrappers built from them.
 
 ## Complex Gradient Convention
 
@@ -24,7 +12,6 @@ For real-valued losses:
 - gradients follow the conjugate-Wirtinger convention
 - VJP formulas include complex conjugation where required
 - real inputs project complex intermediates back to the real domain
-  (`handle_r_to_c`)
 
 ## Scalar Basis Rules
 
@@ -33,10 +20,13 @@ primal output.
 
 ### Core arithmetic
 
-- `add`: $(dx_1, dx_2) = (g, g)$
-- `sub`: $(dx_1, dx_2) = (g, -g)$
+- `add`: for `x_1 + \alpha x_2`, $(dx_1, dx_2) = (g, \overline{\alpha}\, g)$
+- `sub`: for `x_1 - \alpha x_2`, $(dx_1, dx_2) = (g, -\overline{\alpha}\, g)$
 - `mul`: $(dx_1, dx_2) = (g \cdot \overline{x_2}, g \cdot \overline{x_1})$
-- `div`: quotient rule with conjugated denominator factors
+- `div`:
+  - numerator path: $dx_1 = g / \overline{x_2}$
+  - denominator path: $dx_2 = -g \cdot \overline{x_1 / x_2^2}$
+  - integer-style rounding modes are treated as nondifferentiable branches
 
 ### Analytic unary wrappers
 
@@ -44,16 +34,18 @@ primal output.
 - `sqrt`: $dx = g / (2 \overline{\sqrt{x}})$
 - `exp`: $dx = g \cdot \overline{y}$
 - `log`: $dx = g / \overline{x}$
-- `expm1`: derivative factor `exp(x)`
-- `log1p`: derivative factor `1 / (1 + x)`
-- `sin`: derivative factor `cos(x)`
-- `cos`: derivative factor `-sin(x)`
-- `tanh`: derivative factor `1 - y^2`
+- `expm1`: $dx = g \cdot \overline{\exp(x)}$
+- `log1p`: $dx = g / \overline{(1 + x)}$
+- `sin`: $dx = g \cdot \overline{\cos(x)}$
+- `cos`: $dx = -g \cdot \overline{\sin(x)}$
+- `tanh`: $dx = g \cdot \overline{(1 - y^2)}$
 
 ### Parameterized wrappers
 
-- `atan2`: standard real partials over $a^2 + b^2$
-- `powf`: fixed scalar-exponent rule
+- `atan2`: for real inputs $(a, b)$,
+  $da = g \, b / (a^2 + b^2)$ and $db = -g \, a / (a^2 + b^2)$, with the
+  zero-denominator singularity masked by the implementation convention
+- `powf`: for fixed exponent $p$, $dx = g \cdot \overline{(p x^{p-1})}$
 - `powi`: integer-exponent specialization of `powf`
 - `pow`:
   - base path: $dx = g \cdot \overline{a x^{a-1}}$
@@ -72,20 +64,56 @@ Tensor-level wrappers built on top of the scalar basis include:
 
 ### `sum_ad`
 
-Every element receives the same cotangent.
+For a reduction over index set $\mathcal{I}$,
+
+$$
+y = \sum_{i \in \mathcal{I}} x_i
+\quad \Longrightarrow \quad
+\bar{x}_i = \bar{y}
+$$
+
+for every reduced element, with the cotangent broadcast back to the input
+shape.
 
 ### `mean_ad`
 
-Every element receives the cotangent divided by the number of reduced entries.
+If $n$ entries are reduced,
+
+$$
+y = \frac{1}{n} \sum_{i \in \mathcal{I}} x_i
+\quad \Longrightarrow \quad
+\bar{x}_i = \frac{\bar{y}}{n}.
+$$
 
 ### `var_ad`
 
-Differentiate through the centered residual
-$x - \operatorname{mean}(x)$.
+Let $\mu = \operatorname{mean}(x)$ over the reduced axes and let `correction`
+denote the Bessel-style offset used by the variance operator. Then
+
+$$
+\operatorname{var}(x) = \frac{1}{n - \mathrm{correction}} \sum_i |x_i - \mu|^2,
+$$
+
+so away from the singular degrees-of-freedom boundary,
+
+$$
+\bar{x}
+= \frac{2}{n - \mathrm{correction}} \, \bar{v} \, (x - \mu).
+$$
+
+At $n - \mathrm{correction} \le 0$, the operator is singular and the derivative
+inherits the same NaN / infinity boundary behavior as the primal convention.
 
 ### `std_ad`
 
-Combine the variance rule with the derivative of `sqrt`.
+For $\sigma = \sqrt{v}$ with $v = \operatorname{var}(x)$,
+
+$$
+\bar{v} = \frac{\bar{\sigma}}{2 \sigma},
+$$
+
+masked at $\sigma = 0$, and then the variance rule is applied to propagate back
+to $x$.
 
 ## Published DB Families Using This Note
 

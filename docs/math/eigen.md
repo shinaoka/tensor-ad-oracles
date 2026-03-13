@@ -96,15 +96,6 @@ $$
 
 with the understanding that the skew-Hermitian gauge is projected away.
 
-## Implementation Correspondence
-
-- `tenferro-rs/docs/AD/eigen.md` writes the reverse rule through the explicit
-  Hermitian inner matrix $D$; this note keeps that structure.
-- PyTorch does not have a separate Hermitian kernel. It calls
-  `linalg_eig_backward(..., is_hermitian=true)` and
-  `linalg_eig_jvp(..., is_hermitian=true)`, which reduce to the same formulas
-  with $V^{-1} = V^\dagger$.
-
 ## Verification
 
 ### Forward reconstruction

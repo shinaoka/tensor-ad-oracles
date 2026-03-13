@@ -40,17 +40,8 @@ immediately recovers
 - JVP: $\dot{B} = -B\,\dot{A}\,B$
 - VJP: $\bar{A} = -B^{\mathsf{H}}\,\bar{B}\,B^{\mathsf{H}}$
 
-The same relationship is used in PyTorch and downstream libraries to avoid
-duplicating logic.
-
-## Implementation Correspondence
-
-- `tenferro-rs/docs/AD/inv.md` writes the inverse rule directly and then points
-  back to solve as the conceptual source.
-- PyTorch exposes the inverse derivative via solve-style formulas in
-  `derivatives.yaml` and related linear-solve kernels.
-- For higher-order AD, prefer `solve` over explicit multiplication by a cached
-  inverse.
+For higher-order AD, it is often more stable to treat the inverse as an
+implicit linear solve rather than as a primitive cached matrix product.
 
 ## Verification
 

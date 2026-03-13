@@ -14,10 +14,9 @@ the thin SVD uses
 - $\Sigma = \operatorname{diag}(\sigma_1, \ldots, \sigma_K)$ with $\sigma_i > 0$
 - $V \in \mathbb{C}^{N \times K}$ with $V^\dagger V = I_K$
 
-PyTorch's `_linalg_svd` may be called with `full_matrices=True`, but its AD
-formulas narrow back to the leading $K$ singular vectors before applying the
-differential rules. The thin factors are therefore the mathematical source of
-truth for the note and for the oracle DB.
+If a decomposition is returned with full orthonormal factors, the AD rules
+still depend only on the leading thin factors. The thin SVD is therefore the
+mathematical source of truth for this note and for the oracle DB.
 
 ## Reverse Rule
 
@@ -57,8 +56,8 @@ $$
 S_{\text{inv},i} = \frac{\sigma_i}{\sigma_i^2 + \eta} \approx \frac{1}{\sigma_i}.
 $$
 
-PyTorch writes the formulas using $E$, while `tenferro-rs` writes them using
-$F$. They are the same off the diagonal.
+The matrices $E$ and $F$ encode the same off-diagonal inverse-gap
+information.
 
 ### Step 2: Inner matrix split
 
@@ -97,9 +96,7 @@ $$
 \Gamma_{\bar{V}} = \Sigma (K + K^\dagger).
 $$
 
-This is the right-singular-vector analogue of the $\bar{U}$ path. PyTorch's
-`svd_backward` combines the same information through
-$S ((V^\dagger \bar{V}) / E)$ inside its skew formulation.
+This is the right-singular-vector analogue of the $\bar{U}$ path.
 
 #### From $\bar{S}$
 
@@ -117,7 +114,7 @@ $$
 \bar{A}_{\text{core}} = U \Gamma V^\dagger.
 $$
 
-Equivalently, PyTorch writes the same expression as
+Equivalently, the same expression can be written as
 
 $$
 \bar{A}_{\text{core}} =
@@ -172,9 +169,9 @@ $$
 \operatorname{Im}(\operatorname{diag}(U^\dagger \bar{U} + V^\dagger \bar{V})) = 0.
 $$
 
-PyTorch's `svd_backward` checks this numerically and raises an error when the
-loss depends on the singular-vector phase. The DB's `gauge_ill_defined` family
-records those expected failures.
+Losses that violate this condition are ill-defined for derivatives through the
+singular-vector phase gauge. The DB's `gauge_ill_defined` family records those
+expected failures.
 
 ## Forward Rule
 
@@ -223,9 +220,8 @@ $$
 dV \mathrel{+}= (I_N - V V^\dagger)(dA)^\dagger U \operatorname{diag}(S_{\text{inv}}).
 $$
 
-This is the form implemented in PyTorch's `linalg_svd_jvp`, up to the
-convention that PyTorch returns `Vh = V^\dagger` and thus reports
-$dVh = (dV)^\dagger$ directly.
+Equivalent formulations may return $V^\dagger$ instead of $V$ and therefore
+report $d(V^\dagger) = (dV)^\dagger$ directly.
 
 ## Numerical and Domain Notes
 
@@ -261,16 +257,6 @@ Representative scalar test functions:
 - mixed: $f(A) = \operatorname{Re}(U_{1,1}^* V_{1,1})$
 
 where $H$ is a random Hermitian matrix independent of $A$.
-
-## Implementation Correspondence
-
-- `tenferro-rs/docs/AD/svd.md` writes the reverse rule by splitting
-  $\Gamma_{\bar{U}}$, $\Gamma_{\bar{V}}$, and $\Gamma_{\bar{S}}`, and by making
-  the `F` and `S_inv` helpers explicit. This note keeps that structure.
-- PyTorch's `svd_backward` uses the equivalent $E$-matrix formulation together
-  with skew/sym operators and an explicit gauge check in the complex case.
-- PyTorch's `linalg_svd_jvp` uses the same thin-factor formulas and only pads
-  zeros back out when it must return `full_matrices=True` shaped tangents.
 
 ## References
 

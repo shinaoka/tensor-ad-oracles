@@ -117,17 +117,6 @@ $$
 
 Since $A z = Q y$, the formulas for $\bar{b}$ and $\bar{A}$ follow.
 
-## Implementation Correspondence
-
-- `tenferro-rs/docs/AD/lstsq.md` uses the QR-based derivation above, which makes
-  the residual correction term explicit.
-- PyTorch's `linalg_lstsq_solution_jvp` and `linalg_lstsq_backward` currently
-  route the solution term through `pinv_jvp` / `pinv_backward`, while the
-  residual term is added directly. The resulting adjoint matches the same
-  least-squares geometry.
-- The residual JVP in PyTorch uses Danskin's theorem, treating the minimizer as
-  fixed when differentiating the residual objective itself.
-
 ## Verification
 
 ### Forward check

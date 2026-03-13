@@ -1,8 +1,7 @@
 # QR AD Notes
 
-This note covers the reduced QR rule that is materialized in the DB and keeps
-the transpose-dual LQ formulas from `tenferro-rs/docs/AD/qr.md` so that no
-derivation detail is lost in the migration.
+This note covers the reduced QR rule materialized in the DB together with the
+transpose-dual LQ formulas.
 
 ## QR Forward Definition
 
@@ -56,8 +55,7 @@ $$
 \end{cases}
 $$
 
-This is the adjoint helper appearing in PyTorch's `linalg_qr_backward` for the
-$M < N$ case.
+This is the adjoint helper for the $M < N$ case.
 
 ## Reverse Rule
 
@@ -92,8 +90,7 @@ $$
 \bar{A} = B R^{-\dagger}.
 $$
 
-Implementation-wise this is a right solve with $R^\dagger$. PyTorch expresses
-the same step as
+This is a right solve with $R^\dagger$. An equivalent form is
 
 $$
 \bar{A} =
@@ -143,7 +140,7 @@ $$
 \bar{A} = \pi^\*(\bar{A}_{\mathrm{lead}}) + Q \bar{R}.
 $$
 
-PyTorch's `linalg_qr_backward` implements the same case as
+Equivalently,
 
 $$
 \bar{A} = Q \bar{R} + \pi^\*\!\left(
@@ -152,8 +149,6 @@ R_1^{-\dagger}\right).
 $$
 
 ## Forward Rule
-
-PyTorch's `linalg_qr_jvp` uses the same case split.
 
 ### Case $M \geq N$
 
@@ -211,8 +206,7 @@ $$
 
 ## LQ Reverse Rule
 
-The transpose-dual LQ formulas are retained here because the original
-`tenferro-rs` note grouped QR and LQ together.
+The transpose-dual LQ formulas are included for completeness.
 
 ### LQ Forward Definition
 
@@ -318,15 +312,6 @@ v_2 = R_{2,:},
 $$
 
 with random Hermitian operators independent of $A$.
-
-## Implementation Correspondence
-
-- `tenferro-rs/docs/AD/qr.md` writes the rule in terms of `copyltu`,
-  `trilImInvAdjSkew`, and the QR/LQ duality. This note keeps those helpers.
-- PyTorch's `linalg_qr_backward` uses the same two reduced-QR cases:
-  full-rank via `syminvadj(... ) R^{-H}` and wide reduced QR via the
-  `pi*`-embedded `trilImInvAdjSkew` formula.
-- PyTorch's `linalg_qr_jvp` mirrors the same case split in forward mode.
 
 ## References
 
