@@ -399,9 +399,10 @@ def build_provenance(
     seed: int,
     torch_version: str,
     generator: str = "python-pytorch-v1",
+    comment: str | None = None,
 ) -> dict:
     """Build the common provenance block for a materialized case record."""
-    return {
+    provenance = {
         "source_repo": "pytorch",
         "source_file": spec.source_file,
         "source_function": spec.source_function,
@@ -411,6 +412,9 @@ def build_provenance(
         "torch_version": torch_version,
         "fd_policy_version": FD_POLICY_VERSION,
     }
+    if comment is not None:
+        provenance["comment"] = comment
+    return provenance
 
 
 def make_success_case(

@@ -369,6 +369,10 @@
           "type": "string",
           "minLength": 1
         },
+        "comment": {
+          "type": "string",
+          "minLength": 1
+        },
         "generator": {
           "type": "string",
           "minLength": 1
