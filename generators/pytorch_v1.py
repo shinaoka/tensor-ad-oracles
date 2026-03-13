@@ -569,6 +569,14 @@ def _materialize_hvp_for_spec(spec: CaseFamilySpec, *, dtype_name: str) -> bool:
     return True
 
 
+def _is_skippable_hvp_runtime_error(exc: RuntimeError) -> bool:
+    message = str(exc)
+    return (
+        "forward differentiable view operations" in message
+        or "has_fw_view" in message
+    )
+
+
 def _resolve_runtime_for_spec(spec: CaseFamilySpec):
     if spec.inventory_kind == "scalar":
         return import_scalar_generation_runtime()
@@ -817,19 +825,24 @@ def _generate_success_records(
                     output_names=output_names,
                     cotangent=cotangent,
                 )
-                pytorch_hvp = compute_pytorch_hvp(
-                    torch,
-                    scalarized_fn,
-                    inputs=inputs,
-                    direction=direction,
-                )
-                fd_hvp = compute_fd_hvp(
-                    torch,
-                    scalarized_fn,
-                    inputs=inputs,
-                    direction=direction,
-                    step=fd_step,
-                )
+                try:
+                    pytorch_hvp = compute_pytorch_hvp(
+                        torch,
+                        scalarized_fn,
+                        inputs=inputs,
+                        direction=direction,
+                    )
+                    fd_hvp = compute_fd_hvp(
+                        torch,
+                        scalarized_fn,
+                        inputs=inputs,
+                        direction=direction,
+                        step=fd_step,
+                    )
+                except RuntimeError as exc:
+                    if _is_skippable_hvp_runtime_error(exc):
+                        continue
+                    raise
                 if not tensor_map_isfinite(pytorch_hvp) or not tensor_map_isfinite(fd_hvp):
                     continue
                 second_order_abs, second_order_rel = hvp_residuals(

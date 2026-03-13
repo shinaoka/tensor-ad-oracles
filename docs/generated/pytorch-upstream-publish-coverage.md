@@ -38,29 +38,29 @@ publishable upstream coverage that is not yet materialized in this repository.
 | atanh | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | cdouble | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | ceil | identity | success | float64, float32 | float64, float32 | - |
-| cholesky | identity | success | float64, complex128, float32, complex64 | float64 | complex128, float32, complex64 |
-| cholesky_ex | identity | success | float64, complex128, float32, complex64 | float64 | complex128, float32, complex64 |
+| cholesky | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
+| cholesky_ex | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | clamp_max | identity | success | float64, float32 | float64, float32 | - |
 | clamp_min | identity | success | float64, float32 | float64, float32 | - |
 | complex | identity | success | float64, float32 | float64, float32 | - |
-| cond | identity | success | float64, complex128, float32, complex64 | float64 | complex128, float32, complex64 |
+| cond | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | conj | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | conj_physical | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | copysign | identity | success | float64, float32 | float64, float32 | - |
 | cos | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | cosh | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
-| cross | identity | success | float64, complex128, float32, complex64 | float64 | complex128, float32, complex64 |
+| cross | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | deg2rad | identity | success | float64, float32 | float64, float32 | - |
-| det | identity | success | float64, complex128, float32, complex64 | float64 | complex128, float32, complex64 |
-| diagonal | identity | success | float64, complex128, float32, complex64 | float64 | complex128, float32, complex64 |
+| det | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
+| diagonal | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | digamma | identity | success | float64, float32 | float64, float32 | - |
 | div_no_rounding_mode | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | double | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
-| eig | values_vectors_abs | success | float64, complex128, float32, complex64 | float64 | complex128, float32, complex64 |
+| eig | values_vectors_abs | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | eigh | gauge_ill_defined | error | complex128 | complex128 | - |
-| eigh | values_vectors_abs | success | float64, complex128, float32, complex64 | float64 | complex128, float32, complex64 |
-| eigvals | identity | success | float64, complex128, float32, complex64 | float64 | complex128, float32, complex64 |
-| eigvalsh | identity | success | float64, complex128, float32, complex64 | float64 | complex128, float32, complex64 |
+| eigh | values_vectors_abs | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
+| eigvals | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
+| eigvalsh | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | erf | identity | success | float64, float32 | float64, float32 | - |
 | erfc | identity | success | float64, float32 | float64, float32 | - |
 | erfinv | identity | success | float64, float32 | float64, float32 | - |
@@ -74,12 +74,12 @@ publishable upstream coverage that is not yet materialized in this repository.
 | fmin | identity | success | float64, float32 | float64, float32 | - |
 | frac | identity | success | float64, float32 | float64, float32 | - |
 | frexp | identity | success | float64, float32 | float64, float32 | - |
-| householder_product | identity | success | float64, complex128, float32, complex64 | float64 | complex128, float32, complex64 |
+| householder_product | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | hypot | identity | success | float64, float32 | float64, float32 | - |
 | i0 | identity | success | float64, float32 | float64, float32 | - |
 | imag | identity | success | complex128, complex64 | complex128, complex64 | - |
-| inv | identity | success | float64, complex128, float32, complex64 | float64 | complex128, float32, complex64 |
-| inv_ex | identity | success | float64, complex128, float32, complex64 | float64 | complex128, float32, complex64 |
+| inv | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
+| inv_ex | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | ldexp | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | lgamma | identity | success | float64, float32 | float64, float32 | - |
 | log | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
@@ -88,20 +88,20 @@ publishable upstream coverage that is not yet materialized in this repository.
 | log2 | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | logaddexp | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | logit | identity | success | float64, float32 | float64, float32 | - |
-| lstsq_grad_oriented | identity | success | float64, complex128, float32, complex64 | float64 | complex128, float32, complex64 |
-| lu | identity | success | float64, complex128, float32, complex64 | float64 | complex128, float32, complex64 |
-| lu_factor | identity | success | float64, complex128, float32, complex64 | float64 | complex128, float32, complex64 |
-| lu_factor_ex | identity | success | float64, complex128, float32, complex64 | float64 | complex128, float32, complex64 |
-| lu_solve | identity | success | float64, complex128, float32, complex64 | float64 | complex128, float32, complex64 |
-| matrix_norm | identity | success | float64, complex128, float32, complex64 | float64 | complex128, float32, complex64 |
-| matrix_power | identity | success | float64, complex128, float32, complex64 | float64 | complex128, float32, complex64 |
+| lstsq_grad_oriented | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
+| lu | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
+| lu_factor | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
+| lu_factor_ex | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
+| lu_solve | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
+| matrix_norm | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
+| matrix_power | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | max_binary | identity | success | float64, float32 | float64, float32 | - |
 | maximum | identity | success | float64, float32 | float64, float32 | - |
 | mean | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | min_binary | identity | success | float64, float32 | float64, float32 | - |
 | minimum | identity | success | float64, float32 | float64, float32 | - |
 | mul | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
-| multi_dot | identity | success | float64, complex128, float32, complex64 | float64 | complex128, float32, complex64 |
+| multi_dot | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | mvlgamma_mvlgamma_p_1 | identity | success | float64, float32 | float64, float32 | - |
 | mvlgamma_mvlgamma_p_3 | identity | success | float64, float32 | float64, float32 | - |
 | mvlgamma_mvlgamma_p_5 | identity | success | float64, float32 | float64, float32 | - |
@@ -127,10 +127,10 @@ publishable upstream coverage that is not yet materialized in this repository.
 | nn_functional_softsign | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | nn_functional_tanhshrink | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | nn_functional_threshold | identity | success | float64, float32 | float64, float32 | - |
-| norm | identity | success | float64, complex128, float32, complex64 | float64 | complex128, float32, complex64 |
-| pinv | identity | success | float64, complex128, float32, complex64 | float64 | complex128, float32, complex64 |
-| pinv_hermitian | identity | success | float64, complex128, float32, complex64 | float64 | complex128, float32, complex64 |
-| pinv_singular | identity | success | float64, complex128, float32, complex64 | float64 | complex128, float32, complex64 |
+| norm | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
+| pinv | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
+| pinv_hermitian | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
+| pinv_singular | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | polar | identity | success | float64, float32 | float64, float32 | - |
 | polygamma_polygamma_n_0 | identity | success | float64, float32 | float64, float32 | - |
 | polygamma_polygamma_n_1 | identity | success | float64, float32 | float64, float32 | - |
@@ -140,7 +140,7 @@ publishable upstream coverage that is not yet materialized in this repository.
 | positive | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | pow | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | prod | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
-| qr | identity | success | float64, complex128, float32, complex64 | float64 | complex128, float32, complex64 |
+| qr | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | rad2deg | identity | success | float64, float32 | float64, float32 | - |
 | real | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | reciprocal | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
@@ -156,10 +156,10 @@ publishable upstream coverage that is not yet materialized in this repository.
 | sin | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | sinc | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | sinh | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
-| slogdet | identity | success | float64, complex128, float32, complex64 | float64 | complex128, float32, complex64 |
-| solve | identity | success | float64, complex128, float32, complex64 | float64 | complex128, float32, complex64 |
-| solve_ex | identity | success | float64, complex128, float32, complex64 | float64 | complex128, float32, complex64 |
-| solve_triangular | identity | success | float64, complex128, float32, complex64 | float64 | complex128, float32, complex64 |
+| slogdet | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
+| solve | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
+| solve_ex | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
+| solve_triangular | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | special_entr | identity | success | float64, float32 | float64, float32 | - |
 | special_erfcx | identity | success | float64, float32 | float64, float32 | - |
 | special_i0e | identity | success | float64, float32 | float64, float32 | - |
@@ -177,65 +177,24 @@ publishable upstream coverage that is not yet materialized in this repository.
 | sub | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | sum | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | svd | gauge_ill_defined | error | complex128 | complex128 | - |
-| svd | s | success | float64, complex128, float32, complex64 | float64 | complex128, float32, complex64 |
-| svd | u_abs | success | float64, complex128, float32, complex64 | float64 | complex128, float32, complex64 |
-| svd | uvh_product | success | float64, complex128, float32, complex64 | float64 | complex128, float32, complex64 |
-| svd | vh_abs | success | float64, complex128, float32, complex64 | float64 | complex128, float32, complex64 |
-| svdvals | identity | success | float64, complex128, float32, complex64 | float64 | complex128, float32, complex64 |
+| svd | s | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
+| svd | u_abs | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
+| svd | uvh_product | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
+| svd | vh_abs | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
+| svdvals | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | tan | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | tanh | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
-| tensorinv | identity | success | float64, complex128, float32, complex64 | float64 | complex128, float32, complex64 |
-| tensorsolve | identity | success | float64, complex128, float32, complex64 | float64 | complex128, float32, complex64 |
+| tensorinv | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
+| tensorsolve | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | true_divide | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | trunc | identity | success | float64, float32 | float64, float32 | - |
-| vander | identity | success | float64, complex128, float32, complex64 | float64 | complex128, float32, complex64 |
+| vander | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | var | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | var_unbiased | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
-| vecdot | identity | success | float64, complex128, float32, complex64 | float64 | complex128, float32, complex64 |
-| vector_norm | identity | success | float64, complex128, float32, complex64 | float64 | complex128, float32, complex64 |
+| vecdot | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
+| vector_norm | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | xlogy | identity | success | float64, float32 | float64, float32 | - |
 
 ## Missing Publishable Coverage
 
-| op | family | behavior | published dtypes | missing publishable dtypes |
-| --- | --- | --- | --- | --- |
-| cholesky | identity | success | float64 | complex128, float32, complex64 |
-| cholesky_ex | identity | success | float64 | complex128, float32, complex64 |
-| cond | identity | success | float64 | complex128, float32, complex64 |
-| cross | identity | success | float64 | complex128, float32, complex64 |
-| det | identity | success | float64 | complex128, float32, complex64 |
-| diagonal | identity | success | float64 | complex128, float32, complex64 |
-| eig | values_vectors_abs | success | float64 | complex128, float32, complex64 |
-| eigh | values_vectors_abs | success | float64 | complex128, float32, complex64 |
-| eigvals | identity | success | float64 | complex128, float32, complex64 |
-| eigvalsh | identity | success | float64 | complex128, float32, complex64 |
-| householder_product | identity | success | float64 | complex128, float32, complex64 |
-| inv | identity | success | float64 | complex128, float32, complex64 |
-| inv_ex | identity | success | float64 | complex128, float32, complex64 |
-| lstsq_grad_oriented | identity | success | float64 | complex128, float32, complex64 |
-| lu | identity | success | float64 | complex128, float32, complex64 |
-| lu_factor | identity | success | float64 | complex128, float32, complex64 |
-| lu_factor_ex | identity | success | float64 | complex128, float32, complex64 |
-| lu_solve | identity | success | float64 | complex128, float32, complex64 |
-| matrix_norm | identity | success | float64 | complex128, float32, complex64 |
-| matrix_power | identity | success | float64 | complex128, float32, complex64 |
-| multi_dot | identity | success | float64 | complex128, float32, complex64 |
-| norm | identity | success | float64 | complex128, float32, complex64 |
-| pinv | identity | success | float64 | complex128, float32, complex64 |
-| pinv_hermitian | identity | success | float64 | complex128, float32, complex64 |
-| pinv_singular | identity | success | float64 | complex128, float32, complex64 |
-| qr | identity | success | float64 | complex128, float32, complex64 |
-| slogdet | identity | success | float64 | complex128, float32, complex64 |
-| solve | identity | success | float64 | complex128, float32, complex64 |
-| solve_ex | identity | success | float64 | complex128, float32, complex64 |
-| solve_triangular | identity | success | float64 | complex128, float32, complex64 |
-| svd | s | success | float64 | complex128, float32, complex64 |
-| svd | u_abs | success | float64 | complex128, float32, complex64 |
-| svd | uvh_product | success | float64 | complex128, float32, complex64 |
-| svd | vh_abs | success | float64 | complex128, float32, complex64 |
-| svdvals | identity | success | float64 | complex128, float32, complex64 |
-| tensorinv | identity | success | float64 | complex128, float32, complex64 |
-| tensorsolve | identity | success | float64 | complex128, float32, complex64 |
-| vander | identity | success | float64 | complex128, float32, complex64 |
-| vecdot | identity | success | float64 | complex128, float32, complex64 |
-| vector_norm | identity | success | float64 | complex128, float32, complex64 |
+None.

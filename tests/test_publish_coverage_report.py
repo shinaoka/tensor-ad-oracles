@@ -20,12 +20,17 @@ class PublishCoverageReportTests(unittest.TestCase):
         self.assertIn("## Publishable Family Coverage", report)
         self.assertIn("## Missing Publishable Coverage", report)
 
-    def test_build_report_highlights_representative_missing_complex_svd_coverage(self) -> None:
+    def test_build_report_highlights_representative_svd_publish_coverage(self) -> None:
         report = report_upstream_publish_coverage.build_report_text()
 
         self.assertIn("| svd | u_abs | success |", report)
         self.assertIn("float64, complex128, float32, complex64", report)
-        self.assertIn("| float64 | complex128, float32, complex64 |", report)
+        self.assertIn(
+            "| svd | u_abs | success | float64, complex128, float32, complex64 | "
+            "float64, complex128, float32, complex64 | - |",
+            report,
+        )
+        self.assertIn("## Missing Publishable Coverage\n\nNone.", report)
 
     def test_main_writes_report_and_matches_checked_in_copy(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:

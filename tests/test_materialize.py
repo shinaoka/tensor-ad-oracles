@@ -8,6 +8,19 @@ from tests.test_encoding import FakeTensor
 
 
 class MaterializeTests(unittest.TestCase):
+    def test_skippable_hvp_runtime_error_matches_forward_view_assertion(self) -> None:
+        exc = RuntimeError(
+            "INTERNAL ASSERT FAILED: Expected the output of forward differentiable view operations "
+            "to have the tangent have the same layout as primal"
+        )
+
+        self.assertTrue(pytorch_v1._is_skippable_hvp_runtime_error(exc))  # noqa: SLF001
+
+    def test_skippable_hvp_runtime_error_rejects_unrelated_runtime_error(self) -> None:
+        exc = RuntimeError("some unrelated failure")
+
+        self.assertFalse(pytorch_v1._is_skippable_hvp_runtime_error(exc))  # noqa: SLF001
+
     def test_supported_dtype_names_for_linalg_spec_follow_spec_metadata(self) -> None:
         class FakeTorch:
             float64 = "float64"
