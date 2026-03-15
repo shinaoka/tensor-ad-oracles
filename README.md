@@ -95,6 +95,8 @@ The mathematical AD notes live under `docs/math/`.
 - `docs/math/index.md` is the note corpus entrypoint
 - `docs/math/registry.json` is the central mapping from published `(op, family)`
   DB families to note locations
+- `docs/math/complex-support.json` is the machine-readable complex capability
+  ledger for the published `(op, family)` surface
 
 `docs/math/*.md` is the mathematical source of truth for known operator rules in
 this repository. The note corpus is maintained as a non-lossy migration target
@@ -117,6 +119,12 @@ valid note target:
 ```bash
 uv run python scripts/check_math_registry.py
 ```
+
+Use the complex-support ledger to track whether each published family is:
+
+- complex-note reviewed
+- complex-DB covered
+- explicitly unsupported for complex with a recorded reason
 
 ## What Counts As a Case
 

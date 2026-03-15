@@ -49,6 +49,11 @@ class RepoConfigTests(unittest.TestCase):
         self.assertTrue((REPO_ROOT / "docs" / "math" / "index.md").exists())
         self.assertTrue((REPO_ROOT / "docs" / "math" / "registry.json").exists())
 
+    def test_readme_documents_complex_support_ledger(self) -> None:
+        readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+
+        self.assertIn("docs/math/complex-support.json", readme)
+
     def test_readme_documents_pages_deployment(self) -> None:
         readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
 
