@@ -1,6 +1,7 @@
 """Repository utility scripts for tensor-ad-oracles."""
 
 from . import (
+    check_complex_support,
     check_docs_site,
     check_math_registry,
     check_regeneration,
@@ -10,6 +11,7 @@ from . import (
 )
 
 __all__ = [
+    "check_complex_support",
     "check_docs_site",
     "check_math_registry",
     "check_regeneration",
