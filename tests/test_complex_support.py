@@ -211,6 +211,59 @@ class ComplexSupportTests(unittest.TestCase):
                 spec_index=self._spec_index(("solve", "identity", ("float64",))),
             )
 
+    def test_validate_complex_support_rejects_unsupported_entry_when_complex_support_exists(
+        self,
+    ) -> None:
+        tmpdir, root = self._make_repo()
+        self.addCleanup(tmpdir.cleanup)
+
+        (root / "docs" / "math" / "solve.md").write_text(
+            "# Solve\n\n<a id=\"family-identity\"></a>\n",
+            encoding="utf-8",
+        )
+        (root / "cases" / "solve").mkdir()
+        (root / "cases" / "solve" / "identity.jsonl").write_text(
+            "\n".join(
+                [
+                    json.dumps({"case_id": "solve_c128_identity_001", "dtype": "complex128"}),
+                    json.dumps({"case_id": "solve_c64_identity_002", "dtype": "complex64"}),
+                ]
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        self._write_registry(
+            root,
+            [
+                {
+                    "op": "solve",
+                    "family": "identity",
+                    "note_path": "docs/math/solve.md",
+                    "anchor": "family-identity",
+                }
+            ],
+        )
+        self._write_ledger(
+            root,
+            [
+                {
+                    "op": "solve",
+                    "family": "identity",
+                    "note": {"path": None, "anchor": None, "status": "not_required"},
+                    "db": {"status": "unsupported"},
+                    "unsupported_reason": "stale",
+                }
+            ],
+        )
+
+        with self.assertRaisesRegex(ValueError, "unsupported.*complex support"):
+            complex_support.validate_complex_support(
+                root,
+                spec_index=self._spec_index(
+                    ("solve", "identity", ("float64", "complex128", "complex64"))
+                ),
+            )
+
     def test_validate_complex_support_rejects_covered_entry_missing_complex_dtype(self) -> None:
         tmpdir, root = self._make_repo()
         self.addCleanup(tmpdir.cleanup)
@@ -253,6 +306,98 @@ class ComplexSupportTests(unittest.TestCase):
         )
 
         with self.assertRaisesRegex(ValueError, "missing complex dtypes"):
+            complex_support.validate_complex_support(
+                root,
+                spec_index=self._spec_index(
+                    ("solve", "identity", ("float64", "complex128", "complex64"))
+                ),
+            )
+
+    def test_validate_complex_support_rejects_pending_note_without_existing_target(self) -> None:
+        tmpdir, root = self._make_repo()
+        self.addCleanup(tmpdir.cleanup)
+
+        (root / "cases" / "solve").mkdir()
+        (root / "cases" / "solve" / "identity.jsonl").write_text(
+            "\n".join(
+                [
+                    json.dumps({"case_id": "solve_c128_identity_001", "dtype": "complex128"}),
+                    json.dumps({"case_id": "solve_c64_identity_002", "dtype": "complex64"}),
+                ]
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        self._write_registry(root, [])
+        self._write_ledger(
+            root,
+            [
+                {
+                    "op": "solve",
+                    "family": "identity",
+                    "note": {"path": None, "anchor": None, "status": "pending"},
+                    "db": {"status": "covered"},
+                    "unsupported_reason": None,
+                }
+            ],
+        )
+
+        with self.assertRaisesRegex(ValueError, "missing path"):
+            complex_support.validate_complex_support(
+                root,
+                spec_index=self._spec_index(
+                    ("solve", "identity", ("float64", "complex128", "complex64"))
+                ),
+            )
+
+    def test_validate_complex_support_rejects_pending_note_when_db_is_covered(self) -> None:
+        tmpdir, root = self._make_repo()
+        self.addCleanup(tmpdir.cleanup)
+
+        (root / "docs" / "math" / "solve.md").write_text(
+            "# Solve\n\n<a id=\"family-identity\"></a>\n",
+            encoding="utf-8",
+        )
+        (root / "cases" / "solve").mkdir()
+        (root / "cases" / "solve" / "identity.jsonl").write_text(
+            "\n".join(
+                [
+                    json.dumps({"case_id": "solve_c128_identity_001", "dtype": "complex128"}),
+                    json.dumps({"case_id": "solve_c64_identity_002", "dtype": "complex64"}),
+                ]
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        self._write_registry(
+            root,
+            [
+                {
+                    "op": "solve",
+                    "family": "identity",
+                    "note_path": "docs/math/solve.md",
+                    "anchor": "family-identity",
+                }
+            ],
+        )
+        self._write_ledger(
+            root,
+            [
+                {
+                    "op": "solve",
+                    "family": "identity",
+                    "note": {
+                        "path": "docs/math/solve.md",
+                        "anchor": "family-identity",
+                        "status": "pending",
+                    },
+                    "db": {"status": "covered"},
+                    "unsupported_reason": None,
+                }
+            ],
+        )
+
+        with self.assertRaisesRegex(ValueError, "covered db entry requires completed note"):
             complex_support.validate_complex_support(
                 root,
                 spec_index=self._spec_index(

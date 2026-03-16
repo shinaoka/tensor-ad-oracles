@@ -131,6 +131,9 @@ def validate_complex_support(
         }
         published = set(published_complex.get(key, ()))
 
+        if db_status == "covered" and note_status == "pending":
+            raise ValueError(f"covered db entry requires completed note for {op}/{family}")
+
         if db_status == "covered":
             missing = sorted(expected_complex - published)
             if missing:
@@ -140,6 +143,10 @@ def validate_complex_support(
         elif db_status == "unsupported":
             if not isinstance(unsupported_reason, str) or not unsupported_reason.strip():
                 raise ValueError(f"unsupported_reason required for {op}/{family}")
+            if expected_complex or published:
+                raise ValueError(
+                    f"unsupported entry conflicts with complex support for {op}/{family}"
+                )
         else:
             if unsupported_reason not in (None, ""):
                 raise ValueError(f"pending db entry must not set unsupported_reason for {op}/{family}")
