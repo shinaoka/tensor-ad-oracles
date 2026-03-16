@@ -69,6 +69,7 @@ uv run python -m generators.pytorch_v1 --materialize solve --family identity --l
 uv run python -m generators.pytorch_v1 --materialize-all --limit 1
 uv run python -m unittest tests.test_db_replay -v
 uv run python scripts/check_math_registry.py
+uv run python scripts/check_complex_support.py
 uv run python scripts/validate_schema.py
 uv run python scripts/verify_cases.py
 uv run python scripts/check_replay.py
@@ -76,6 +77,7 @@ uv run python scripts/check_regeneration.py
 uv run python scripts/check_tolerances.py
 uv run python scripts/check_upstream_ad_tolerances.py
 uv run python scripts/report_upstream_publish_coverage.py
+uv run python scripts/report_complex_support.py
 ```
 
 Repository-managed environment files:
@@ -95,6 +97,8 @@ The mathematical AD notes live under `docs/math/`.
 - `docs/math/index.md` is the note corpus entrypoint
 - `docs/math/registry.json` is the central mapping from published `(op, family)`
   DB families to note locations
+- `docs/math/complex-support.json` is the machine-readable complex capability
+  ledger for the published `(op, family)` surface
 
 `docs/math/*.md` is the mathematical source of truth for known operator rules in
 this repository. The note corpus is maintained as a non-lossy migration target
@@ -116,6 +120,18 @@ valid note target:
 
 ```bash
 uv run python scripts/check_math_registry.py
+```
+
+Use the complex-support ledger to track whether each published family is:
+
+- complex-note reviewed
+- complex-DB covered
+- explicitly unsupported for complex with a recorded reason
+
+Validate the ledger with:
+
+```bash
+uv run python scripts/check_complex_support.py
 ```
 
 ## What Counts As a Case
@@ -167,6 +183,7 @@ Version 1 uses the same AD-relevant case families as PyTorch. Each case stores u
 Publish-surface coverage against the pinned PyTorch upstream inventory is tracked in:
 
 - `docs/generated/pytorch-upstream-publish-coverage.md`
+- `docs/generated/complex-support.md`
 
 ## Repository Layout
 

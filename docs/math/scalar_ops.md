@@ -26,6 +26,16 @@ For real-valued losses:
 - real inputs project complex intermediates back to the real domain
   (`handle_r_to_c`)
 
+## Current Complex Support Boundary
+
+This note groups both complex-capable wrappers and wrappers that remain
+float-only in the pinned PyTorch upstream AD coverage.
+
+For this repository phase, families that are still float-only in the pinned
+PyTorch upstream AD coverage are tracked as explicitly unsupported for complex
+in `docs/math/complex-support.json` rather than being promoted to repo-specific
+complex extensions.
+
 ## Scalar Basis Rules
 
 Let `g` be the output cotangent, `x` the primal input, and `y = f(x)` the
