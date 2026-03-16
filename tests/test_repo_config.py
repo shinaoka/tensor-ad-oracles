@@ -30,6 +30,8 @@ class RepoConfigTests(unittest.TestCase):
         self.assertIn("uv run python -m unittest", readme)
         self.assertIn("uv run python -m generators.pytorch_v1 --list", readme)
         self.assertIn("uv run python scripts/check_math_registry.py", readme)
+        self.assertIn("uv run python scripts/check_complex_support.py", readme)
+        self.assertIn("uv run python scripts/report_complex_support.py", readme)
         self.assertIn("uv run python scripts/check_upstream_ad_tolerances.py", readme)
 
     def test_readme_documents_structured_input_semantics(self) -> None:
@@ -53,6 +55,7 @@ class RepoConfigTests(unittest.TestCase):
         readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
 
         self.assertIn("docs/math/complex-support.json", readme)
+        self.assertIn("docs/generated/complex-support.md", readme)
 
     def test_readme_documents_pages_deployment(self) -> None:
         readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
@@ -101,6 +104,7 @@ class RepoConfigTests(unittest.TestCase):
         ).read_text(encoding="utf-8")
 
         self.assertIn("uv run python scripts/check_math_registry.py", workflow)
+        self.assertIn("uv run python scripts/check_complex_support.py", workflow)
         self.assertIn("uv run python scripts/check_tolerances.py", workflow)
         self.assertIn("uv run python scripts/check_upstream_ad_tolerances.py", workflow)
 

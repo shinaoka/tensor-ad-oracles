@@ -69,6 +69,7 @@ uv run python -m generators.pytorch_v1 --materialize solve --family identity --l
 uv run python -m generators.pytorch_v1 --materialize-all --limit 1
 uv run python -m unittest tests.test_db_replay -v
 uv run python scripts/check_math_registry.py
+uv run python scripts/check_complex_support.py
 uv run python scripts/validate_schema.py
 uv run python scripts/verify_cases.py
 uv run python scripts/check_replay.py
@@ -76,6 +77,7 @@ uv run python scripts/check_regeneration.py
 uv run python scripts/check_tolerances.py
 uv run python scripts/check_upstream_ad_tolerances.py
 uv run python scripts/report_upstream_publish_coverage.py
+uv run python scripts/report_complex_support.py
 ```
 
 Repository-managed environment files:
@@ -126,6 +128,12 @@ Use the complex-support ledger to track whether each published family is:
 - complex-DB covered
 - explicitly unsupported for complex with a recorded reason
 
+Validate the ledger with:
+
+```bash
+uv run python scripts/check_complex_support.py
+```
+
 ## What Counts As a Case
 
 A case is defined by:
@@ -175,6 +183,7 @@ Version 1 uses the same AD-relevant case families as PyTorch. Each case stores u
 Publish-surface coverage against the pinned PyTorch upstream inventory is tracked in:
 
 - `docs/generated/pytorch-upstream-publish-coverage.md`
+- `docs/generated/complex-support.md`
 
 ## Repository Layout
 
