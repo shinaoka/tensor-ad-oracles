@@ -336,6 +336,14 @@ class MathRegistryTests(unittest.TestCase):
         self.assertIn("powi", text)
         self.assertIn("Tensor-Composite Rules", text)
 
+    def test_repo_scalar_ops_note_marks_float_only_upstream_boundary(self) -> None:
+        text = (
+            Path(__file__).resolve().parents[1] / "docs" / "math" / "scalar_ops.md"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn("float-only in the pinned PyTorch upstream AD coverage", text)
+        self.assertIn("docs/math/complex-support.json", text)
+
     def test_repo_eig_and_eigen_notes_are_distinct(self) -> None:
         note_dir = Path(__file__).resolve().parents[1] / "docs" / "math"
         eig_text = (note_dir / "eig.md").read_text(encoding="utf-8")
