@@ -4,8 +4,8 @@ Generated from the checked-in complex-support ledger and the published `cases/` 
 
 ## Summary
 
-- Total tracked families: 176
-- Ready for downstream: 103
+- Total tracked families: 177
+- Ready for downstream: 104
 - Unsupported: 73
 - Pending note review: 0
 - Pending DB coverage: 0
@@ -89,6 +89,7 @@ Generated from the checked-in complex-support ledger and the published `cases/` 
 | lu_factor | identity | not_required | covered | complex128, complex64 | - | yes |
 | lu_factor_ex | identity | not_required | covered | complex128, complex64 | - | yes |
 | lu_solve | identity | not_required | covered | complex128, complex64 | - | yes |
+| matrix_exp | identity | reviewed | covered | complex128, complex64 | - | yes |
 | matrix_norm | identity | not_required | covered | complex128, complex64 | - | yes |
 | matrix_power | identity | reviewed | covered | complex128, complex64 | - | yes |
 | max_binary | identity | not_required | unsupported | - | float-only in pinned PyTorch upstream AD coverage | no |
@@ -247,6 +248,7 @@ Generated from the checked-in complex-support ledger and the published `cases/` 
 | lu_factor | identity | not_required | covered | complex128, complex64 | - | yes |
 | lu_factor_ex | identity | not_required | covered | complex128, complex64 | - | yes |
 | lu_solve | identity | not_required | covered | complex128, complex64 | - | yes |
+| matrix_exp | identity | reviewed | covered | complex128, complex64 | - | yes |
 | matrix_norm | identity | not_required | covered | complex128, complex64 | - | yes |
 | matrix_power | identity | reviewed | covered | complex128, complex64 | - | yes |
 | mean | identity | reviewed | covered | complex128, complex64 | - | yes |

@@ -202,7 +202,7 @@ def _find_candidate_samples(
 
 
 def _prepare_samples_for_spec_dtype(torch, spec, *, dtype_name: str) -> list[PreparedSample]:
-    if getattr(spec, "inventory_kind", "linalg") == "scalar":
+    if getattr(spec, "inventory_kind", "linalg") in ("scalar", "cmi_linalg"):
         _, runtime_source = import_scalar_generation_runtime()
     else:
         _, runtime_source = import_generation_runtime()
@@ -249,7 +249,7 @@ def _replay_success_case_for_sample(
     input_names = tuple(inputs.keys())
     first_order = _first_order_comparison(comparison)
     second_order = _second_order_comparison(comparison)
-    if getattr(spec, "inventory_kind", "linalg") == "scalar":
+    if getattr(spec, "inventory_kind", "linalg") in ("scalar", "cmi_linalg"):
         _, runtime_source = import_scalar_generation_runtime()
     else:
         _, runtime_source = import_generation_runtime()

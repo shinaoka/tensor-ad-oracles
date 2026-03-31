@@ -348,8 +348,32 @@ def _build_scalar_case_specs() -> tuple[CaseFamilySpec, ...]:
     return tuple(specs)
 
 
+def _build_cmi_linalg_case_specs() -> tuple[CaseFamilySpec, ...]:
+    """Case specs for linalg ops whose OpInfo lives in common_methods_invocations."""
+    return (
+        CaseFamilySpec(
+            op="matrix_exp",
+            family="identity",
+            observable_kind="identity",
+            expected_behavior="success",
+            source_file="torch/testing/_internal/common_methods_invocations.py",
+            source_function="sample_inputs_matrix_exp",
+            upstream_name="matrix_exp",
+            upstream_variant_name="",
+            hvp_enabled=True,
+            inventory_kind="cmi_linalg",
+            supported_dtype_names=("float64", "complex128", "float32", "complex64"),
+        ),
+    )
+
+
 def _build_case_specs() -> tuple[CaseFamilySpec, ...]:
-    return _build_success_case_specs() + _build_error_case_specs() + _build_scalar_case_specs()
+    return (
+        _build_success_case_specs()
+        + _build_error_case_specs()
+        + _build_cmi_linalg_case_specs()
+        + _build_scalar_case_specs()
+    )
 
 @lru_cache(maxsize=1)
 def _case_specs_cached() -> tuple[CaseFamilySpec, ...]:
@@ -578,7 +602,7 @@ def _is_skippable_hvp_runtime_error(exc: RuntimeError) -> bool:
 
 
 def _resolve_runtime_for_spec(spec: CaseFamilySpec):
-    if spec.inventory_kind == "scalar":
+    if spec.inventory_kind in ("scalar", "cmi_linalg"):
         return import_scalar_generation_runtime()
     return import_generation_runtime()
 

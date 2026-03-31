@@ -9,7 +9,7 @@ and the checked-in `cases/` tree.
 - AD-relevant scalar upstream variants: 138
 - Mapped publishable success families: 174
 - Explicit publishable error families: 2
-- Total tracked DB families: 176
+- Total tracked DB families: 177
 
 ## Publishable Family Coverage
 
@@ -93,6 +93,7 @@ publishable upstream coverage that is not yet materialized in this repository.
 | lu_factor | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | lu_factor_ex | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | lu_solve | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
+| matrix_exp | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | matrix_norm | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | matrix_power | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | max_binary | identity | success | float64, float32 | float64, float32 | - |
