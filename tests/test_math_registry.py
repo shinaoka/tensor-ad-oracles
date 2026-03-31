@@ -356,12 +356,12 @@ class MathRegistryTests(unittest.TestCase):
 
         self.assertEqual({"op-abs", "op-add", "op-sum", "op-var"} - anchors, set())
 
-    def test_repo_matrix_exp_note_marks_db_status(self) -> None:
+    def test_repo_matrix_exp_note_has_db_family(self) -> None:
         text = (
             Path(__file__).resolve().parents[1] / "docs" / "math" / "matrix_exp.md"
         ).read_text(encoding="utf-8")
 
-        self.assertIn("not yet materialized", text)
+        self.assertIn("family-identity", text)
 
     def test_repo_registry_contains_representative_family_mappings(self) -> None:
         root = Path(__file__).resolve().parents[1]

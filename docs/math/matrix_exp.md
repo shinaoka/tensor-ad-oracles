@@ -89,7 +89,9 @@ PyTorch factors this pattern through the helper
 2. A. H. Al-Mohy and N. J. Higham, "Computing the Frechet Derivative of the
    Matrix Exponential," 2009.
 
-## DB Status
+## DB Families
 
-`matrix_exp` is documented here as a known rule, but it is **not yet materialized**
-in the current published `cases/` tree.
+<a id="family-identity"></a>
+### `matrix_exp/identity`
+
+The DB publishes the matrix exponential output directly.

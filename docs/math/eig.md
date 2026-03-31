@@ -167,3 +167,37 @@ column-wise phase ambiguity of raw eigenvectors.
 ### `eigvals/identity`
 
 The eigenvalue-only family reuses the diagonal part of the same differential.
+
+## Complex Oracle Strategy
+
+### Phase ambiguity resolution
+
+The `values_vectors_abs` observable publishes eigenvalues together with
+`abs(eigenvectors)`. Raw eigenvectors are defined only up to per-column complex
+phase $V \mapsto V \operatorname{diag}(e^{i\phi_k})$. Taking the element-wise
+absolute value collapses this gauge freedom into a well-defined observable whose
+AD is unambiguous.
+
+### Real-to-complex output handling
+
+For real input matrices ($A \in \mathbb{R}^{N \times N}$), PyTorch's
+`linalg.eig` returns complex-valued eigenvalues and eigenvectors. The forward
+rule operates in the complex domain; the reverse rule projects the cotangent
+back to the real domain via $\bar{A} \leftarrow \operatorname{Re}(\bar{A})$
+(`handle_r_to_c`). The oracle DB includes float32 and float64 cases that
+exercise this path.
+
+### Complex-input coverage
+
+The oracle DB includes complex64 and complex128 input cases. For complex inputs
+the full complex formula applies: the normalization correction uses
+$\operatorname{Re}(V^\dagger \dot{V}_{\mathrm{raw}})$, the reverse rule uses
+$V^{-\dagger} G V^\dagger$, and the gauge invariance check verifies
+$\operatorname{Im}(\operatorname{diag}(V^\dagger \bar{V})) = 0$.
+
+### Future considerations
+
+If downstream `tenferro-rs` requires a different observable representation
+(sorted eigenvalues, a different gauge-fixing convention, or separate real/imaginary
+parts), a new DB family can be added alongside `values_vectors_abs` without
+breaking the existing contract.
