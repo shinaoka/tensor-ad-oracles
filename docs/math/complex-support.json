@@ -1,0 +1,2293 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "op": "__radd__",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-__radd__",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "__rdiv__",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-__rdiv__",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "__rmod__",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "__rmul__",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-__rmul__",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "__rpow__",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-__rpow__",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "__rsub__",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-__rsub__",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "abs",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-abs",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "acos",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-acos",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "acosh",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-acosh",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "add",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-add",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "amax",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "amin",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "angle",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-angle",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "asin",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-asin",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "asinh",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-asinh",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "atan",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-atan",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "atan2",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "atanh",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-atanh",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "cdouble",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-cdouble",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "ceil",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "cholesky",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/cholesky.md",
+        "anchor": "family-cholesky-identity",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "cholesky_ex",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "clamp_max",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "clamp_min",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "complex",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "cond",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "conj",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-conj",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "conj_physical",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-conj_physical",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "copysign",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "cos",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-cos",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "cosh",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-cosh",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "cross",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-cross",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "deg2rad",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "det",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/det.md",
+        "anchor": "family-det-identity",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "diagonal",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-diagonal",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "digamma",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "div_no_rounding_mode",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-div_no_rounding_mode",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "double",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-double",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "eig",
+      "family": "values_vectors_abs",
+      "note": {
+        "path": "docs/math/eig.md",
+        "anchor": "family-values-vectors-abs",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "eigh",
+      "family": "gauge_ill_defined",
+      "note": {
+        "path": "docs/math/eigen.md",
+        "anchor": "family-gauge-ill-defined",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "eigh",
+      "family": "values_vectors_abs",
+      "note": {
+        "path": "docs/math/eigen.md",
+        "anchor": "family-values-vectors-abs",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "eigvals",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "eigvalsh",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "erf",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "erfc",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "erfinv",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "exp",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-exp",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "exp2",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-exp2",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "expm1",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-expm1",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "fill",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-fill",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "float_power",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-float_power",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "floor",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "fmax",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "fmin",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "frac",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "frexp",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "householder_product",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-householder_product",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "hypot",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "i0",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "imag",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-imag",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "inv",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/inv.md",
+        "anchor": "family-inv-identity",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "inv_ex",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "ldexp",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-ldexp",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "lgamma",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "log",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-log",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "log10",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-log10",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "log1p",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-log1p",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "log2",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-log2",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "logaddexp",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-logaddexp",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "logit",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "lstsq_grad_oriented",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/lstsq.md",
+        "anchor": "family-lstsq-grad-oriented-identity",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "lu",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/lu.md",
+        "anchor": "family-lu-identity",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "lu_factor",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "lu_factor_ex",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "lu_solve",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "matrix_norm",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "matrix_power",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-matrix_power",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "max_binary",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "maximum",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "mean",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-mean",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "min_binary",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "minimum",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "mul",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-mul",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "multi_dot",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-multi_dot",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "mvlgamma_mvlgamma_p_1",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "mvlgamma_mvlgamma_p_3",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "mvlgamma_mvlgamma_p_5",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "nan_to_num",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "nanmean",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "nansum",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "neg",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-neg",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "nn_functional_celu",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "nn_functional_elu",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "nn_functional_hardshrink",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "nn_functional_hardsigmoid",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "nn_functional_hardtanh",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "nn_functional_logsigmoid",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "nn_functional_mish",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "nn_functional_prelu",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "nn_functional_relu",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "nn_functional_relu6",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "nn_functional_rrelu",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "nn_functional_selu",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "nn_functional_silu",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "nn_functional_softplus",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "nn_functional_softshrink",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "nn_functional_softsign",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-nn_functional_softsign",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "nn_functional_tanhshrink",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-nn_functional_tanhshrink",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "nn_functional_threshold",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "norm",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/norm.md",
+        "anchor": "family-norm-identity",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "pinv",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/pinv.md",
+        "anchor": "family-pinv-identity",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "pinv_hermitian",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "pinv_singular",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "polar",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "polygamma_polygamma_n_0",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "polygamma_polygamma_n_1",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "polygamma_polygamma_n_2",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "polygamma_polygamma_n_3",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "polygamma_polygamma_n_4",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "positive",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-positive",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "pow",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-pow",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "prod",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-prod",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "qr",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/qr.md",
+        "anchor": "family-identity",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "rad2deg",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "real",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-real",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "reciprocal",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-reciprocal",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "round",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "round_decimals_0",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "round_decimals_3",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "round_decimals_neg_3",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "rsqrt",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-rsqrt",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "rsub",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-rsub",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "sgn",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-sgn",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "sigmoid",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-sigmoid",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "sign",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "sin",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-sin",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "sinc",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-sinc",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "sinh",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-sinh",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "slogdet",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/det.md",
+        "anchor": "family-slogdet-identity",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "solve",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/solve.md",
+        "anchor": "family-solve-identity",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "solve_ex",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "solve_triangular",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/solve.md",
+        "anchor": "family-solve-triangular-identity",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "special_entr",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "special_erfcx",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "special_i0e",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "special_i1",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "special_i1e",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "special_log_ndtr",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "special_ndtr",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "special_ndtri",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "special_polygamma_special_polygamma_n_0",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "special_xlog1py",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "sqrt",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-sqrt",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "square",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-square",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "std",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-std",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "std_unbiased",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-std_unbiased",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "sub",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-sub",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "sum",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-sum",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "svd",
+      "family": "gauge_ill_defined",
+      "note": {
+        "path": "docs/math/svd.md",
+        "anchor": "family-gauge-ill-defined",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "svd",
+      "family": "s",
+      "note": {
+        "path": "docs/math/svd.md",
+        "anchor": "family-s",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "svd",
+      "family": "u_abs",
+      "note": {
+        "path": "docs/math/svd.md",
+        "anchor": "family-u-abs",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "svd",
+      "family": "uvh_product",
+      "note": {
+        "path": "docs/math/svd.md",
+        "anchor": "family-uvh-product",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "svd",
+      "family": "vh_abs",
+      "note": {
+        "path": "docs/math/svd.md",
+        "anchor": "family-vh-abs",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "svdvals",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "tan",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-tan",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "tanh",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-tanh",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "tensorinv",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/inv.md",
+        "anchor": "family-tensorinv-identity",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "tensorsolve",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/solve.md",
+        "anchor": "family-tensorsolve-identity",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "true_divide",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-true_divide",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "trunc",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "vander",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-vander",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "var",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-var",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "var_unbiased",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-var_unbiased",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "vecdot",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/scalar_ops.md",
+        "anchor": "op-vecdot",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "vector_norm",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "xlogy",
+      "family": "identity",
+      "note": {
+        "path": null,
+        "anchor": null,
+        "status": "not_required"
+      },
+      "db": {
+        "status": "unsupported"
+      },
+      "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    }
+  ]
+}

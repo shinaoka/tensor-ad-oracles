@@ -5,6 +5,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from scripts import (
+    check_complex_support,
     check_docs_site,
     check_math_registry,
     check_regeneration,
@@ -336,6 +337,83 @@ class CheckMathRegistryScriptTests(unittest.TestCase):
             with patch.object(check_math_registry, "REPO_ROOT", root):
                 with self.assertRaisesRegex(SystemExit, "missing registry entries"):
                     check_math_registry.main()
+
+
+class CheckComplexSupportScriptTests(unittest.TestCase):
+    def test_main_reports_success_for_valid_repo(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            (root / "docs" / "math").mkdir(parents=True)
+            (root / "cases" / "solve").mkdir(parents=True)
+            (root / "docs" / "math" / "solve.md").write_text(
+                "<a id=\"family-identity\"></a>\n",
+                encoding="utf-8",
+            )
+            (root / "docs" / "math" / "registry.json").write_text(
+                json.dumps(
+                    {
+                        "version": 1,
+                        "entries": [
+                            {
+                                "op": "solve",
+                                "family": "identity",
+                                "note_path": "docs/math/solve.md",
+                                "anchor": "family-identity",
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            (root / "docs" / "math" / "complex-support.json").write_text(
+                json.dumps(
+                    {
+                        "version": 1,
+                        "entries": [
+                            {
+                                "op": "solve",
+                                "family": "identity",
+                                "note": {
+                                    "path": "docs/math/solve.md",
+                                    "anchor": "family-identity",
+                                    "status": "reviewed",
+                                },
+                                "db": {"status": "covered"},
+                                "unsupported_reason": None,
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            (root / "cases" / "solve" / "identity.jsonl").write_text(
+                "\n".join(
+                    [
+                        json.dumps({"case_id": "solve_c128_identity_001", "dtype": "complex128"}),
+                        json.dumps({"case_id": "solve_c64_identity_002", "dtype": "complex64"}),
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            with patch.object(check_complex_support, "REPO_ROOT", root):
+                with patch.object(
+                    check_complex_support,
+                    "_default_spec_index",
+                    return_value={
+                        ("solve", "identity"): type(
+                            "StubSpec",
+                            (),
+                            {
+                                "op": "solve",
+                                "family": "identity",
+                                "supported_dtype_names": ("float64", "complex128", "complex64"),
+                            },
+                        )()
+                    },
+                ):
+                    self.assertEqual(check_complex_support.main(), 0)
 
 
 class CheckDocsSiteScriptTests(unittest.TestCase):
