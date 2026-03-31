@@ -990,6 +990,19 @@
       "unsupported_reason": null
     },
     {
+      "op": "matrix_exp",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/matrix_exp.md",
+        "anchor": "family-identity",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
       "op": "matrix_power",
       "family": "identity",
       "note": {
