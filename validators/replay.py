@@ -143,6 +143,74 @@ def _simple_jax_raw_output_function(op: str, input_name: str, *, family: str):
     raise ValueError(f"unsupported JAX-backed family for replay: {op}/{family}")
 
 
+def _simple_torch_observable(op: str, input_name: str):
+    import torch
+
+    if op == "abs":
+        return lambda x: torch.abs(x)
+    if op == "exp":
+        return lambda x: torch.exp(x)
+    raise ValueError(f"unsupported JAX-backed family for replay: {op}/identity")
+
+
+def _replay_simple_success_case(record: dict) -> None:
+    import torch
+
+    if (record["op"], record["family"]) not in {("abs", "identity"), ("exp", "identity")}:
+        raise ValueError(f"unsupported JAX-backed family for replay: {record['op']}/{record['family']}")
+
+    inputs = _decode_record_inputs(record)
+    input_name = next(iter(inputs))
+    direction = decode_tensor_map(record["probes"][0]["direction"])
+    cotangent = decode_tensor_map(record["probes"][0]["cotangent"])
+    stored_pytorch_jvp = decode_tensor_map(record["probes"][0]["pytorch_ref"]["jvp"])
+    stored_pytorch_vjp = decode_tensor_map(record["probes"][0]["pytorch_ref"]["vjp"])
+    stored_fd_jvp = decode_tensor_map(record["probes"][0]["fd_ref"]["jvp"])
+    fd_step = float(record["probes"][0]["fd_ref"]["step"])
+    first_order = _first_order_comparison(record["comparison"])
+
+    observable = _simple_torch_observable(record["op"], input_name)
+    output = observable(inputs[input_name])
+    _, jvp_tuple = torch.func.jvp(observable, (inputs[input_name],), (direction[input_name],))
+    pytorch_jvp = {"value": jvp_tuple}
+    pytorch_vjp = {
+        input_name: torch.autograd.grad(
+            output,
+            inputs[input_name],
+            grad_outputs=cotangent["value"],
+            allow_unused=False,
+        )[0]
+    }
+    plus_output = observable(inputs[input_name] + fd_step * direction[input_name])
+    minus_output = observable(inputs[input_name] - fd_step * direction[input_name])
+    fd_jvp = {"value": (plus_output - minus_output) / (2.0 * fd_step)}
+
+    if not map_allclose(
+        torch,
+        stored_pytorch_jvp,
+        pytorch_jvp,
+        rtol=first_order["rtol"],
+        atol=first_order["atol"],
+    ):
+        raise ValueError("stored and replayed PyTorch JVP disagree")
+    if not map_allclose(
+        torch,
+        stored_pytorch_vjp,
+        pytorch_vjp,
+        rtol=first_order["rtol"],
+        atol=first_order["atol"],
+    ):
+        raise ValueError("stored and replayed PyTorch VJP disagree")
+    if not map_allclose(
+        torch,
+        stored_fd_jvp,
+        fd_jvp,
+        rtol=first_order["rtol"],
+        atol=first_order["atol"],
+    ):
+        raise ValueError("stored and replayed FD-JVP disagree")
+
+
 def _decode_success_probe(record: dict) -> tuple[dict[str, object], dict[str, object], dict[str, object], dict[str, object], float]:
     probe = record["probes"][0]
     return (
@@ -454,6 +522,8 @@ def _replay_success_case_for_sample(
 
 
 def _replay_jax_success_case(record: dict) -> None:
+    _replay_simple_success_case(record)
+
     jax_ref = record["probes"][0]["jax_ref"]
     if (record["op"], record["family"]) not in {("abs", "identity"), ("exp", "identity")}:
         raise ValueError(f"unsupported JAX-backed family for replay: {record['op']}/{record['family']}")

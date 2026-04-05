@@ -263,6 +263,58 @@ class DbReplayTests(unittest.TestCase):
             self.assertEqual(len(result.failures), 1)
             self.assertRegex(result.failures[0], "JAX adjoint check")
 
+    def test_replay_case_file_rejects_pytorch_drift_in_jax_smoke_case(self) -> None:
+        try:
+            import jax.numpy as jnp  # noqa: F401
+        except Exception as exc:
+            self.skipTest(f"jax runtime unavailable: {exc}")
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            cases_root = Path(tmpdir)
+            from generators import jax_v1
+
+            generated = jax_v1.materialize_case_family(
+                "abs",
+                "identity",
+                limit=1,
+                cases_root=cases_root,
+            )
+            record = json.loads(generated.read_text(encoding="utf-8").splitlines()[0])
+            record["probes"][0]["pytorch_ref"]["jvp"]["value"]["data"][0] += 1.0
+            generated.write_text(json.dumps(record, sort_keys=True) + "\n", encoding="utf-8")
+
+            result = replay.replay_case_file(generated)
+
+            self.assertEqual(result.checked, 0)
+            self.assertEqual(len(result.failures), 1)
+            self.assertRegex(result.failures[0], "PyTorch JVP")
+
+    def test_replay_case_file_rejects_fd_drift_in_jax_smoke_case(self) -> None:
+        try:
+            import jax.numpy as jnp  # noqa: F401
+        except Exception as exc:
+            self.skipTest(f"jax runtime unavailable: {exc}")
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            cases_root = Path(tmpdir)
+            from generators import jax_v1
+
+            generated = jax_v1.materialize_case_family(
+                "exp",
+                "identity",
+                limit=1,
+                cases_root=cases_root,
+            )
+            record = json.loads(generated.read_text(encoding="utf-8").splitlines()[0])
+            record["probes"][0]["fd_ref"]["jvp"]["value"]["data"][0] += 1.0
+            generated.write_text(json.dumps(record, sort_keys=True) + "\n", encoding="utf-8")
+
+            result = replay.replay_case_file(generated)
+
+            self.assertEqual(result.checked, 0)
+            self.assertEqual(len(result.failures), 1)
+            self.assertRegex(result.failures[0], "FD-JVP")
+
     def test_replay_case_file_reuses_sample_inputs_for_same_spec_and_dtype(self) -> None:
         try:
             import expecttest  # noqa: F401
