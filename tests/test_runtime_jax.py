@@ -59,29 +59,45 @@ class RuntimeJaxTests(unittest.TestCase):
         self.assertEqual(jvp["value"].tolist(), [12.0])
         self.assertEqual(vjp["x"].tolist(), [20.0])
 
-    def test_compute_jax_linearization_transpose_and_adjoint_check(self) -> None:
+    def test_compute_jax_linearization_returns_directional_output(self) -> None:
         try:
             import jax.numpy as jnp
         except Exception as exc:
             self.skipTest(f"jax runtime unavailable: {exc}")
 
         def raw_output_fn(inputs):
-            return {"value": inputs["x"] ** 3}
+            return {"value": jnp.abs(inputs["x"])}
+
+        inputs = {"x": jnp.array([3.0])}
+        direction = {"x": jnp.array([1.0])}
+
+        linearization, _ = runtime_jax.compute_jax_linearization(
+            raw_output_fn,
+            inputs,
+            direction,
+        )
+
+        self.assertEqual(linearization["value"].tolist(), [1.0])
+
+    def test_compute_jax_transpose_and_adjoint_check(self) -> None:
+        try:
+            import jax.numpy as jnp
+        except Exception as exc:
+            self.skipTest(f"jax runtime unavailable: {exc}")
+
+        def linear_fn(tangent):
+            return {"value": tangent["x"] * 12.0}
 
         inputs = {"x": jnp.array([2.0])}
-        direction = {"x": jnp.array([3.0])}
         cotangent = {"value": jnp.array([5.0])}
+        direction = {"x": jnp.array([3.0])}
 
-        raw_output, linear_fn = runtime_jax.compute_jax_linearization(raw_output_fn, inputs)
         transpose = runtime_jax.compute_jax_transpose(linear_fn, inputs, cotangent)
-        jvp = linear_fn(direction)
         adjoint_check = runtime_jax.compute_jax_adjoint_check(
-            runtime_jax.tensor_map_inner_product(cotangent, jvp),
+            runtime_jax.tensor_map_inner_product(cotangent, linear_fn(direction)),
             runtime_jax.tensor_map_inner_product(transpose, direction),
         )
 
-        self.assertEqual(raw_output["value"].tolist(), [8.0])
-        self.assertEqual(jvp["value"].tolist(), [36.0])
         self.assertEqual(transpose["x"].tolist(), [60.0])
         self.assertEqual(adjoint_check, {"lhs": 180.0, "rhs": 180.0, "abs_err": 0.0, "rel_err": 0.0})
 

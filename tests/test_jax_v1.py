@@ -4,6 +4,7 @@ import tempfile
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
+from unittest.mock import patch
 
 from generators import jax_v1, pytorch_v1
 
@@ -26,34 +27,48 @@ class JaxV1Tests(unittest.TestCase):
         self.assertEqual(provenance["jax_version"], "0.9.1")
         self.assertEqual(provenance["jaxlib_version"], "0.9.1")
 
-    def test_main_materialize_abs_identity_writes_jax_ref_case(self) -> None:
+    def test_main_materialize_abs_identity_uses_honest_torch_and_fd_refs(self) -> None:
         try:
-            import jax  # noqa: F401
             import jax.numpy as jnp  # noqa: F401
         except Exception as exc:
             self.skipTest(f"jax runtime unavailable: {exc}")
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            with redirect_stdout(io.StringIO()):
-                exit_code = jax_v1.main(
-                    [
-                        "--materialize",
-                        "abs",
-                        "--family",
-                        "identity",
-                        "--limit",
-                        "1",
-                        "--cases-root",
-                        tmpdir,
-                    ]
-                )
+            with (
+                patch.object(
+                    jax_v1.runtime_jax,
+                    "compute_jax_jvp",
+                    return_value={"value": jnp.array([123.0])},
+                ),
+                patch.object(
+                    jax_v1.runtime_jax,
+                    "compute_jax_vjp",
+                    return_value={"x": jnp.array([456.0])},
+                ),
+            ):
+                with redirect_stdout(io.StringIO()):
+                    exit_code = jax_v1.main(
+                        [
+                            "--materialize",
+                            "abs",
+                            "--family",
+                            "identity",
+                            "--limit",
+                            "1",
+                            "--cases-root",
+                            tmpdir,
+                        ]
+                    )
 
             self.assertEqual(exit_code, 0)
             out_path = Path(tmpdir) / "abs" / "identity.jsonl"
             self.assertTrue(out_path.exists())
             record = json.loads(out_path.read_text(encoding="utf-8").splitlines()[0])
-            self.assertIn("jax_ref", record["probes"][0])
-            self.assertEqual(record["probes"][0]["jax_ref"]["provenance"]["witness_source"], "jax_test")
+            probe = record["probes"][0]
+            self.assertEqual(probe["jax_ref"]["linearization"]["value"]["data"], [1.0])
+            self.assertEqual(probe["pytorch_ref"]["jvp"]["value"]["data"], [1.0])
+            self.assertAlmostEqual(probe["fd_ref"]["jvp"]["value"]["data"][0], 1.0, places=9)
+            self.assertEqual(probe["jax_ref"]["provenance"]["witness_source"], "jax_test")
 
 
 if __name__ == "__main__":

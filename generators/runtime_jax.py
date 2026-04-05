@@ -140,9 +140,11 @@ def compute_jax_vjp(observable_fn, inputs, cotangent):
     return result
 
 
-def compute_jax_linearization(raw_output_fn, inputs):
+def compute_jax_linearization(raw_output_fn, inputs, direction):
+    """Return the raw-output-space linearization and the cached linear map."""
     jax, _ = import_generation_runtime()
-    return jax.linearize(raw_output_fn, inputs)
+    _, linear_fn = jax.linearize(raw_output_fn, inputs)
+    return linear_fn(direction), linear_fn
 
 
 def compute_jax_transpose(linear_fn, inputs, cotangent):
