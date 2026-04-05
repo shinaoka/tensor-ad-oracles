@@ -110,6 +110,14 @@ def _load_jsonl_case(path: Path, *, index: int = 0) -> dict:
     return json.loads(lines[index])
 
 
+def _load_jsonl_cases(path: Path) -> list[dict]:
+    return [
+        json.loads(line)
+        for line in path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+
+
 def _decode_tensor_map_to_jax(jnp, encoded: dict[str, dict]) -> dict[str, object]:
     return {
         name: jnp.asarray(tensor.detach().cpu().numpy()) for name, tensor in decode_tensor_map(encoded).items()
@@ -467,14 +475,14 @@ def materialize_torch_aligned_case_family(
             f"JAX v1 only has published torch-aligned source cases for: {op}/{family}"
         )
     source_path = source_case_path or _published_torch_source_case_paths()[key]
-    source_case = _load_jsonl_case(source_path)
+    source_cases = _load_jsonl_cases(source_path)
     records = [
         enrich_torch_aligned_case_record(
             spec,
             source_case,
             seed=17 + index,
         )
-        for index in range(limit)
+        for index, source_case in enumerate(source_cases[:limit])
     ]
     return write_case_records(spec, records, cases_root=cases_root)
 

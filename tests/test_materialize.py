@@ -3,8 +3,10 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from generators import pytorch_v1
+from generators import jax_v1, pytorch_v1
 from tests.test_encoding import FakeTensor
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 class MaterializeTests(unittest.TestCase):
@@ -187,6 +189,48 @@ class MaterializeTests(unittest.TestCase):
         self.assertEqual(case["probes"][0]["fd_ref"]["hvp"]["a"]["data"], [0.7, 0.8, 0.9, 1.0])
         self.assertEqual(case["observable"], {"kind": "identity"})
         self.assertEqual(case["provenance"]["comment"], "solve materialization coverage")
+
+    def test_materialize_torch_aligned_case_family_preserves_all_source_records(self) -> None:
+        try:
+            import jax.numpy as jnp  # noqa: F401
+        except Exception as exc:
+            self.skipTest(f"jax runtime unavailable: {exc}")
+
+        source_path = REPO_ROOT / "cases" / "exp" / "identity.jsonl"
+        source_records = [
+            json.loads(line)
+            for line in source_path.read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            out_path = jax_v1.materialize_torch_aligned_case_family(
+                "exp",
+                "identity",
+                limit=3,
+                cases_root=Path(tmpdir),
+                source_case_path=source_path,
+            )
+            generated_records = [
+                json.loads(line)
+                for line in out_path.read_text(encoding="utf-8").splitlines()
+                if line.strip()
+            ]
+
+        self.assertEqual(len(generated_records), 3)
+        for source_record, generated_record in zip(source_records[:3], generated_records):
+            self.assertEqual(generated_record["case_id"], source_record["case_id"])
+            self.assertEqual(generated_record["dtype"], source_record["dtype"])
+            self.assertEqual(generated_record["inputs"], source_record["inputs"])
+            self.assertEqual(
+                generated_record["probes"][0]["pytorch_ref"],
+                source_record["probes"][0]["pytorch_ref"],
+            )
+            self.assertEqual(
+                generated_record["probes"][0]["fd_ref"],
+                source_record["probes"][0]["fd_ref"],
+            )
+            self.assertIn("jax_ref", generated_record["probes"][0])
 
 
 if __name__ == "__main__":

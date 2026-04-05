@@ -1,5 +1,59 @@
 # Matrix Exponential AD Notes
 
+## Conventions
+
+Unless noted otherwise, `Linearization` and `Transpose` are written for the
+raw-output-space matrix exponential map. For complex tensors, `Transpose` means
+the adjoint under the real Frobenius inner product
+
+$$
+\langle X, Y \rangle_{\mathbb{R}} = \operatorname{Re}\operatorname{tr}(X^\dagger Y).
+$$
+
+## Forward
+
+The raw operator is
+
+$$
+A \mapsto B = \exp(A).
+$$
+
+## Linearization
+
+The raw-output-space linearization is the Fr\'echet derivative
+
+$$
+\dot{B} = L(A, \dot{A})
+= \int_0^1 \exp(sA)\,\dot{A}\,\exp((1-s)A)\,ds.
+$$
+
+## JVP
+
+The JVP is exactly the same Fr\'echet derivative applied to the tangent:
+
+$$
+\operatorname{jvp}(\operatorname{matrix\_exp})(A;\dot{A}) = L(A,\dot{A}).
+$$
+
+## Transpose
+
+For a raw output cotangent $\bar{B}$, the transpose map is
+
+$$
+\bar{A} = L(A^{\mathsf{H}}, \bar{B}).
+$$
+
+## VJP (JAX convention)
+
+JAX reads the same Fr\'echet-adjoint map as the VJP or `linear_transpose`
+result.
+
+## VJP (PyTorch convention)
+
+PyTorch uses the same raw rule through
+`differential_analytic_matrix_function`; the public VJP is the same adjoint map
+packaged through the framework's cotangent convention.
+
 ## Forward Definition
 
 $$

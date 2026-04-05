@@ -111,6 +111,11 @@ uv run python scripts/report_upstream_publish_coverage.py
 uv run python scripts/report_complex_support.py
 ```
 
+`uv run python scripts/validate_schema.py` is a repository-integrity and
+publish-time check for maintainers and CI. Downstream consumers should treat
+`schema/case.schema.json` as the contract and normally do not need to invoke
+the repository script directly.
+
 Repository-managed environment files:
 
 - `.python-version`
@@ -176,6 +181,12 @@ A case is defined by:
 - materialized inputs
 - an `observable`
 - one or more paired derivative probes
+
+Published JSONL files store materialized numeric tensor payloads directly. For
+`success` cases this includes serialized inputs, probe directions, cotangents,
+and numeric reference tensors such as `pytorch_ref`, `fd_ref`, and any present
+`jax_ref` witness payloads. Downstream readers do not need PyTorch or JAX to
+reconstruct those published numbers.
 
 The database does not require raw decomposition outputs to be the comparison target. For spectral operations, the observable may be a processed output such as `U.abs()`, `S`, `Vh.abs()`, or `U @ Vh`, following the same derivative-relevant observables used by PyTorch AD tests.
 

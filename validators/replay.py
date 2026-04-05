@@ -210,6 +210,16 @@ def _replay_simple_success_case(record: dict) -> None:
     ):
         raise ValueError("stored and replayed FD-JVP disagree")
 
+    validate_live_success_probe(
+        torch,
+        comparison=_live_cross_check_comparison(record["comparison"]),
+        direction=direction,
+        cotangent=cotangent,
+        pytorch_jvp=pytorch_jvp,
+        pytorch_vjp=pytorch_vjp,
+        fd_jvp=fd_jvp,
+    )
+
 
 def _decode_success_probe(record: dict) -> tuple[dict[str, object], dict[str, object], dict[str, object], dict[str, object], float]:
     probe = record["probes"][0]
@@ -238,6 +248,17 @@ def _first_order_comparison(comparison: dict) -> dict:
 
 def _second_order_comparison(comparison: dict) -> dict | None:
     return comparison.get("second_order")
+
+
+def _live_cross_check_comparison(comparison: dict) -> dict:
+    first_order = _first_order_comparison(comparison)
+    return {
+        "first_order": {
+            **first_order,
+            "rtol": max(float(first_order["rtol"]), 1e-8),
+            "atol": max(float(first_order["atol"]), 1e-9),
+        }
+    }
 
 
 def validate_live_success_probe(

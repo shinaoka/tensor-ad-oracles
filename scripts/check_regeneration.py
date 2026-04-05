@@ -21,6 +21,21 @@ def _relative_case_files(root: Path) -> set[Path]:
     return {path.relative_to(root) for path in root.rglob("*.jsonl")}
 
 
+def _torch_aligned_jax_overlay_families() -> tuple[tuple[str, str], ...]:
+    return (("abs", "identity"), ("exp", "identity"))
+
+
+def _overlay_torch_aligned_jax_refs(regenerated_root: Path) -> None:
+    for op, family in _torch_aligned_jax_overlay_families():
+        jax_v1.materialize_torch_aligned_case_family(
+            op,
+            family,
+            limit=None,
+            cases_root=regenerated_root,
+            source_case_path=regenerated_root / op / f"{family}.jsonl",
+        )
+
+
 def _record_tolerance(record: dict) -> tuple[float, float]:
     comparison = record.get("comparison", {})
     if comparison.get("kind") == "allclose":
@@ -192,6 +207,7 @@ def check_regeneration(cases_root: Path = CASES_ROOT) -> int:
     with tempfile.TemporaryDirectory() as tmpdir:
         regenerated_root = Path(tmpdir) / "cases"
         materialize_all_case_families(limit=None, cases_root=regenerated_root)
+        _overlay_torch_aligned_jax_refs(regenerated_root)
         compare_case_trees(cases_root, regenerated_root)
     return len(_relative_case_files(cases_root))
 

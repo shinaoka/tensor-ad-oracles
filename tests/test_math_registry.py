@@ -358,6 +358,16 @@ class MathRegistryTests(unittest.TestCase):
 
         self.assertTrue(expected.issubset({path.name for path in note_dir.glob("*.md")}))
 
+    def test_repo_math_index_describes_unified_note_model(self) -> None:
+        text = (
+            Path(__file__).resolve().parents[1] / "docs" / "math" / "index.md"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn("raw-output-space", text)
+        self.assertIn("## Unified Note Model", text)
+        self.assertIn("VJP (JAX convention)", text)
+        self.assertIn("VJP (PyTorch convention)", text)
+
     def test_repo_scalar_ops_note_exposes_representative_op_anchors(self) -> None:
         note_path = Path(__file__).resolve().parents[1] / "docs" / "math" / "scalar_ops.md"
         anchors = math_registry.extract_markdown_anchors(note_path.read_text(encoding="utf-8"))

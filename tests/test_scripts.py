@@ -256,19 +256,78 @@ class CheckRegenerationTests(unittest.TestCase):
 
     def test_main_also_checks_jax_smoke_regeneration(self) -> None:
         with patch.object(check_regeneration, "materialize_all_case_families", return_value=None):
-            with patch.object(check_regeneration, "compare_case_trees", return_value=None) as compare_case_trees:
-                self.assertEqual(check_regeneration.main(), 0)
-                self.assertEqual(compare_case_trees.call_count, 2)
+            with patch.object(check_regeneration, "_overlay_torch_aligned_jax_refs", return_value=None):
+                with patch.object(check_regeneration, "compare_case_trees", return_value=None) as compare_case_trees:
+                    self.assertEqual(check_regeneration.main(), 0)
+                    self.assertEqual(compare_case_trees.call_count, 2)
+
+    def test_check_regeneration_overlays_torch_aligned_jax_refs(self) -> None:
+        published_record = {
+            "case_id": "abs_f64_identity_001",
+            "probes": [{"probe_id": "p0"}],
+        }
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            cases_root = Path(tmpdir) / "published"
+            (cases_root / "abs").mkdir(parents=True)
+            (cases_root / "exp").mkdir(parents=True)
+            (cases_root / "abs" / "identity.jsonl").write_text(
+                json.dumps(published_record) + "\n",
+                encoding="utf-8",
+            )
+            (cases_root / "exp" / "identity.jsonl").write_text(
+                json.dumps(published_record | {"case_id": "exp_f64_identity_001"}) + "\n",
+                encoding="utf-8",
+            )
+
+            def fake_materialize_all_case_families(*, limit, cases_root):
+                del limit
+                (cases_root / "abs").mkdir(parents=True, exist_ok=True)
+                (cases_root / "exp").mkdir(parents=True, exist_ok=True)
+                (cases_root / "abs" / "identity.jsonl").write_text(
+                    json.dumps(published_record) + "\n",
+                    encoding="utf-8",
+                )
+                (cases_root / "exp" / "identity.jsonl").write_text(
+                    json.dumps(published_record | {"case_id": "exp_f64_identity_001"}) + "\n",
+                    encoding="utf-8",
+                )
+                return [
+                    cases_root / "abs" / "identity.jsonl",
+                    cases_root / "exp" / "identity.jsonl",
+                ]
+
+            with patch.object(
+                check_regeneration,
+                "materialize_all_case_families",
+                side_effect=fake_materialize_all_case_families,
+            ):
+                with patch.object(
+                    check_regeneration.jax_v1,
+                    "materialize_torch_aligned_case_family",
+                    return_value=None,
+                ) as overlay:
+                    with patch.object(check_regeneration, "compare_case_trees", return_value=None):
+                        compared = check_regeneration.check_regeneration(cases_root=cases_root)
+
+        self.assertEqual(compared, 2)
+        self.assertEqual(overlay.call_count, 2)
+        self.assertEqual(overlay.call_args_list[0].args, ("abs", "identity"))
+        self.assertEqual(overlay.call_args_list[1].args, ("exp", "identity"))
+        for call in overlay.call_args_list:
+            self.assertIsNone(call.kwargs["limit"])
+            self.assertTrue(str(call.kwargs["source_case_path"]).endswith("identity.jsonl"))
 
     def test_main_raises_when_jax_smoke_regeneration_fails(self) -> None:
         with patch.object(check_regeneration, "materialize_all_case_families", return_value=None):
-            with patch.object(
-                check_regeneration,
-                "compare_case_trees",
-                side_effect=[None, ValueError("jax smoke regeneration mismatch")],
-            ):
-                with self.assertRaisesRegex(ValueError, "jax smoke regeneration mismatch"):
-                    check_regeneration.main()
+            with patch.object(check_regeneration, "_overlay_torch_aligned_jax_refs", return_value=None):
+                with patch.object(
+                    check_regeneration,
+                    "compare_case_trees",
+                    side_effect=[None, ValueError("jax smoke regeneration mismatch")],
+                ):
+                    with self.assertRaisesRegex(ValueError, "jax smoke regeneration mismatch"):
+                        check_regeneration.main()
 
 
 class ValidateSchemaTests(unittest.TestCase):

@@ -1,5 +1,96 @@
 # General Eigen AD Notes
 
+## Conventions
+
+Unless noted otherwise, `Linearization` and `Transpose` are written for the
+raw-output-space eigendecomposition before any DB observable such as
+`values_vectors_abs` is applied. For complex tensors, `Transpose` means the
+adjoint under the real Frobenius inner product
+
+$$
+\langle X, Y \rangle_{\mathbb{R}} = \operatorname{Re}\operatorname{tr}(X^\dagger Y).
+$$
+
+## Forward
+
+The raw operator is
+
+$$
+A \mapsto (\lambda, V),
+\qquad
+A V = V \operatorname{diag}(\lambda),
+$$
+
+with simple eigenvalues.
+
+## Linearization
+
+Let
+
+$$
+\Delta P = V^{-1}\dot{A}\,V.
+$$
+
+Then
+
+$$
+\dot{\lambda}_i = (\Delta P)_{ii},
+\qquad
+Q_{ij} = \frac{(\Delta P)_{ij}}{\lambda_j - \lambda_i} \ \ (i \neq j),
+\qquad
+Q_{ii} = 0,
+$$
+
+and the normalized eigenvector tangent is
+
+$$
+\dot{V} = VQ - V\,\operatorname{diag}\!\left(\operatorname{Re}(V^\dagger VQ)\right).
+$$
+
+## JVP
+
+The JVP is exactly the linearization evaluated at $\dot{A}$, returning the raw
+pair $(\dot{\lambda}, \dot{V})$ before any observable removes gauge freedom.
+
+## Transpose
+
+For raw output cotangents $(\bar{\lambda}, \bar{V})$, define
+
+$$
+\bar{V}_{\mathrm{adj}} =
+\bar{V}
+- V \, \operatorname{diag}\!\left(\operatorname{Re}(V^\dagger \bar{V})\right),
+$$
+
+then build
+
+$$
+G = V^\dagger \bar{V}_{\mathrm{adj}},
+\qquad
+G_{ij} \leftarrow \frac{G_{ij}}{\overline{\lambda_j - \lambda_i}}
+\ \ (i \neq j),
+\qquad
+G_{ii} = \bar{\lambda}_i,
+$$
+
+and finally
+
+$$
+\bar{A} = V^{-\dagger} G V^\dagger.
+$$
+
+## VJP (JAX convention)
+
+JAX reads the same raw transpose map for the eigendecomposition outputs. If a
+downstream observable removes phase or normalization ambiguity, that observable
+is applied after the raw rule.
+
+## VJP (PyTorch convention)
+
+PyTorch uses the same raw adjoint together with the explicit normalization and
+gauge checks. For real inputs with complex outputs, the final cotangent is
+projected back to the real domain.
+
 ## Forward Definition
 
 $$

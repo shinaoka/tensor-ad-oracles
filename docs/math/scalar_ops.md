@@ -1,5 +1,130 @@
 # Scalar And Tensor Wrapper AD Notes
 
+## Conventions
+
+Unless noted otherwise, `Linearization` and `Transpose` are written for the
+raw-output-space operator before any DB observable projection. For complex
+tensors, `Transpose` means the adjoint under the real Frobenius inner product
+
+$$
+\langle X, Y \rangle_{\mathbb{R}} = \operatorname{Re}\operatorname{tr}(X^\dagger Y).
+$$
+
+## Forward
+
+This note groups raw scalar and tensor-wrapper operators of three common forms:
+
+$$
+y = f(x),
+\qquad
+y = h(x_1, x_2),
+\qquad
+y = r(x).
+$$
+
+Here `f` is a unary wrapper, `h` is a binary wrapper, and `r` is a reduction or
+small tensor composite.
+
+## Linearization
+
+Representative raw-output-space linearizations are:
+
+- unary analytic wrapper:
+
+$$
+\dot{y} = f'(x)\dot{x}
+$$
+
+- addition and subtraction:
+
+$$
+\dot{y} = \dot{x}_1 \pm \dot{x}_2
+$$
+
+- multiplication:
+
+$$
+\dot{y} = \dot{x}_1 x_2 + x_1 \dot{x}_2
+$$
+
+- quotient:
+
+$$
+\dot{y} = \frac{\dot{x}_1 x_2 - x_1 \dot{x}_2}{x_2^2}
+$$
+
+- reductions:
+
+$$
+\dot{y}_{\mathrm{sum}} = \sum_i \dot{x}_i,
+\qquad
+\dot{y}_{\mathrm{mean}} = \frac{1}{n}\sum_i \dot{x}_i
+$$
+
+The same pattern extends to `var`, `std`, and tensor composites through the
+scalar basis plus broadcast or reduction structure.
+
+## JVP
+
+The JVP is the linearization evaluated at the chosen tangent. Representative
+examples are
+
+$$
+\operatorname{jvp}(\exp)(x;\dot{x}) = \exp(x)\dot{x},
+\qquad
+\operatorname{jvp}(\mathrm{mul})(x_1, x_2;\dot{x}_1,\dot{x}_2)
+= \dot{x}_1 x_2 + x_1 \dot{x}_2.
+$$
+
+For reductions, JVP just applies the corresponding sum, averaging, or centered
+residual rule to the tangent tensor.
+
+## Transpose
+
+For a raw output cotangent $\bar{y}$, representative transpose rules are:
+
+- unary analytic wrapper:
+
+$$
+\bar{x} = \overline{f'(x)} \odot \bar{y}
+$$
+
+- addition and subtraction:
+
+$$
+(\bar{x}_1, \bar{x}_2) = (\bar{y}, \pm \bar{y})
+$$
+
+- multiplication:
+
+$$
+(\bar{x}_1, \bar{x}_2) = (\bar{y}\,\overline{x_2}, \bar{y}\,\overline{x_1})
+$$
+
+- reductions:
+
+$$
+\bar{x}_{\mathrm{sum}} = \operatorname{broadcast}(\bar{y}),
+\qquad
+\bar{x}_{\mathrm{mean}} = \frac{1}{n}\operatorname{broadcast}(\bar{y})
+$$
+
+`var` and `std` add the centered-residual correction recorded later in this
+note.
+
+## VJP (JAX convention)
+
+JAX presents the same raw transpose map as the VJP or `linear_transpose`
+result, interpreted under the real Frobenius inner product. Complex families
+therefore follow the raw adjoint formulas directly.
+
+## VJP (PyTorch convention)
+
+PyTorch uses the same raw formulas but packages them through its
+conjugate-Wirtinger convention. When a real input is embedded into complex
+intermediates, the final cotangent is projected back to the real domain via
+`handle_r_to_c`.
+
 ## Scope
 
 This note records the shared scalar AD formulas implemented in

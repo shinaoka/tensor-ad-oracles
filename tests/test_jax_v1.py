@@ -119,6 +119,29 @@ class JaxV1Tests(unittest.TestCase):
             source_case["provenance"]["source_function"],
         )
 
+    def test_main_materialize_smoke_witnesses_keep_strict_first_order_replay_tolerances(self) -> None:
+        try:
+            import jax.numpy as jnp  # noqa: F401
+        except Exception as exc:
+            self.skipTest(f"jax runtime unavailable: {exc}")
+
+        expected = {
+            "abs": {"kind": "allclose", "rtol": 1e-12, "atol": 1e-12},
+            "exp": {"kind": "allclose", "rtol": 1e-12, "atol": 1e-12},
+        }
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            with redirect_stdout(io.StringIO()):
+                exit_code = jax_v1.main(
+                    ["--materialize-all", "--limit", "1", "--cases-root", tmpdir]
+                )
+
+            self.assertEqual(exit_code, 0)
+            for op, expected_first_order in expected.items():
+                out_path = Path(tmpdir) / op / "identity.jsonl"
+                record = json.loads(out_path.read_text(encoding="utf-8").splitlines()[0])
+                self.assertEqual(record["comparison"]["first_order"], expected_first_order)
+
 
 if __name__ == "__main__":
     unittest.main()
