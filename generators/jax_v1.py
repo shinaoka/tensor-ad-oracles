@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import copy
 import json
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -67,16 +68,18 @@ def _normalize_torch_tensor_map(torch, tensor_map: dict[str, object]) -> dict[st
 
 
 def _jax_test_harness_specs() -> dict[tuple[str, str], HarnessWitnessSpec]:
+    source_file = "jax/_src/internal_test_util/test_harnesses.py"
+    source_function = "_make_unary_elementwise_harness"
     return {
         ("abs", "identity"): HarnessWitnessSpec(
-            source_file="tests/lax_numpy_test.py",
-            source_function="testAbs",
-            harness_fullname="jax/tests/lax_numpy_test.py::LaxNumpyTest.testAbs",
+            source_file=source_file,
+            source_function=source_function,
+            harness_fullname=_unary_elementwise_harness_fullname("lax.abs_p"),
         ),
         ("exp", "identity"): HarnessWitnessSpec(
-            source_file="tests/lax_numpy_test.py",
-            source_function="testExp",
-            harness_fullname="jax/tests/lax_numpy_test.py::LaxNumpyTest.testExp",
+            source_file=source_file,
+            source_function=source_function,
+            harness_fullname=_unary_elementwise_harness_fullname("lax.exp_p"),
         ),
     }
 
@@ -111,6 +114,12 @@ def _decode_tensor_map_to_jax(jnp, encoded: dict[str, dict]) -> dict[str, object
     return {
         name: jnp.asarray(tensor.detach().cpu().numpy()) for name, tensor in decode_tensor_map(encoded).items()
     }
+
+
+def _unary_elementwise_harness_fullname(prim: str, *, shape: tuple[int, ...] = (20, 20), dtype: str = "float64") -> str:
+    shape_part = ",".join(str(dim) for dim in shape)
+    raw_name = f"{prim}_shape={dtype}[{shape_part}]"
+    return re.sub(r'[ "\'\[\](){}<>=,._]+', "_", raw_name)
 
 
 def build_case_families() -> dict[str, tuple[str, ...]]:

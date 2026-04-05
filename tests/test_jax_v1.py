@@ -17,7 +17,7 @@ class JaxV1Tests(unittest.TestCase):
     def test_build_case_families_matches_pytorch_registry(self) -> None:
         self.assertEqual(jax_v1.build_case_families(), pytorch_v1.build_case_families())
 
-    def test_select_witness_source_prefers_jax_test_for_complex_sensitive_families(self) -> None:
+    def test_select_witness_source_prefers_jax_test_for_unary_elementwise_families(self) -> None:
         self.assertEqual(jax_v1.select_witness_source("abs", "identity"), "jax_test")
         self.assertEqual(
             jax_v1.select_witness_source("abs", "identity", prefer_jax_test=False),
@@ -81,10 +81,13 @@ class JaxV1Tests(unittest.TestCase):
                 rhs = float((transpose["x"] * direction["x"]).sum().item())
                 self.assertAlmostEqual(lhs, rhs, places=12)
                 self.assertEqual(probe["jax_ref"]["provenance"]["witness_source"], "jax_test")
-                self.assertEqual(record["provenance"]["source_file"], "tests/lax_numpy_test.py")
+                self.assertEqual(
+                    record["provenance"]["source_file"],
+                    "jax/_src/internal_test_util/test_harnesses.py",
+                )
                 self.assertEqual(
                     record["provenance"]["source_function"],
-                    "testAbs" if op == "abs" else "testExp",
+                    "_make_unary_elementwise_harness",
                 )
                 self.assertEqual(record["provenance"]["seed"], 17)
                 self.assertIn("harness_fullname=", record["provenance"]["comment"])
