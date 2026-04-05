@@ -31,7 +31,6 @@ class RepoConfigTests(unittest.TestCase):
         self.assertIn("uv sync --locked --all-groups", readme)
         self.assertIn("uv run python -m unittest", readme)
         self.assertIn("uv run python -m generators.pytorch_v1 --list", readme)
-        self.assertIn("uv run python -m generators.jax_v1 --list", readme)
         self.assertIn("uv run python scripts/check_math_registry.py", readme)
         self.assertIn("uv run python scripts/check_complex_support.py", readme)
         self.assertIn("uv run python scripts/report_complex_support.py", readme)
@@ -51,9 +50,8 @@ class RepoConfigTests(unittest.TestCase):
         self.assertIn("mathematical AD notes", readme)
         self.assertIn("oracle database", readme)
         self.assertIn("docs/math/registry.json", readme)
-        self.assertIn("jax_ref", readme)
-        self.assertIn("linearization", readme)
-        self.assertIn("transpose", readme)
+        self.assertIn("dual-backend", readme)
+        self.assertIn("added in later tasks", readme)
         self.assertTrue((REPO_ROOT / "docs" / "math" / "index.md").exists())
         self.assertTrue((REPO_ROOT / "docs" / "math" / "registry.json").exists())
 
@@ -87,7 +85,8 @@ class RepoConfigTests(unittest.TestCase):
         self.assertIn("torch==2.10.0", agents)
         self.assertIn("jax==0.9.1", agents)
         self.assertIn("jaxlib==0.9.1", agents)
-        self.assertIn("uv run", agents)
+        self.assertIn("The JAX generator surface is a first-class part of the repository contract.", agents)
+        self.assertIn("Run every JAX command through `uv run`", agents)
 
     def test_github_policy_files_are_present(self) -> None:
         self.assertTrue((REPO_ROOT / ".github" / "CODEOWNERS").exists())

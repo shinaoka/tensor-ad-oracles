@@ -9,8 +9,8 @@ validation:
 The repository is intentionally dual-backend:
 
 - PyTorch remains the baseline oracle source for the existing case DB
-- JAX adds a parallel witness surface for `jvp`, `vjp`, `linearization`, and
-  `transpose`
+- JAX support is being added in later tasks as a parallel generator and witness
+  surface
 
 The oracle database covers both scalar-style `OpInfo` families and linear
 algebra operations.
@@ -71,7 +71,6 @@ Typical commands:
 ```bash
 uv run python -m unittest discover -s tests -v
 uv run python -m generators.pytorch_v1 --list
-uv run python -m generators.jax_v1 --list
 uv run python -m generators.pytorch_v1 --materialize solve --family identity --limit 1
 uv run python -m generators.pytorch_v1 --materialize-all --limit 1
 uv run python -m unittest tests.test_db_replay -v
@@ -97,9 +96,9 @@ The repository requires an exact PyTorch dependency pin: `torch==2.10.0`.
 Generated provenance stores the public version string `2.10.0`, not local
 build suffixes such as `+cpu` or `+cu128`.
 
-The JAX generator surface is pinned separately with exact backend versions.
-Generated JAX provenance stores the raw witness inputs and outputs, including
-`jax_ref` payloads for `jvp`, `vjp`, `linearization`, and `transpose`.
+The planned JAX backend will use exact version pins as well; those pins are
+tracked in the repository contract now so the later generator work can rely on a
+fixed runtime.
 
 ## Math Notes
 
@@ -154,10 +153,6 @@ A case is defined by:
 - one or more paired derivative probes
 
 The database does not require raw decomposition outputs to be the comparison target. For spectral operations, the observable may be a processed output such as `U.abs()`, `S`, `Vh.abs()`, or `U @ Vh`, following the same derivative-relevant observables used by PyTorch AD tests.
-
-For JAX-backed cases, `jax_ref.linearization` and `jax_ref.transpose` are
-stored in the raw operator output space. They are not projected through the
-observable; the observable remains the DB-facing comparison target.
 
 ## Oracle Policy
 
