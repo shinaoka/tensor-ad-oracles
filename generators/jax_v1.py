@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import argparse
+import copy
 import json
 from dataclasses import dataclass
 from pathlib import Path
 
 from . import probes, pytorch_v1, runtime_jax
+from validators.encoding import decode_tensor_map
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -26,12 +28,28 @@ class SimpleWitnessSpec:
     comment: str
 
 
+@dataclass(frozen=True)
+class HarnessWitnessSpec:
+    source_file: str
+    source_function: str
+    harness_fullname: str
+
+
 def _simple_torch_observable(torch, spec: pytorch_v1.CaseFamilySpec, x):
     if spec.op == "abs":
         return torch.abs(x)
     if spec.op == "exp":
         return torch.exp(x)
     raise ValueError(f"unsupported simple JAX smoke op: {spec.op}")
+
+
+def _simple_raw_output_function(op: str, input_name: str):
+    _, jnp = runtime_jax.import_generation_runtime()
+    if op == "abs":
+        return lambda inputs: {"value": jnp.abs(inputs[input_name])}
+    if op == "exp":
+        return lambda inputs: {"value": jnp.exp(inputs[input_name])}
+    raise ValueError(f"unsupported simple JAX smoke op: {op}")
 
 
 def _encode_torch_tensor_map(torch, tensor_map: dict[str, object]) -> dict[str, dict]:
@@ -48,6 +66,53 @@ def _normalize_torch_tensor_map(torch, tensor_map: dict[str, object]) -> dict[st
     return normalized
 
 
+def _jax_test_harness_specs() -> dict[tuple[str, str], HarnessWitnessSpec]:
+    return {
+        ("abs", "identity"): HarnessWitnessSpec(
+            source_file="tests/lax_numpy_test.py",
+            source_function="testAbs",
+            harness_fullname="jax/tests/lax_numpy_test.py::LaxNumpyTest.testAbs",
+        ),
+        ("exp", "identity"): HarnessWitnessSpec(
+            source_file="tests/lax_numpy_test.py",
+            source_function="testExp",
+            harness_fullname="jax/tests/lax_numpy_test.py::LaxNumpyTest.testExp",
+        ),
+    }
+
+
+def _published_torch_source_case_paths() -> dict[tuple[str, str], Path]:
+    return {
+        ("abs", "identity"): REPO_ROOT / "cases" / "abs" / "identity.jsonl",
+        ("exp", "identity"): REPO_ROOT / "cases" / "exp" / "identity.jsonl",
+    }
+
+
+def select_witness_source(op: str, family: str, *, prefer_jax_test: bool = True) -> str:
+    """Choose the preferred witness source for one JAX v1 case family."""
+    key = (op, family)
+    if prefer_jax_test and key in _jax_test_harness_specs():
+        return "jax_test"
+    if key in _published_torch_source_case_paths():
+        return "torch_aligned"
+    if key in _jax_test_harness_specs():
+        return "jax_test"
+    raise ValueError(f"unsupported JAX witness source selection key: {op}/{family}")
+
+
+def _load_jsonl_case(path: Path, *, index: int = 0) -> dict:
+    lines = path.read_text(encoding="utf-8").splitlines()
+    if index >= len(lines):
+        raise IndexError(f"no case at line {index + 1} in {path}")
+    return json.loads(lines[index])
+
+
+def _decode_tensor_map_to_jax(jnp, encoded: dict[str, dict]) -> dict[str, object]:
+    return {
+        name: jnp.asarray(tensor.detach().cpu().numpy()) for name, tensor in decode_tensor_map(encoded).items()
+    }
+
+
 def build_case_families() -> dict[str, tuple[str, ...]]:
     """Return the fixed JAX v1 op/family registry."""
     return pytorch_v1.build_case_families()
@@ -62,14 +127,17 @@ def build_provenance(
     *,
     source_commit: str,
     seed: int,
+    source_repo: str = "jax",
+    source_file: str = "generators/jax_v1.py",
+    source_function: str = "materialize_case_family",
     comment: str | None = None,
     generator: str = "python-jax-v1",
 ) -> dict:
     """Build the common provenance block for a JAX materialized case record."""
     return {
-        "source_repo": "jax",
-        "source_file": "generators/jax_v1.py",
-        "source_function": "materialize_case_family",
+        "source_repo": source_repo,
+        "source_file": source_file,
+        "source_function": source_function,
         "source_commit": source_commit,
         "generator": generator,
         "seed": seed,
@@ -173,6 +241,10 @@ def _simple_witness_specs() -> dict[tuple[str, str], SimpleWitnessSpec]:
     }
 
 
+def _jax_test_comment(base_comment: str, harness_fullname: str) -> str:
+    return f"{base_comment}; harness_fullname={harness_fullname}"
+
+
 def _supported_materialization_keys() -> tuple[tuple[str, str], ...]:
     return tuple(_simple_witness_specs())
 
@@ -193,6 +265,9 @@ def _materialize_simple_success_case(
     *,
     seed: int,
     index: int,
+    source_file: str | None = None,
+    source_function: str | None = None,
+    harness_fullname: str | None = None,
 ) -> dict:
     jax, jnp = runtime_jax.import_generation_runtime()
     import jaxlib
@@ -293,9 +368,104 @@ def _materialize_simple_success_case(
         provenance=build_provenance(
             source_commit=runtime_jax.normalize_jax_version(jax.__version__),
             seed=seed,
-            comment=witness_spec.comment,
+            source_file=source_file or "generators/jax_v1.py",
+            source_function=source_function or "materialize_case_family",
+            comment=(
+                _jax_test_comment(witness_spec.comment, harness_fullname)
+                if harness_fullname is not None
+                else witness_spec.comment
+            ),
         ),
     )
+
+
+def enrich_torch_aligned_case_record(
+    spec: pytorch_v1.CaseFamilySpec,
+    source_case: dict,
+    *,
+    seed: int,
+) -> dict:
+    """Attach a JAX witness to a published PyTorch case without changing its inputs."""
+    jax, jnp = runtime_jax.import_generation_runtime()
+    import jaxlib
+
+    enriched = copy.deepcopy(source_case)
+
+    source_inputs = enriched["inputs"]
+    input_name = next(iter(source_inputs))
+    inputs = _decode_tensor_map_to_jax(jnp, source_inputs)
+    probe = enriched["probes"][0]
+    direction = _decode_tensor_map_to_jax(jnp, probe["direction"])
+    cotangent = _decode_tensor_map_to_jax(jnp, probe["cotangent"])
+    raw_output_function = _simple_raw_output_function(spec.op, input_name)
+    jvp = runtime_jax.compute_jax_jvp(raw_output_function, inputs, direction)
+    vjp = runtime_jax.compute_jax_vjp(raw_output_function, inputs, cotangent)
+    linearization, linear_fn = runtime_jax.compute_jax_linearization(
+        raw_output_function,
+        inputs,
+        direction,
+    )
+    transpose = runtime_jax.compute_jax_transpose(linear_fn, inputs, cotangent)
+    adjoint_check = runtime_jax.compute_jax_adjoint_check(
+        runtime_jax.tensor_map_inner_product(cotangent, jvp),
+        runtime_jax.tensor_map_inner_product(transpose, direction),
+    )
+
+    probe["jax_ref"] = {
+        "jvp": runtime_jax.encode_tensor_map(jvp),
+        "vjp": runtime_jax.encode_tensor_map(vjp),
+        "linearization": runtime_jax.encode_tensor_map(linearization),
+        "raw_output_cotangent": runtime_jax.encode_tensor_map(cotangent),
+        "transpose": runtime_jax.encode_tensor_map(transpose),
+        "adjoint_check": adjoint_check,
+        "provenance": build_jax_ref_provenance(
+            source_commit=runtime_jax.normalize_jax_version(jax.__version__),
+            seed=seed,
+            jax_version=runtime_jax.normalize_jax_version(jax.__version__),
+            jaxlib_version=runtime_jax.normalize_jax_version(jaxlib.__version__),
+            witness_source="torch_aligned",
+            enable_x64=True,
+        ),
+    }
+
+    enriched["provenance"] = build_provenance(
+        source_repo=source_case["provenance"]["source_repo"],
+        source_file=source_case["provenance"]["source_file"],
+        source_function=source_case["provenance"]["source_function"],
+        source_commit=source_case["provenance"]["source_commit"],
+        seed=seed,
+        comment=source_case["provenance"].get("comment"),
+        generator="python-jax-v1",
+    )
+    return enriched
+
+
+def materialize_torch_aligned_case_family(
+    op: str,
+    family: str,
+    *,
+    limit: int = 1,
+    cases_root: Path | None = None,
+    source_case_path: Path | None = None,
+) -> Path:
+    """Materialize a JAX witness from a published PyTorch source case."""
+    spec = build_case_spec_index()[(op, family)]
+    key = (op, family)
+    if key not in _published_torch_source_case_paths():
+        raise ValueError(
+            f"JAX v1 only has published torch-aligned source cases for: {op}/{family}"
+        )
+    source_path = source_case_path or _published_torch_source_case_paths()[key]
+    source_case = _load_jsonl_case(source_path)
+    records = [
+        enrich_torch_aligned_case_record(
+            spec,
+            source_case,
+            seed=17 + index,
+        )
+        for index in range(limit)
+    ]
+    return write_case_records(spec, records, cases_root=cases_root)
 
 
 def materialize_case_family(
@@ -310,8 +480,25 @@ def materialize_case_family(
     supported = _simple_witness_specs()
     if key not in supported:
         raise ValueError(f"JAX v1 only materializes simple smoke witnesses in this task: {op}/{family}")
+    witness_source = select_witness_source(op, family)
+    if witness_source == "torch_aligned":
+        return materialize_torch_aligned_case_family(
+            op,
+            family,
+            limit=limit,
+            cases_root=cases_root,
+        )
+    harness_spec = _jax_test_harness_specs().get(key)
     records = [
-        _materialize_simple_success_case(spec, supported[key], seed=17 + index, index=index + 1)
+        _materialize_simple_success_case(
+            spec,
+            supported[key],
+            seed=17 + index,
+            index=index + 1,
+            source_file=harness_spec.source_file if harness_spec is not None else None,
+            source_function=harness_spec.source_function if harness_spec is not None else None,
+            harness_fullname=harness_spec.harness_fullname if harness_spec is not None else None,
+        )
         for index in range(limit)
     ]
     return write_case_records(spec, records, cases_root=cases_root)

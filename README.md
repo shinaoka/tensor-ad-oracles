@@ -25,6 +25,18 @@ tasks and are not implemented yet:
 These names document the intended future contract so the JAX backend can be
 added without changing the vocabulary later.
 
+## JAX Witness Source Policy
+
+JAX witness materialization uses two source modes:
+
+- Prefer `jax_test` for families with a dedicated JAX internal harness.
+- Fall back to `torch_aligned` when a published PyTorch case should be reused
+  as the exact serialized primal-input source.
+
+When a witness comes from a JAX internal harness, the top-level provenance
+records the harness `source_file`, `source_function`, `seed`, and a
+`comment` entry containing `harness_fullname=...`.
+
 The oracle database covers both scalar-style `OpInfo` families and linear
 algebra operations.
 

@@ -10,9 +10,19 @@ from generators import jax_v1, pytorch_v1
 from validators.encoding import decode_tensor_map
 
 
+REPO_ROOT = Path(__file__).resolve().parents[1]
+
+
 class JaxV1Tests(unittest.TestCase):
     def test_build_case_families_matches_pytorch_registry(self) -> None:
         self.assertEqual(jax_v1.build_case_families(), pytorch_v1.build_case_families())
+
+    def test_select_witness_source_prefers_jax_test_for_complex_sensitive_families(self) -> None:
+        self.assertEqual(jax_v1.select_witness_source("abs", "identity"), "jax_test")
+        self.assertEqual(
+            jax_v1.select_witness_source("abs", "identity", prefer_jax_test=False),
+            "torch_aligned",
+        )
 
     def test_build_jax_ref_provenance_preserves_witness_source(self) -> None:
         provenance = jax_v1.build_jax_ref_provenance(
@@ -71,6 +81,37 @@ class JaxV1Tests(unittest.TestCase):
                 rhs = float((transpose["x"] * direction["x"]).sum().item())
                 self.assertAlmostEqual(lhs, rhs, places=12)
                 self.assertEqual(probe["jax_ref"]["provenance"]["witness_source"], "jax_test")
+                self.assertEqual(record["provenance"]["source_file"], "tests/lax_numpy_test.py")
+                self.assertEqual(
+                    record["provenance"]["source_function"],
+                    "testAbs" if op == "abs" else "testExp",
+                )
+                self.assertEqual(record["provenance"]["seed"], 17)
+                self.assertIn("harness_fullname=", record["provenance"]["comment"])
+
+    def test_torch_aligned_materialization_preserves_published_inputs(self) -> None:
+        source_path = REPO_ROOT / "cases" / "abs" / "identity.jsonl"
+        source_case = json.loads(source_path.read_text(encoding="utf-8").splitlines()[0])
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            out_path = jax_v1.materialize_torch_aligned_case_family(
+                "abs",
+                "identity",
+                cases_root=Path(tmpdir),
+            )
+
+            generated = json.loads(out_path.read_text(encoding="utf-8").splitlines()[0])
+
+        self.assertEqual(generated["inputs"], source_case["inputs"])
+        self.assertEqual(
+            generated["probes"][0]["jax_ref"]["provenance"]["witness_source"],
+            "torch_aligned",
+        )
+        self.assertEqual(generated["provenance"]["source_file"], source_case["provenance"]["source_file"])
+        self.assertEqual(
+            generated["provenance"]["source_function"],
+            source_case["provenance"]["source_function"],
+        )
 
 
 if __name__ == "__main__":
