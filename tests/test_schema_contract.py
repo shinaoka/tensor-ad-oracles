@@ -110,6 +110,97 @@ class SchemaContractTests(unittest.TestCase):
 
         jsonschema.validate(case, schema)
 
+    def test_schema_accepts_optional_jax_ref_in_success_case(self) -> None:
+        try:
+            import jsonschema
+        except ModuleNotFoundError as exc:
+            self.skipTest(f"jsonschema unavailable: {exc}")
+
+        schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
+        tensor = {
+            "dtype": "float64",
+            "shape": [1],
+            "order": "row_major",
+            "data": [1.0],
+        }
+        case = {
+            "schema_version": 1,
+            "case_id": "solve_f64_identity_jax_001",
+            "op": "solve",
+            "dtype": "float64",
+            "family": "identity",
+            "expected_behavior": "success",
+            "inputs": {
+                "a": {"dtype": "float64", "shape": [1, 1], "order": "row_major", "data": [1.0]},
+                "b": {"dtype": "float64", "shape": [1], "order": "row_major", "data": [2.0]},
+            },
+            "observable": {"kind": "identity"},
+            "comparison": {
+                "first_order": {"kind": "allclose", "rtol": 1e-10, "atol": 1e-10}
+            },
+            "probes": [
+                {
+                    "probe_id": "p0",
+                    "direction": {
+                        "a": {"dtype": "float64", "shape": [1, 1], "order": "row_major", "data": [1.0]},
+                        "b": {"dtype": "float64", "shape": [1], "order": "row_major", "data": [1.0]},
+                    },
+                    "cotangent": {
+                        "value": {
+                            "dtype": "float64",
+                            "shape": [1],
+                            "order": "row_major",
+                            "data": [1.0],
+                        }
+                    },
+                    "pytorch_ref": {
+                        "jvp": {"value": tensor},
+                        "vjp": {"a": tensor, "b": tensor},
+                    },
+                    "fd_ref": {
+                        "method": "central_difference",
+                        "stencil_order": 2,
+                        "step": 1e-6,
+                        "jvp": {"value": tensor},
+                    },
+                    "jax_ref": {
+                        "jvp": {"value": tensor},
+                        "vjp": {"a": tensor},
+                        "linearization": {"value": tensor},
+                        "raw_output_cotangent": {"value": tensor},
+                        "transpose": {"a": tensor},
+                        "adjoint_check": {
+                            "lhs": 1.0,
+                            "rhs": 1.0,
+                            "abs_err": 0.0,
+                            "rel_err": 0.0,
+                        },
+                        "provenance": {
+                            "source_backend": "jax",
+                            "witness_source": "torch_aligned",
+                            "jax_version": "0.0.0",
+                            "jaxlib_version": "0.0.0",
+                            "backend": "cpu",
+                            "enable_x64": True,
+                        },
+                    },
+                }
+            ],
+            "provenance": {
+                "source_repo": "pytorch",
+                "source_file": "torch/testing/_internal/opinfo/definitions/linalg.py",
+                "source_function": "sample_inputs_linalg_solve",
+                "source_commit": "deadbeef",
+                "comment": "from PyTorch OpInfo",
+                "generator": "python-pytorch-v1",
+                "seed": 17,
+                "torch_version": "2.10.0",
+                "fd_policy_version": "v1",
+            },
+        }
+
+        jsonschema.validate(case, schema)
+
     def test_schema_accepts_hvp_enabled_success_case(self) -> None:
         try:
             import jsonschema

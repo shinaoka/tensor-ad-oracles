@@ -62,6 +62,13 @@ def make_probe_record(
     fd_step: float,
     fd_jvp: dict[str, dict],
     fd_hvp: dict[str, dict] | None = None,
+    jax_jvp: dict[str, dict] | None = None,
+    jax_vjp: dict[str, dict] | None = None,
+    jax_linearization: dict[str, dict] | None = None,
+    jax_raw_output_cotangent: dict[str, dict] | None = None,
+    jax_transpose: dict[str, dict] | None = None,
+    jax_adjoint_check: dict[str, float] | None = None,
+    jax_provenance: dict[str, object] | None = None,
 ) -> dict:
     """Assemble one paired derivative probe record."""
     pytorch_ref = {
@@ -80,10 +87,29 @@ def make_probe_record(
     if fd_hvp is not None:
         fd_ref["hvp"] = fd_hvp
 
-    return {
+    probe = {
         "probe_id": probe_id,
         "direction": direction,
         "cotangent": cotangent,
         "pytorch_ref": pytorch_ref,
         "fd_ref": fd_ref,
     }
+    jax_ref = {}
+    if jax_jvp is not None:
+        jax_ref["jvp"] = jax_jvp
+    if jax_vjp is not None:
+        jax_ref["vjp"] = jax_vjp
+    if jax_linearization is not None:
+        jax_ref["linearization"] = jax_linearization
+    if jax_raw_output_cotangent is not None:
+        jax_ref["raw_output_cotangent"] = jax_raw_output_cotangent
+    if jax_transpose is not None:
+        jax_ref["transpose"] = jax_transpose
+    if jax_adjoint_check is not None:
+        jax_ref["adjoint_check"] = jax_adjoint_check
+    if jax_provenance is not None:
+        jax_ref["provenance"] = jax_provenance
+    if jax_ref:
+        probe["jax_ref"] = jax_ref
+
+    return probe

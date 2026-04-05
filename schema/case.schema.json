@@ -280,6 +280,99 @@
         }
       }
     },
+    "jax_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "jvp": {
+          "$ref": "#/$defs/tensor_map"
+        },
+        "vjp": {
+          "$ref": "#/$defs/tensor_map"
+        },
+        "linearization": {
+          "$ref": "#/$defs/tensor_map"
+        },
+        "raw_output_cotangent": {
+          "$ref": "#/$defs/tensor_map"
+        },
+        "transpose": {
+          "$ref": "#/$defs/tensor_map"
+        },
+        "adjoint_check": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "lhs",
+            "rhs",
+            "abs_err",
+            "rel_err"
+          ],
+          "properties": {
+            "lhs": {
+              "type": "number"
+            },
+            "rhs": {
+              "type": "number"
+            },
+            "abs_err": {
+              "type": "number",
+              "minimum": 0
+            },
+            "rel_err": {
+              "type": "number",
+              "minimum": 0
+            }
+          }
+        },
+        "provenance": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "source_backend",
+            "witness_source",
+            "jax_version",
+            "jaxlib_version",
+            "backend",
+            "enable_x64"
+          ],
+          "properties": {
+            "source_backend": {
+              "type": "string",
+              "const": "jax"
+            },
+            "witness_source": {
+              "type": "string",
+              "enum": [
+                "torch_aligned",
+                "jax_test",
+                "jax_native"
+              ]
+            },
+            "jax_version": {
+              "type": "string",
+              "minLength": 1
+            },
+            "jaxlib_version": {
+              "type": "string",
+              "minLength": 1
+            },
+            "backend": {
+              "type": "string",
+              "enum": [
+                "cpu",
+                "gpu",
+                "tpu"
+              ]
+            },
+            "enable_x64": {
+              "type": "boolean"
+            }
+          }
+        }
+      }
+    },
     "fd_ref": {
       "type": "object",
       "additionalProperties": false,
@@ -333,6 +426,9 @@
         },
         "pytorch_ref": {
           "$ref": "#/$defs/pytorch_ref"
+        },
+        "jax_ref": {
+          "$ref": "#/$defs/jax_ref"
         },
         "fd_ref": {
           "$ref": "#/$defs/fd_ref"
