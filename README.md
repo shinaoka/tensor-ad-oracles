@@ -12,6 +12,19 @@ The repository is intentionally dual-backend:
 - JAX support is being added in later tasks as a parallel generator and witness
   surface
 
+## Planned JAX Surface
+
+The following JAX-facing entrypoint and witness fields are planned for later
+tasks and are not implemented yet:
+
+- `uv run python -m generators.jax_v1 --list`
+- `jax_ref`
+- `linearization`
+- `transpose`
+
+These names document the intended future contract so the JAX backend can be
+added without changing the vocabulary later.
+
 The oracle database covers both scalar-style `OpInfo` families and linear
 algebra operations.
 

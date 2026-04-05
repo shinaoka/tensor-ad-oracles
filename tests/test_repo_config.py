@@ -52,6 +52,13 @@ class RepoConfigTests(unittest.TestCase):
         self.assertIn("docs/math/registry.json", readme)
         self.assertIn("dual-backend", readme)
         self.assertIn("added in later tasks", readme)
+        self.assertIn("Planned JAX Surface", readme)
+        self.assertIn("later tasks", readme)
+        self.assertIn("not implemented yet", readme)
+        self.assertIn("uv run python -m generators.jax_v1 --list", readme)
+        self.assertIn("jax_ref", readme)
+        self.assertIn("linearization", readme)
+        self.assertIn("transpose", readme)
         self.assertTrue((REPO_ROOT / "docs" / "math" / "index.md").exists())
         self.assertTrue((REPO_ROOT / "docs" / "math" / "registry.json").exists())
 
