@@ -168,6 +168,74 @@ class ProbeTests(unittest.TestCase):
         self.assertEqual(probe["pytorch_ref"]["vjp"], direction)
         self.assertEqual(probe["fd_ref"]["jvp"], cotangent)
 
+    def test_make_probe_record_omits_jax_ref_for_pytorch_only_payloads(self) -> None:
+        direction = {
+            "a": {
+                "dtype": "float64",
+                "shape": [1],
+                "order": "row_major",
+                "data": [1.0],
+            }
+        }
+        cotangent = {
+            "value": {
+                "dtype": "float64",
+                "shape": [1],
+                "order": "row_major",
+                "data": [1.0],
+            }
+        }
+
+        probe = probes.make_probe_record(
+            probe_id="p0",
+            direction=direction,
+            cotangent=cotangent,
+            pytorch_jvp=cotangent,
+            pytorch_vjp=direction,
+            fd_step=1e-6,
+            fd_jvp=cotangent,
+        )
+
+        self.assertNotIn("jax_ref", probe)
+
+    def test_make_probe_record_rejects_partial_jax_payloads(self) -> None:
+        direction = {
+            "a": {
+                "dtype": "float64",
+                "shape": [1],
+                "order": "row_major",
+                "data": [1.0],
+            }
+        }
+        cotangent = {
+            "value": {
+                "dtype": "float64",
+                "shape": [1],
+                "order": "row_major",
+                "data": [1.0],
+            }
+        }
+        jax_provenance = {
+            "source_backend": "jax",
+            "witness_source": "torch_aligned",
+            "jax_version": "0.0.0",
+            "jaxlib_version": "0.0.0",
+            "backend": "cpu",
+            "enable_x64": True,
+        }
+
+        with self.assertRaises(ValueError):
+            probes.make_probe_record(
+                probe_id="p0",
+                direction=direction,
+                cotangent=cotangent,
+                pytorch_jvp=cotangent,
+                pytorch_vjp=direction,
+                fd_step=1e-6,
+                fd_jvp=cotangent,
+                jax_provenance=jax_provenance,
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

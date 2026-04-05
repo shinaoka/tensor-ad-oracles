@@ -284,6 +284,15 @@
       "type": "object",
       "additionalProperties": false,
       "minProperties": 1,
+      "required": [
+        "jvp",
+        "vjp",
+        "linearization",
+        "raw_output_cotangent",
+        "transpose",
+        "adjoint_check",
+        "provenance"
+      ],
       "properties": {
         "jvp": {
           "$ref": "#/$defs/tensor_map"
