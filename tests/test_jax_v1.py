@@ -90,7 +90,10 @@ class JaxV1Tests(unittest.TestCase):
                     "_make_unary_elementwise_harness",
                 )
                 self.assertEqual(record["provenance"]["seed"], 17)
-                self.assertIn("harness_fullname=", record["provenance"]["comment"])
+                self.assertIn(
+                    f"harness_fullname={op}_shape_float64_20_20_",
+                    record["provenance"]["comment"],
+                )
 
     def test_torch_aligned_materialization_preserves_published_inputs(self) -> None:
         source_path = REPO_ROOT / "cases" / "abs" / "identity.jsonl"

@@ -74,12 +74,12 @@ def _jax_test_harness_specs() -> dict[tuple[str, str], HarnessWitnessSpec]:
         ("abs", "identity"): HarnessWitnessSpec(
             source_file=source_file,
             source_function=source_function,
-            harness_fullname=_unary_elementwise_harness_fullname("lax.abs_p"),
+            harness_fullname=_unary_elementwise_harness_fullname("abs"),
         ),
         ("exp", "identity"): HarnessWitnessSpec(
             source_file=source_file,
             source_function=source_function,
-            harness_fullname=_unary_elementwise_harness_fullname("lax.exp_p"),
+            harness_fullname=_unary_elementwise_harness_fullname("exp"),
         ),
     }
 
@@ -116,7 +116,9 @@ def _decode_tensor_map_to_jax(jnp, encoded: dict[str, dict]) -> dict[str, object
     }
 
 
-def _unary_elementwise_harness_fullname(prim: str, *, shape: tuple[int, ...] = (20, 20), dtype: str = "float64") -> str:
+def _unary_elementwise_harness_fullname(
+    prim: str, *, shape: tuple[int, ...] = (20, 20), dtype: str = "float64"
+) -> str:
     shape_part = ",".join(str(dim) for dim in shape)
     raw_name = f"{prim}_shape={dtype}[{shape_part}]"
     return re.sub(r'[ "\'\[\](){}<>=,._]+', "_", raw_name)
