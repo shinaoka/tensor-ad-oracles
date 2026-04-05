@@ -2,6 +2,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from scripts import (
@@ -44,6 +45,11 @@ class VerifyCasesTests(unittest.TestCase):
             records = verify_cases.load_jsonl_records(path)
 
             self.assertEqual([record["case_id"] for record in records], ["a", "b"])
+
+    def test_main_also_verifies_jax_smoke_cases(self) -> None:
+        with patch.object(verify_cases, "verify_case_tree", side_effect=[7, 2]) as verify_case_tree:
+            self.assertEqual(verify_cases.main(), 0)
+            self.assertEqual(verify_case_tree.call_count, 2)
 
 
 class CheckRegenerationTests(unittest.TestCase):
@@ -248,6 +254,22 @@ class CheckRegenerationTests(unittest.TestCase):
 
             check_regeneration.compare_case_trees(expected, actual)
 
+    def test_main_also_checks_jax_smoke_regeneration(self) -> None:
+        with patch.object(check_regeneration, "materialize_all_case_families", return_value=None):
+            with patch.object(check_regeneration, "compare_case_trees", return_value=None) as compare_case_trees:
+                self.assertEqual(check_regeneration.main(), 0)
+                self.assertEqual(compare_case_trees.call_count, 2)
+
+    def test_main_raises_when_jax_smoke_regeneration_fails(self) -> None:
+        with patch.object(check_regeneration, "materialize_all_case_families", return_value=None):
+            with patch.object(
+                check_regeneration,
+                "compare_case_trees",
+                side_effect=[None, ValueError("jax smoke regeneration mismatch")],
+            ):
+                with self.assertRaisesRegex(ValueError, "jax smoke regeneration mismatch"):
+                    check_regeneration.main()
+
 
 class ValidateSchemaTests(unittest.TestCase):
     def test_require_jsonschema_dependency_raises_clear_error(self) -> None:
@@ -283,6 +305,28 @@ class CheckReplayScriptTests(unittest.TestCase):
             )(),
         ):
             with self.assertRaisesRegex(SystemExit, "bad_case: mismatch"):
+                check_replay.main()
+
+    def test_main_also_replays_jax_smoke_cases(self) -> None:
+        published = SimpleNamespace(checked=7, failures=[])
+        jax_smoke = SimpleNamespace(checked=2, failures=[])
+        with patch.object(
+            check_replay,
+            "replay_case_tree",
+            side_effect=[published, jax_smoke],
+        ) as replay_case_tree:
+            self.assertEqual(check_replay.main(), 0)
+            self.assertEqual(replay_case_tree.call_count, 2)
+
+    def test_main_raises_when_jax_smoke_replay_fails(self) -> None:
+        published = SimpleNamespace(checked=7, failures=[])
+        jax_smoke = SimpleNamespace(checked=2, failures=["jax_case: mismatch"])
+        with patch.object(
+            check_replay,
+            "replay_case_tree",
+            side_effect=[published, jax_smoke],
+        ):
+            with self.assertRaisesRegex(SystemExit, "jax_case: mismatch"):
                 check_replay.main()
 
 

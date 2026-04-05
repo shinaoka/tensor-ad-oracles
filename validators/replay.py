@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 from pathlib import Path
 
 from generators.pytorch_v1 import build_case_spec_index
+from generators import runtime_jax
 from generators.runtime import (
     apply_spec_observable,
     build_call_metadata,
@@ -90,6 +92,55 @@ def _decode_record_inputs(record: dict) -> dict[str, object]:
         name: tensor.detach().clone().requires_grad_(True)
         for name, tensor in decode_tensor_map(record["inputs"]).items()
     }
+
+
+def _decode_record_inputs_jax(jnp, encoded: dict[str, object]) -> dict[str, object]:
+    return {
+        name: jnp.asarray(tensor.detach().cpu().numpy())
+        for name, tensor in decode_tensor_map(encoded).items()
+    }
+
+
+def _decode_tensor_map_jax(jnp, encoded: dict[str, object]) -> dict[str, object]:
+    return _decode_record_inputs_jax(jnp, encoded)
+
+
+def _jax_map_close(jnp, expected: dict[str, object], actual: dict[str, object], *, comparison: dict) -> bool:
+    if expected.keys() != actual.keys():
+        return False
+    first_order = _first_order_comparison(comparison)
+    rtol = max(float(first_order["rtol"]), 1e-8)
+    atol = max(float(first_order["atol"]), 1e-9)
+    return all(
+        expected[name].shape == actual[name].shape
+        and expected[name].dtype == actual[name].dtype
+        and bool(
+            jnp.allclose(
+                expected[name],
+                actual[name],
+                rtol=rtol,
+                atol=atol,
+                equal_nan=True,
+            )
+        )
+        for name in expected
+    )
+
+
+def _scalar_close(lhs: float, rhs: float, *, comparison: dict) -> bool:
+    first_order = _first_order_comparison(comparison)
+    rtol = max(float(first_order["rtol"]), 1e-8)
+    atol = max(float(first_order["atol"]), 1e-9)
+    return math.isclose(lhs, rhs, rel_tol=rtol, abs_tol=atol)
+
+
+def _simple_jax_raw_output_function(op: str, input_name: str, *, family: str):
+    _, jnp = runtime_jax.import_generation_runtime()
+    if op == "abs":
+        return lambda inputs: {"value": jnp.abs(inputs[input_name])}
+    if op == "exp":
+        return lambda inputs: {"value": jnp.exp(inputs[input_name])}
+    raise ValueError(f"unsupported JAX-backed family for replay: {op}/{family}")
 
 
 def _decode_success_probe(record: dict) -> tuple[dict[str, object], dict[str, object], dict[str, object], dict[str, object], float]:
@@ -402,6 +453,55 @@ def _replay_success_case_for_sample(
     return None
 
 
+def _replay_jax_success_case(record: dict) -> None:
+    jax_ref = record["probes"][0]["jax_ref"]
+    if (record["op"], record["family"]) not in {("abs", "identity"), ("exp", "identity")}:
+        raise ValueError(f"unsupported JAX-backed family for replay: {record['op']}/{record['family']}")
+
+    _, jnp = runtime_jax.import_generation_runtime()
+    inputs = _decode_record_inputs_jax(jnp, record["inputs"])
+    direction = _decode_record_inputs_jax(jnp, record["probes"][0]["direction"])
+    cotangent = _decode_record_inputs_jax(jnp, record["probes"][0]["cotangent"])
+    stored_jvp = _decode_tensor_map_jax(jnp, jax_ref["jvp"])
+    stored_vjp = _decode_tensor_map_jax(jnp, jax_ref["vjp"])
+    stored_linearization = _decode_tensor_map_jax(jnp, jax_ref["linearization"])
+    stored_raw_output_cotangent = _decode_tensor_map_jax(jnp, jax_ref["raw_output_cotangent"])
+    stored_transpose = _decode_tensor_map_jax(jnp, jax_ref["transpose"])
+    stored_adj = jax_ref["adjoint_check"]
+
+    input_name = next(iter(inputs))
+    raw_output_fn = _simple_jax_raw_output_function(record["op"], input_name, family=record["family"])
+    jvp = runtime_jax.compute_jax_jvp(raw_output_fn, inputs, direction)
+    vjp = runtime_jax.compute_jax_vjp(raw_output_fn, inputs, cotangent)
+    linearization, linear_fn = runtime_jax.compute_jax_linearization(
+        raw_output_fn,
+        inputs,
+        direction,
+    )
+    transpose = runtime_jax.compute_jax_transpose(linear_fn, inputs, cotangent)
+    adjoint_check = runtime_jax.compute_jax_adjoint_check(
+        runtime_jax.tensor_map_inner_product(cotangent, jvp),
+        runtime_jax.tensor_map_inner_product(transpose, direction),
+    )
+
+    if not _jax_map_close(jnp, stored_raw_output_cotangent, cotangent, comparison=record["comparison"]):
+        raise ValueError("stored and replayed JAX raw-output cotangent disagree")
+    if not _jax_map_close(jnp, stored_jvp, jvp, comparison=record["comparison"]):
+        raise ValueError("stored and replayed JAX JVP disagree")
+    if not _jax_map_close(jnp, stored_vjp, vjp, comparison=record["comparison"]):
+        raise ValueError("stored and replayed JAX VJP disagree")
+    if not _jax_map_close(jnp, stored_linearization, linearization, comparison=record["comparison"]):
+        raise ValueError("stored and replayed JAX linearization disagree")
+    if not _jax_map_close(jnp, stored_transpose, transpose, comparison=record["comparison"]):
+        raise ValueError("stored and replayed JAX transpose disagree")
+
+    if not all(
+        _scalar_close(float(stored_adj[name]), float(adjoint_check[name]), comparison=record["comparison"])
+        for name in ("lhs", "rhs", "abs_err", "rel_err")
+    ):
+        raise ValueError("stored and replayed JAX adjoint check disagree")
+
+
 def _replay_success_case(
     record: dict,
     *,
@@ -510,10 +610,13 @@ def replay_case_file(path: Path, *, limit: int | None = None) -> ReplayResult:
     for record in records[:limit]:
         try:
             if record["expected_behavior"] == "success":
-                _replay_success_case(
-                    record,
-                    prepared_sample_cache=prepared_sample_cache,
-                )
+                if record.get("probes") and record["probes"][0].get("jax_ref") is not None:
+                    _replay_jax_success_case(record)
+                else:
+                    _replay_success_case(
+                        record,
+                        prepared_sample_cache=prepared_sample_cache,
+                    )
             elif record["expected_behavior"] == "error":
                 _replay_error_case(record)
             else:

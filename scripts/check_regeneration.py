@@ -13,6 +13,7 @@ CASES_ROOT = REPO_ROOT / "cases"
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
+from generators import jax_v1
 from generators.pytorch_v1 import materialize_all_case_families
 
 
@@ -195,9 +196,27 @@ def check_regeneration(cases_root: Path = CASES_ROOT) -> int:
     return len(_relative_case_files(cases_root))
 
 
+def _materialize_jax_smoke_case_tree(root: Path) -> None:
+    jax_v1.materialize_case_family("abs", "identity", limit=1, cases_root=root)
+    jax_v1.materialize_case_family("exp", "identity", limit=1, cases_root=root)
+
+
+def check_jax_smoke_regeneration() -> int:
+    """Regenerate the JAX smoke tree twice and require semantic equality."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        left_root = Path(tmpdir) / "left"
+        right_root = Path(tmpdir) / "right"
+        _materialize_jax_smoke_case_tree(left_root)
+        _materialize_jax_smoke_case_tree(right_root)
+        compare_case_trees(left_root, right_root)
+        return len(_relative_case_files(left_root))
+
+
 def main() -> int:
     compared = check_regeneration()
+    jax_compared = check_jax_smoke_regeneration()
     print(f"regeneration_checked_files={compared}")
+    print(f"jax_regeneration_checked_files={jax_compared}")
     return 0
 
 
