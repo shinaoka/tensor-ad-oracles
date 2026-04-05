@@ -1,12 +1,13 @@
 import io
 import json
+import math
 import tempfile
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
-from unittest.mock import patch
 
 from generators import jax_v1, pytorch_v1
+from validators.encoding import decode_tensor_map
 
 
 class JaxV1Tests(unittest.TestCase):
@@ -27,48 +28,49 @@ class JaxV1Tests(unittest.TestCase):
         self.assertEqual(provenance["jax_version"], "0.9.1")
         self.assertEqual(provenance["jaxlib_version"], "0.9.1")
 
-    def test_main_materialize_abs_identity_uses_honest_torch_and_fd_refs(self) -> None:
+    def test_main_materialize_smoke_witnesses_normalize_computation_and_serialization(self) -> None:
         try:
             import jax.numpy as jnp  # noqa: F401
         except Exception as exc:
             self.skipTest(f"jax runtime unavailable: {exc}")
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            with (
-                patch.object(
-                    jax_v1.runtime_jax,
-                    "compute_jax_jvp",
-                    return_value={"value": jnp.array([123.0])},
-                ),
-                patch.object(
-                    jax_v1.runtime_jax,
-                    "compute_jax_vjp",
-                    return_value={"x": jnp.array([456.0])},
-                ),
-            ):
-                with redirect_stdout(io.StringIO()):
-                    exit_code = jax_v1.main(
-                        [
-                            "--materialize",
-                            "abs",
-                            "--family",
-                            "identity",
-                            "--limit",
-                            "1",
-                            "--cases-root",
-                            tmpdir,
-                        ]
-                    )
+            with redirect_stdout(io.StringIO()):
+                exit_code = jax_v1.main(
+                    ["--materialize-all", "--limit", "1", "--cases-root", tmpdir]
+                )
 
             self.assertEqual(exit_code, 0)
-            out_path = Path(tmpdir) / "abs" / "identity.jsonl"
-            self.assertTrue(out_path.exists())
-            record = json.loads(out_path.read_text(encoding="utf-8").splitlines()[0])
-            probe = record["probes"][0]
-            self.assertEqual(probe["jax_ref"]["linearization"]["value"]["data"], [1.0])
-            self.assertEqual(probe["pytorch_ref"]["jvp"]["value"]["data"], [1.0])
-            self.assertAlmostEqual(probe["fd_ref"]["jvp"]["value"]["data"][0], 1.0, places=9)
-            self.assertEqual(probe["jax_ref"]["provenance"]["witness_source"], "jax_test")
+            for op, expected_linearization in (
+                ("abs", 1.0),
+                ("exp", math.e),
+            ):
+                out_path = Path(tmpdir) / op / "identity.jsonl"
+                self.assertTrue(out_path.exists())
+                record = json.loads(out_path.read_text(encoding="utf-8").splitlines()[0])
+                probe = record["probes"][0]
+
+                direction = decode_tensor_map(probe["direction"])
+                cotangent = decode_tensor_map(probe["cotangent"])
+                jvp = decode_tensor_map(probe["jax_ref"]["jvp"])
+                vjp = decode_tensor_map(probe["jax_ref"]["vjp"])
+                linearization = decode_tensor_map(probe["jax_ref"]["linearization"])
+                transpose = decode_tensor_map(probe["jax_ref"]["transpose"])
+                pytorch_jvp = decode_tensor_map(probe["pytorch_ref"]["jvp"])
+                fd_jvp = decode_tensor_map(probe["fd_ref"]["jvp"])
+
+                self.assertEqual(direction["x"].tolist(), [1.0])
+                self.assertEqual(cotangent["value"].tolist(), [1.0])
+                self.assertAlmostEqual(float(linearization["value"].item()), expected_linearization, places=12)
+                self.assertAlmostEqual(float(jvp["value"].item()), expected_linearization, places=12)
+                self.assertAlmostEqual(float(pytorch_jvp["value"].item()), expected_linearization, places=8)
+                self.assertAlmostEqual(float(fd_jvp["value"].item()), expected_linearization, places=6)
+                self.assertAlmostEqual(float(vjp["x"].item()), float(transpose["x"].item()), places=12)
+
+                lhs = float((cotangent["value"] * jvp["value"]).sum().item())
+                rhs = float((transpose["x"] * direction["x"]).sum().item())
+                self.assertAlmostEqual(lhs, rhs, places=12)
+                self.assertEqual(probe["jax_ref"]["provenance"]["witness_source"], "jax_test")
 
 
 if __name__ == "__main__":

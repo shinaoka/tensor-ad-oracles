@@ -40,6 +40,14 @@ def _encode_torch_tensor_map(torch, tensor_map: dict[str, object]) -> dict[str, 
     )
 
 
+def _normalize_torch_tensor_map(torch, tensor_map: dict[str, object]) -> dict[str, object]:
+    normalized = {}
+    for name, tensor in tensor_map.items():
+        norm = float(torch.linalg.vector_norm(tensor).item())
+        normalized[name] = tensor.clone() if norm == 0.0 else tensor / norm
+    return normalized
+
+
 def build_case_families() -> dict[str, tuple[str, ...]]:
     """Return the fixed JAX v1 op/family registry."""
     return pytorch_v1.build_case_families()
@@ -192,14 +200,22 @@ def _materialize_simple_success_case(
 
     dtype = jnp.float64
     inputs = {witness_spec.input_name: jnp.array([witness_spec.input_value], dtype=dtype)}
-    direction = {witness_spec.input_name: jnp.array([witness_spec.direction_value], dtype=dtype)}
-    cotangent = {"value": jnp.array([witness_spec.cotangent_value], dtype=dtype)}
+    raw_direction = {witness_spec.input_name: jnp.array([witness_spec.direction_value], dtype=dtype)}
+    raw_cotangent = {"value": jnp.array([witness_spec.cotangent_value], dtype=dtype)}
+    direction = runtime_jax.normalize_raw_tensor_map(raw_direction)
+    cotangent = runtime_jax.normalize_raw_tensor_map(raw_cotangent)
 
     torch_input = torch.tensor(
         [witness_spec.input_value], dtype=torch.float64, requires_grad=True
     )
-    torch_direction = torch.tensor([witness_spec.direction_value], dtype=torch.float64)
-    torch_cotangent = torch.tensor([witness_spec.cotangent_value], dtype=torch.float64)
+    torch_direction = _normalize_torch_tensor_map(
+        torch,
+        {"x": torch.tensor([witness_spec.direction_value], dtype=torch.float64)},
+    )["x"]
+    torch_cotangent = _normalize_torch_tensor_map(
+        torch,
+        {"value": torch.tensor([witness_spec.cotangent_value], dtype=torch.float64)},
+    )["value"]
 
     def torch_observable(x):
         return _simple_torch_observable(torch, spec, x)
@@ -238,8 +254,8 @@ def _materialize_simple_success_case(
 
     probe = probes.make_probe_record(
         probe_id="p0",
-        direction=probes.normalize_tensor_map(runtime_jax.encode_tensor_map(direction)),
-        cotangent=probes.normalize_tensor_map(runtime_jax.encode_tensor_map(cotangent)),
+        direction=runtime_jax.encode_tensor_map(direction),
+        cotangent=runtime_jax.encode_tensor_map(cotangent),
         pytorch_jvp=_encode_torch_tensor_map(torch, {"value": torch_jvp}),
         pytorch_vjp=_encode_torch_tensor_map(torch, {witness_spec.input_name: torch_vjp}),
         fd_step=fd_step,
