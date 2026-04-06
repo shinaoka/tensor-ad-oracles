@@ -1,5 +1,87 @@
 # SVD AD Notes
 
+## Conventions
+
+Unless noted otherwise, `Linearization` and `Transpose` are written for the
+raw-output-space thin SVD before any DB observable such as `u_abs`,
+`vh_abs`, or `uvh_product` is applied. For complex tensors, `Transpose` means
+the adjoint under the real Frobenius inner product
+
+$$
+\langle X, Y \rangle_{\mathbb{R}} = \operatorname{Re}\operatorname{tr}(X^\dagger Y).
+$$
+
+## Forward
+
+The raw operator is
+
+$$
+A \mapsto (U, S, V^\dagger),
+\qquad
+A = U \operatorname{diag}(S) V^\dagger.
+$$
+
+## Linearization
+
+Let
+
+$$
+dP = U^\dagger (dA) V,
+\qquad
+dS = \operatorname{Re}(\operatorname{diag}(dP)),
+\qquad
+dX = dP - \operatorname{diag}(dS).
+$$
+
+Then the square-thin linearization is determined by the same spectral-gap
+solves summarized later in the note:
+
+$$
+dU = U \left(\frac{\operatorname{sym}(dX \Sigma)}{E}
++ \operatorname{diag}\!\left(i \, \operatorname{Im}(\operatorname{diag}(dX)) \oslash (2 S)\right)\right),
+$$
+
+$$
+dV = V \left(\frac{\operatorname{sym}(\Sigma dX)}{E}
+- \operatorname{diag}\!\left(i \, \operatorname{Im}(\operatorname{diag}(dX)) \oslash (2 S)\right)\right),
+$$
+
+together with the non-square corrections recorded below.
+
+## JVP
+
+The JVP is the same linearization evaluated at $dA$, returned on the raw factor
+outputs $(dU, dS, dV^\dagger)$.
+
+## Transpose
+
+For raw output cotangents $(\bar{U}, \bar{S}, \bar{V})$, the transpose map is
+
+$$
+\bar{A} = U \Gamma V^\dagger
++ \mathbf{1}_{M > K}(I_M - U U^\dagger)\bar{U}\operatorname{diag}(S_{\text{inv}})V^\dagger
++ \mathbf{1}_{N > K}U\operatorname{diag}(S_{\text{inv}})\bar{V}^\dagger(I_N - V V^\dagger),
+$$
+
+with
+
+$$
+\Gamma = \Gamma_{\bar{U}} + \Gamma_{\bar{V}} + \Gamma_{\bar{S}}
+$$
+
+defined by the spectral-gap helpers below.
+
+## VJP (JAX convention)
+
+JAX reads the same raw transpose rule on the thin SVD outputs. Gauge-dependent
+observables should be removed after the raw rule, not baked into it.
+
+## VJP (PyTorch convention)
+
+PyTorch uses the same raw adjoint, returned as cotangents for `U`, `S`, and
+`Vh`. The public DB families avoid raw singular-vector gauge issues by
+publishing gauge-insensitive observables.
+
 ## Forward Definition
 
 For a real or complex matrix

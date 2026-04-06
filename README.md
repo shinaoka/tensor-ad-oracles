@@ -6,6 +6,37 @@ validation:
 - mathematical AD notes
 - a machine-readable JSON oracle database
 
+The repository is intentionally dual-backend:
+
+- PyTorch remains the baseline oracle source for the existing case DB
+- JAX support is being added in later tasks as a parallel generator and witness
+  surface
+
+## Planned JAX Surface
+
+The following JAX-facing entrypoint and witness fields are planned for later
+tasks and are not implemented yet:
+
+- `uv run python -m generators.jax_v1 --list`
+- `jax_ref`
+- `linearization`
+- `transpose`
+
+These names document the intended future contract so the JAX backend can be
+added without changing the vocabulary later.
+
+## JAX Witness Source Policy
+
+JAX witness materialization uses two source modes:
+
+- Prefer `jax_test` for families with a dedicated JAX internal harness.
+- Fall back to `torch_aligned` when a published PyTorch case should be reused
+  as the exact serialized primal-input source.
+
+When a witness comes from a JAX internal harness, the top-level provenance
+records the harness `source_file`, `source_function`, `seed`, and a
+`comment` entry containing `harness_fullname=...`.
+
 The oracle database covers both scalar-style `OpInfo` families and linear
 algebra operations.
 
@@ -69,13 +100,21 @@ uv run python -m generators.pytorch_v1 --materialize solve --family identity --l
 uv run python -m generators.pytorch_v1 --materialize-all --limit 1
 uv run python -m unittest tests.test_db_replay -v
 uv run python scripts/check_math_registry.py
+uv run python scripts/check_complex_support.py
 uv run python scripts/validate_schema.py
 uv run python scripts/verify_cases.py
 uv run python scripts/check_replay.py
 uv run python scripts/check_regeneration.py
 uv run python scripts/check_tolerances.py
 uv run python scripts/check_upstream_ad_tolerances.py
+uv run python scripts/report_upstream_publish_coverage.py
+uv run python scripts/report_complex_support.py
 ```
+
+`uv run python scripts/validate_schema.py` is a repository-integrity and
+publish-time check for maintainers and CI. Downstream consumers should treat
+`schema/case.schema.json` as the contract and normally do not need to invoke
+the repository script directly.
 
 Repository-managed environment files:
 
@@ -87,6 +126,10 @@ The repository requires an exact PyTorch dependency pin: `torch==2.10.0`.
 Generated provenance stores the public version string `2.10.0`, not local
 build suffixes such as `+cpu` or `+cu128`.
 
+The planned JAX backend will use exact version pins as well; those pins are
+tracked in the repository contract now so the later generator work can rely on a
+fixed runtime.
+
 ## Math Notes
 
 The mathematical AD notes live under `docs/math/`.
@@ -94,6 +137,8 @@ The mathematical AD notes live under `docs/math/`.
 - `docs/math/index.md` is the note corpus entrypoint
 - `docs/math/registry.json` is the central mapping from published `(op, family)`
   DB families to note locations
+- `docs/math/complex-support.json` is the machine-readable complex capability
+  ledger for the published `(op, family)` surface
 
 `docs/math/*.md` is the mathematical source of truth for known operator rules in
 this repository. The note corpus is maintained as a non-lossy migration target
@@ -117,6 +162,18 @@ valid note target:
 uv run python scripts/check_math_registry.py
 ```
 
+Use the complex-support ledger to track whether each published family is:
+
+- complex-note reviewed
+- complex-DB covered
+- explicitly unsupported for complex with a recorded reason
+
+Validate the ledger with:
+
+```bash
+uv run python scripts/check_complex_support.py
+```
+
 ## What Counts As a Case
 
 A case is defined by:
@@ -124,6 +181,12 @@ A case is defined by:
 - materialized inputs
 - an `observable`
 - one or more paired derivative probes
+
+Published JSONL files store materialized numeric tensor payloads directly. For
+`success` cases this includes serialized inputs, probe directions, cotangents,
+and numeric reference tensors such as `pytorch_ref`, `fd_ref`, and any present
+`jax_ref` witness payloads. Downstream readers do not need PyTorch or JAX to
+reconstruct those published numbers.
 
 The database does not require raw decomposition outputs to be the comparison target. For spectral operations, the observable may be a processed output such as `U.abs()`, `S`, `Vh.abs()`, or `U @ Vh`, following the same derivative-relevant observables used by PyTorch AD tests.
 
@@ -162,6 +225,11 @@ At your option, you may use this repository under either license.
 ## PyTorch Provenance
 
 Version 1 uses the same AD-relevant case families as PyTorch. Each case stores upstream provenance, including the source file, source function, and source commit used to generate the record.
+
+Publish-surface coverage against the pinned PyTorch upstream inventory is tracked in:
+
+- `docs/generated/pytorch-upstream-publish-coverage.md`
+- `docs/generated/complex-support.md`
 
 ## Repository Layout
 

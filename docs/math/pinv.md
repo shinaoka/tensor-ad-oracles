@@ -1,5 +1,62 @@
 # Pseudoinverse AD Notes
 
+## Conventions
+
+Unless noted otherwise, `Linearization` and `Transpose` are written for the
+raw-output-space pseudoinverse map. For complex tensors, `Transpose` means the
+adjoint under the real Frobenius inner product
+
+$$
+\langle X, Y \rangle_{\mathbb{R}} = \operatorname{Re}\operatorname{tr}(X^\dagger Y).
+$$
+
+## Forward
+
+The raw operator is
+
+$$
+A \mapsto A^+ = \operatorname{pinv}(A),
+$$
+
+with locally constant rank.
+
+## Linearization
+
+The raw-output-space linearization is
+
+$$
+\dot{A}^+ =
+-A^+ \dot{A} A^+
++ (I - A^+ A)\dot{A}^\dagger (A^+)^\dagger A^+
++ A^+ (A^+)^\dagger \dot{A}^\dagger (I - A A^+).
+$$
+
+## JVP
+
+The JVP is the same three-term pseudoinverse differential evaluated at
+$\dot{A}$.
+
+## Transpose
+
+For a raw output cotangent $\bar{A}^+$, the transpose map is
+
+$$
+\bar{A} =
+-(A^+)^\dagger \bar{A}^+ (A^+)^\dagger
++ (I - A A^+) (\bar{A}^+)^\dagger A^+ (A^+)^\dagger
++ (A^+)^\dagger A^+ (\bar{A}^+)^\dagger (I - A^+ A).
+$$
+
+## VJP (JAX convention)
+
+JAX reads the same projector-corrected transpose map directly on the
+pseudoinverse output cotangent.
+
+## VJP (PyTorch convention)
+
+PyTorch implements algebraically equivalent branch-wise formulas that reduce
+intermediate sizes, but the raw cotangent map is the same three-term adjoint.
+
 ## Forward Definition
 
 $$

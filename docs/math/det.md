@@ -1,5 +1,70 @@
 # Determinant AD Notes
 
+## Conventions
+
+Unless noted otherwise, `Linearization` and `Transpose` are written for the
+raw-output-space determinant maps before any DB observable projection. For
+complex tensors, `Transpose` means the adjoint under the real Frobenius inner
+product
+
+$$
+\langle X, Y \rangle_{\mathbb{R}} = \operatorname{Re}\operatorname{tr}(X^\dagger Y).
+$$
+
+## Forward
+
+This note covers two raw operators:
+
+$$
+A \mapsto \det(A),
+\qquad
+A \mapsto (\operatorname{sign}, \operatorname{logabsdet}).
+$$
+
+## Linearization
+
+For `det`,
+
+$$
+\dot{d} = \det(A)\operatorname{tr}(A^{-1}\dot{A}).
+$$
+
+For `slogdet`, if $w = \operatorname{tr}(A^{-1}\dot{A})$, then
+
+$$
+\dot{\operatorname{logabsdet}} = \operatorname{Re}(w),
+\qquad
+\dot{\operatorname{sign}} = i\,\operatorname{Im}(w)\operatorname{sign}.
+$$
+
+## JVP
+
+The JVP is the same linearization evaluated at the tangent matrix $\dot{A}$.
+
+## Transpose
+
+For `det`, a raw output cotangent $\bar{d}$ gives
+
+$$
+\bar{A} = \overline{\bar{d}\det(A)}\,A^{-\mathsf{H}},
+$$
+
+with the real case reducing to $A^{-\mathsf{T}}$.
+
+For `slogdet`, a raw output cotangent on the pair
+$(\bar{\operatorname{sign}}, \bar{\operatorname{logabsdet}})$ yields the same
+solve-style adjoint summarized later in the note.
+
+## VJP (JAX convention)
+
+JAX reads these transpose maps directly on the scalar or tuple output, with the
+same singularity caveats as the raw determinant formulas.
+
+## VJP (PyTorch convention)
+
+PyTorch uses the same raw adjoint structure, together with the real-input
+projection and the singular-matrix fallback discussed below.
+
 ## 1. Determinant
 
 ### Forward Definition

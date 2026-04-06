@@ -1,5 +1,57 @@
 # Inverse AD Notes
 
+## Conventions
+
+Unless noted otherwise, `Linearization` and `Transpose` are written for the
+raw-output-space inverse map. For complex tensors, `Transpose` means the adjoint
+under the real Frobenius inner product
+
+$$
+\langle X, Y \rangle_{\mathbb{R}} = \operatorname{Re}\operatorname{tr}(X^\dagger Y).
+$$
+
+## Forward
+
+The raw operator is
+
+$$
+A \mapsto B = A^{-1}.
+$$
+
+## Linearization
+
+Differentiating $A B = I$ gives
+
+$$
+\dot{B} = -B\,\dot{A}\,B.
+$$
+
+## JVP
+
+The JVP is the same linearization evaluated at $\dot{A}$:
+
+$$
+\operatorname{jvp}(\operatorname{inv})(A;\dot{A}) = -B\,\dot{A}\,B.
+$$
+
+## Transpose
+
+For a raw output cotangent $\bar{B}$, the transpose map is
+
+$$
+\bar{A} = -B^{\mathsf{H}}\,\bar{B}\,B^{\mathsf{H}}.
+$$
+
+## VJP (JAX convention)
+
+JAX exposes the same transpose rule directly on the inverse output cotangent.
+
+## VJP (PyTorch convention)
+
+PyTorch uses the same raw adjoint, typically via the corresponding `solve`
+formula. Real inputs remain in the real domain after the final cotangent
+projection.
+
 ## Forward Definition
 
 $$

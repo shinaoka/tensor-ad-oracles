@@ -1,4 +1,6 @@
+import json
 import unittest
+from pathlib import Path
 
 from validators import encoding
 
@@ -59,3 +61,16 @@ class ValidatorEncodingTests(unittest.TestCase):
         self.assertEqual(str(tensor.dtype), "torch.complex64")
         self.assertEqual(tuple(tensor.shape), (1,))
         self.assertEqual(tensor.tolist(), [complex(1.0, -0.5)])
+
+    def test_decode_tensor_map_round_trips_published_jax_ref_payloads(self) -> None:
+        path = Path(__file__).resolve().parents[1] / "cases" / "abs" / "identity.jsonl"
+        record = json.loads(path.read_text(encoding="utf-8").splitlines()[0])
+        jax_ref = record["probes"][0]["jax_ref"]
+
+        linearization = encoding.decode_tensor_map(jax_ref["linearization"])
+        transpose = encoding.decode_tensor_map(jax_ref["transpose"])
+        raw_output_cotangent = encoding.decode_tensor_map(jax_ref["raw_output_cotangent"])
+
+        self.assertEqual(set(linearization), {"value"})
+        self.assertEqual(set(transpose), {"a"})
+        self.assertEqual(set(raw_output_cotangent), {"value"})

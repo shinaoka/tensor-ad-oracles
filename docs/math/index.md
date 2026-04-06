@@ -20,6 +20,36 @@ stable note anchor.
 For the human-facing explanation of that linkage, see
 [math-registry.md](../math-registry.md).
 
+## Unified Note Model
+
+Each published operator note now starts with the same six sections:
+
+- `## Forward`
+- `## Linearization`
+- `## JVP`
+- `## Transpose`
+- `## VJP (JAX convention)`
+- `## VJP (PyTorch convention)`
+
+The intent is:
+
+- `Forward` states the raw mathematical operator.
+- `Linearization` and `Transpose` describe the raw-output-space differential and
+  adjoint before any DB observable is applied.
+- `JVP` records the tangent-evaluation view of the same raw rule.
+- `VJP (JAX convention)` and `VJP (PyTorch convention)` explain how the same
+  raw cotangent map is surfaced by each framework.
+
+Unless a note says otherwise, `Transpose` means the adjoint under the real
+Frobenius inner product
+
+$$
+\langle X, Y \rangle_{\mathbb{R}} = \operatorname{Re}\operatorname{tr}(X^\dagger Y).
+$$
+
+Later sections keep the full migrated derivations, case splits, and family
+anchors intact.
+
 ## Core Linalg Notes
 
 - [svd.md](./svd.md)

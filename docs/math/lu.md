@@ -1,5 +1,76 @@
 # LU AD Notes
 
+## Conventions
+
+Unless noted otherwise, `Linearization` and `Transpose` are written for the
+raw-output-space LU factorization before any DB observable projection. For
+complex tensors, `Transpose` means the adjoint under the real Frobenius inner
+product
+
+$$
+\langle X, Y \rangle_{\mathbb{R}} = \operatorname{Re}\operatorname{tr}(X^\dagger Y).
+$$
+
+## Forward
+
+The raw operator is
+
+$$
+A \mapsto (P, L, U),
+\qquad
+P A = L U,
+$$
+
+where $P$ is discrete metadata and only $(L, U)$ are differentiated.
+
+## Linearization
+
+In the square case, define
+
+$$
+\dot{F} = L^{-1} P \dot{A} U^{-1}.
+$$
+
+Then
+
+$$
+\dot{L} = L \, \mathrm{tril}_-(\dot{F}),
+\qquad
+\dot{U} = \mathrm{triu}(\dot{F}) \, U.
+$$
+
+Wide and tall cases use the same lower/upper triangular split on the leading
+square block, with the extra block corrections recorded later in this note.
+
+## JVP
+
+The JVP is the same block-triangular linearization, returned on the raw factor
+outputs $(L, U)$ while keeping pivots as metadata.
+
+## Transpose
+
+In the square case, raw output cotangents $(\bar{L}, \bar{U})$ give
+
+$$
+\bar{F} = \mathrm{tril}_-(L^\dagger \bar{L}) + \mathrm{triu}(\bar{U} U^\dagger),
+$$
+
+$$
+\bar{A} = P^T L^{-\dagger} \bar{F} U^{-\dagger}.
+$$
+
+Wide and tall cases use the same leading-block triangular adjoints, with the
+explicit block formulas retained below.
+
+## VJP (JAX convention)
+
+JAX reads the same raw cotangent map on the differentiable factor outputs.
+
+## VJP (PyTorch convention)
+
+PyTorch uses the same block-triangular adjoint in `linalg_lu_backward`; pivots
+and status metadata stay outside the differentiable surface.
+
 ## Forward Definition
 
 $$

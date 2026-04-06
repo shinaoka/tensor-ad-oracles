@@ -346,6 +346,14 @@ class MathRegistryTests(unittest.TestCase):
             text = note_path.read_text(encoding="utf-8")
             self.assertNotIn("## Implementation Correspondence", text, note_path.name)
 
+    def test_repo_scalar_ops_note_marks_float_only_upstream_boundary(self) -> None:
+        text = (
+            Path(__file__).resolve().parents[1] / "docs" / "math" / "scalar_ops.md"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn("float-only in the pinned PyTorch upstream AD coverage", text)
+        self.assertIn("docs/math/complex-support.json", text)
+
     def test_repo_eig_and_eigen_notes_are_distinct(self) -> None:
         note_dir = Path(__file__).resolve().parents[1] / "docs" / "math"
         eig_text = (note_dir / "eig.md").read_text(encoding="utf-8")
@@ -360,18 +368,28 @@ class MathRegistryTests(unittest.TestCase):
 
         self.assertTrue(expected.issubset({path.name for path in note_dir.glob("*.md")}))
 
+    def test_repo_math_index_describes_unified_note_model(self) -> None:
+        text = (
+            Path(__file__).resolve().parents[1] / "docs" / "math" / "index.md"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn("raw-output-space", text)
+        self.assertIn("## Unified Note Model", text)
+        self.assertIn("VJP (JAX convention)", text)
+        self.assertIn("VJP (PyTorch convention)", text)
+
     def test_repo_scalar_ops_note_exposes_representative_op_anchors(self) -> None:
         note_path = Path(__file__).resolve().parents[1] / "docs" / "math" / "scalar_ops.md"
         anchors = math_registry.extract_markdown_anchors(note_path.read_text(encoding="utf-8"))
 
         self.assertEqual({"op-abs", "op-add", "op-sum", "op-var"} - anchors, set())
 
-    def test_repo_matrix_exp_note_marks_db_status(self) -> None:
+    def test_repo_matrix_exp_note_has_db_family(self) -> None:
         text = (
             Path(__file__).resolve().parents[1] / "docs" / "math" / "matrix_exp.md"
         ).read_text(encoding="utf-8")
 
-        self.assertIn("not yet materialized", text)
+        self.assertIn("family-identity", text)
 
     def test_repo_registry_contains_representative_family_mappings(self) -> None:
         root = Path(__file__).resolve().parents[1]

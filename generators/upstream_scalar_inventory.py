@@ -8,6 +8,7 @@ from .runtime import ensure_pinned_torch_version
 from .upstream_inventory import (
     DEFAULT_FIRST_ORDER_AD_TOLERANCE,
     DEFAULT_SECOND_ORDER_AD_TOLERANCE,
+    _supported_dtype_names,
 )
 
 
@@ -40,6 +41,7 @@ class UpstreamScalarOpInfoRecord:
     gradcheck_fast_mode: bool
     supports_forward_ad: bool
     supports_fwgrad_bwgrad: bool
+    supported_dtype_names: tuple[str, ...]
 
 
 def _import_scalar_generation_runtime():
@@ -115,6 +117,7 @@ def collect_ad_relevant_scalar_opinfos() -> list[UpstreamScalarOpInfoRecord]:
                 gradcheck_fast_mode=bool(getattr(op, "gradcheck_fast_mode", False)),
                 supports_forward_ad=bool(getattr(op, "supports_forward_ad", False)),
                 supports_fwgrad_bwgrad=bool(getattr(op, "supports_fwgrad_bwgrad", False)),
+                supported_dtype_names=_supported_dtype_names(torch, op),
             )
         )
     return rows

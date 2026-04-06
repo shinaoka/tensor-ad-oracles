@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import sys
+import tempfile
 from pathlib import Path
 from typing import Iterable
 
@@ -12,6 +13,7 @@ CASES_ROOT = REPO_ROOT / "cases"
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
+from generators import jax_v1
 from validators.case_loader import iter_case_files
 
 
@@ -48,9 +50,19 @@ def verify_case_tree(root: Path = CASES_ROOT) -> int:
     return sum(len(load_jsonl_records(path)) for path in paths)
 
 
+def _verify_jax_smoke_case_tree() -> int:
+    with tempfile.TemporaryDirectory() as tmpdir:
+        smoke_root = Path(tmpdir)
+        jax_v1.materialize_case_family("abs", "identity", limit=1, cases_root=smoke_root)
+        jax_v1.materialize_case_family("exp", "identity", limit=1, cases_root=smoke_root)
+        return verify_case_tree(smoke_root)
+
+
 def main() -> int:
     verified = verify_case_tree()
+    smoke_verified = _verify_jax_smoke_case_tree()
     print(f"verified_case_records={verified}")
+    print(f"jax_verified_case_records={smoke_verified}")
     return 0
 
 

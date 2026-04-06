@@ -2,9 +2,11 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from scripts import (
+    check_complex_support,
     check_docs_site,
     check_math_registry,
     check_regeneration,
@@ -43,6 +45,11 @@ class VerifyCasesTests(unittest.TestCase):
             records = verify_cases.load_jsonl_records(path)
 
             self.assertEqual([record["case_id"] for record in records], ["a", "b"])
+
+    def test_main_also_verifies_jax_smoke_cases(self) -> None:
+        with patch.object(verify_cases, "verify_case_tree", side_effect=[7, 2]) as verify_case_tree:
+            self.assertEqual(verify_cases.main(), 0)
+            self.assertEqual(verify_case_tree.call_count, 2)
 
 
 class CheckRegenerationTests(unittest.TestCase):
@@ -247,6 +254,81 @@ class CheckRegenerationTests(unittest.TestCase):
 
             check_regeneration.compare_case_trees(expected, actual)
 
+    def test_main_also_checks_jax_smoke_regeneration(self) -> None:
+        with patch.object(check_regeneration, "materialize_all_case_families", return_value=None):
+            with patch.object(check_regeneration, "_overlay_torch_aligned_jax_refs", return_value=None):
+                with patch.object(check_regeneration, "compare_case_trees", return_value=None) as compare_case_trees:
+                    self.assertEqual(check_regeneration.main(), 0)
+                    self.assertEqual(compare_case_trees.call_count, 2)
+
+    def test_check_regeneration_overlays_torch_aligned_jax_refs(self) -> None:
+        published_record = {
+            "case_id": "abs_f64_identity_001",
+            "probes": [{"probe_id": "p0"}],
+        }
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            cases_root = Path(tmpdir) / "published"
+            (cases_root / "abs").mkdir(parents=True)
+            (cases_root / "exp").mkdir(parents=True)
+            (cases_root / "abs" / "identity.jsonl").write_text(
+                json.dumps(published_record) + "\n",
+                encoding="utf-8",
+            )
+            (cases_root / "exp" / "identity.jsonl").write_text(
+                json.dumps(published_record | {"case_id": "exp_f64_identity_001"}) + "\n",
+                encoding="utf-8",
+            )
+
+            def fake_materialize_all_case_families(*, limit, cases_root):
+                del limit
+                (cases_root / "abs").mkdir(parents=True, exist_ok=True)
+                (cases_root / "exp").mkdir(parents=True, exist_ok=True)
+                (cases_root / "abs" / "identity.jsonl").write_text(
+                    json.dumps(published_record) + "\n",
+                    encoding="utf-8",
+                )
+                (cases_root / "exp" / "identity.jsonl").write_text(
+                    json.dumps(published_record | {"case_id": "exp_f64_identity_001"}) + "\n",
+                    encoding="utf-8",
+                )
+                return [
+                    cases_root / "abs" / "identity.jsonl",
+                    cases_root / "exp" / "identity.jsonl",
+                ]
+
+            with patch.object(
+                check_regeneration,
+                "materialize_all_case_families",
+                side_effect=fake_materialize_all_case_families,
+            ):
+                with patch.object(
+                    check_regeneration.jax_v1,
+                    "materialize_torch_aligned_case_family",
+                    return_value=None,
+                ) as overlay:
+                    with patch.object(check_regeneration, "compare_case_trees", return_value=None):
+                        compared = check_regeneration.check_regeneration(cases_root=cases_root)
+
+        self.assertEqual(compared, 2)
+        self.assertEqual(overlay.call_count, 2)
+        self.assertEqual(overlay.call_args_list[0].args, ("abs", "identity"))
+        self.assertEqual(overlay.call_args_list[1].args, ("exp", "identity"))
+        for call in overlay.call_args_list:
+            self.assertIsNone(call.kwargs["limit"])
+            self.assertTrue(str(call.kwargs["source_case_path"]).endswith("identity.jsonl"))
+
+    def test_main_raises_when_jax_smoke_regeneration_fails(self) -> None:
+        with patch.object(check_regeneration, "materialize_all_case_families", return_value=None):
+            with patch.object(check_regeneration, "_overlay_torch_aligned_jax_refs", return_value=None):
+                with patch.object(
+                    check_regeneration,
+                    "compare_case_trees",
+                    side_effect=[None, ValueError("jax smoke regeneration mismatch")],
+                ):
+                    with self.assertRaisesRegex(ValueError, "jax smoke regeneration mismatch"):
+                        check_regeneration.main()
+
 
 class ValidateSchemaTests(unittest.TestCase):
     def test_require_jsonschema_dependency_raises_clear_error(self) -> None:
@@ -282,6 +364,28 @@ class CheckReplayScriptTests(unittest.TestCase):
             )(),
         ):
             with self.assertRaisesRegex(SystemExit, "bad_case: mismatch"):
+                check_replay.main()
+
+    def test_main_also_replays_jax_smoke_cases(self) -> None:
+        published = SimpleNamespace(checked=7, failures=[])
+        jax_smoke = SimpleNamespace(checked=2, failures=[])
+        with patch.object(
+            check_replay,
+            "replay_case_tree",
+            side_effect=[published, jax_smoke],
+        ) as replay_case_tree:
+            self.assertEqual(check_replay.main(), 0)
+            self.assertEqual(replay_case_tree.call_count, 2)
+
+    def test_main_raises_when_jax_smoke_replay_fails(self) -> None:
+        published = SimpleNamespace(checked=7, failures=[])
+        jax_smoke = SimpleNamespace(checked=2, failures=["jax_case: mismatch"])
+        with patch.object(
+            check_replay,
+            "replay_case_tree",
+            side_effect=[published, jax_smoke],
+        ):
+            with self.assertRaisesRegex(SystemExit, "jax_case: mismatch"):
                 check_replay.main()
 
 
@@ -336,6 +440,83 @@ class CheckMathRegistryScriptTests(unittest.TestCase):
             with patch.object(check_math_registry, "REPO_ROOT", root):
                 with self.assertRaisesRegex(SystemExit, "missing registry entries"):
                     check_math_registry.main()
+
+
+class CheckComplexSupportScriptTests(unittest.TestCase):
+    def test_main_reports_success_for_valid_repo(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            (root / "docs" / "math").mkdir(parents=True)
+            (root / "cases" / "solve").mkdir(parents=True)
+            (root / "docs" / "math" / "solve.md").write_text(
+                "<a id=\"family-identity\"></a>\n",
+                encoding="utf-8",
+            )
+            (root / "docs" / "math" / "registry.json").write_text(
+                json.dumps(
+                    {
+                        "version": 1,
+                        "entries": [
+                            {
+                                "op": "solve",
+                                "family": "identity",
+                                "note_path": "docs/math/solve.md",
+                                "anchor": "family-identity",
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            (root / "docs" / "math" / "complex-support.json").write_text(
+                json.dumps(
+                    {
+                        "version": 1,
+                        "entries": [
+                            {
+                                "op": "solve",
+                                "family": "identity",
+                                "note": {
+                                    "path": "docs/math/solve.md",
+                                    "anchor": "family-identity",
+                                    "status": "reviewed",
+                                },
+                                "db": {"status": "covered"},
+                                "unsupported_reason": None,
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            (root / "cases" / "solve" / "identity.jsonl").write_text(
+                "\n".join(
+                    [
+                        json.dumps({"case_id": "solve_c128_identity_001", "dtype": "complex128"}),
+                        json.dumps({"case_id": "solve_c64_identity_002", "dtype": "complex64"}),
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            with patch.object(check_complex_support, "REPO_ROOT", root):
+                with patch.object(
+                    check_complex_support,
+                    "_default_spec_index",
+                    return_value={
+                        ("solve", "identity"): type(
+                            "StubSpec",
+                            (),
+                            {
+                                "op": "solve",
+                                "family": "identity",
+                                "supported_dtype_names": ("float64", "complex128", "complex64"),
+                            },
+                        )()
+                    },
+                ):
+                    self.assertEqual(check_complex_support.main(), 0)
 
 
 class CheckDocsSiteScriptTests(unittest.TestCase):

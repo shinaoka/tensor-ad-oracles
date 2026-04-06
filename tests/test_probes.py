@@ -101,6 +101,141 @@ class ProbeTests(unittest.TestCase):
         self.assertEqual(probe["pytorch_ref"]["hvp"], direction)
         self.assertEqual(probe["fd_ref"]["hvp"], direction)
 
+    def test_make_probe_record_includes_optional_jax_payloads(self) -> None:
+        direction = {
+            "a": {
+                "dtype": "float64",
+                "shape": [1],
+                "order": "row_major",
+                "data": [1.0],
+            }
+        }
+        cotangent = {
+            "value": {
+                "dtype": "float64",
+                "shape": [1],
+                "order": "row_major",
+                "data": [1.0],
+            }
+        }
+        jax_payload = {
+            "value": {
+                "dtype": "float64",
+                "shape": [1],
+                "order": "row_major",
+                "data": [1.0],
+            }
+        }
+        jax_adjoint_check = {
+            "lhs": 1.0,
+            "rhs": 1.0,
+            "abs_err": 0.0,
+            "rel_err": 0.0,
+        }
+        jax_provenance = {
+            "source_backend": "jax",
+            "witness_source": "torch_aligned",
+            "jax_version": "0.0.0",
+            "jaxlib_version": "0.0.0",
+            "backend": "cpu",
+            "enable_x64": True,
+        }
+
+        probe = probes.make_probe_record(
+            probe_id="p0",
+            direction=direction,
+            cotangent=cotangent,
+            pytorch_jvp=cotangent,
+            pytorch_vjp=direction,
+            fd_step=1e-6,
+            fd_jvp=cotangent,
+            jax_jvp=jax_payload,
+            jax_vjp=direction,
+            jax_linearization=jax_payload,
+            jax_raw_output_cotangent=jax_payload,
+            jax_transpose=direction,
+            jax_adjoint_check=jax_adjoint_check,
+            jax_provenance=jax_provenance,
+        )
+
+        self.assertEqual(probe["jax_ref"]["jvp"], jax_payload)
+        self.assertEqual(probe["jax_ref"]["vjp"], direction)
+        self.assertEqual(probe["jax_ref"]["linearization"], jax_payload)
+        self.assertEqual(probe["jax_ref"]["raw_output_cotangent"], jax_payload)
+        self.assertEqual(probe["jax_ref"]["transpose"], direction)
+        self.assertEqual(probe["jax_ref"]["adjoint_check"], jax_adjoint_check)
+        self.assertEqual(probe["jax_ref"]["provenance"], jax_provenance)
+        self.assertEqual(probe["pytorch_ref"]["vjp"], direction)
+        self.assertEqual(probe["fd_ref"]["jvp"], cotangent)
+
+    def test_make_probe_record_omits_jax_ref_for_pytorch_only_payloads(self) -> None:
+        direction = {
+            "a": {
+                "dtype": "float64",
+                "shape": [1],
+                "order": "row_major",
+                "data": [1.0],
+            }
+        }
+        cotangent = {
+            "value": {
+                "dtype": "float64",
+                "shape": [1],
+                "order": "row_major",
+                "data": [1.0],
+            }
+        }
+
+        probe = probes.make_probe_record(
+            probe_id="p0",
+            direction=direction,
+            cotangent=cotangent,
+            pytorch_jvp=cotangent,
+            pytorch_vjp=direction,
+            fd_step=1e-6,
+            fd_jvp=cotangent,
+        )
+
+        self.assertNotIn("jax_ref", probe)
+
+    def test_make_probe_record_rejects_partial_jax_payloads(self) -> None:
+        direction = {
+            "a": {
+                "dtype": "float64",
+                "shape": [1],
+                "order": "row_major",
+                "data": [1.0],
+            }
+        }
+        cotangent = {
+            "value": {
+                "dtype": "float64",
+                "shape": [1],
+                "order": "row_major",
+                "data": [1.0],
+            }
+        }
+        jax_provenance = {
+            "source_backend": "jax",
+            "witness_source": "torch_aligned",
+            "jax_version": "0.0.0",
+            "jaxlib_version": "0.0.0",
+            "backend": "cpu",
+            "enable_x64": True,
+        }
+
+        with self.assertRaises(ValueError):
+            probes.make_probe_record(
+                probe_id="p0",
+                direction=direction,
+                cotangent=cotangent,
+                pytorch_jvp=cotangent,
+                pytorch_vjp=direction,
+                fd_step=1e-6,
+                fd_jvp=cotangent,
+                jax_provenance=jax_provenance,
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

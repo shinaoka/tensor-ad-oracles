@@ -1,5 +1,77 @@
 # Hermitian Eigen AD Notes
 
+## Conventions
+
+Unless noted otherwise, `Linearization` and `Transpose` are written for the
+raw-output-space Hermitian eigendecomposition before any DB observable such as
+`values_vectors_abs` is applied. For complex tensors, `Transpose` means the
+adjoint under the real Frobenius inner product
+
+$$
+\langle X, Y \rangle_{\mathbb{R}} = \operatorname{Re}\operatorname{tr}(X^\dagger Y).
+$$
+
+## Forward
+
+The raw operator is
+
+$$
+A \mapsto (E, U),
+\qquad
+A = U \operatorname{diag}(E) U^\dagger,
+\qquad
+A = A^\dagger.
+$$
+
+## Linearization
+
+With the stabilized inverse-gap matrix $F$ defined later in the note,
+
+$$
+dE = \operatorname{diag}(U^\dagger dA U),
+$$
+
+$$
+dU = U \left(F \odot (U^\dagger dA U - \operatorname{diag}(dE))\right),
+$$
+
+with the skew-Hermitian gauge projected away.
+
+## JVP
+
+The JVP is the same linearization evaluated on the Hermitian tangent $dA$,
+returning $(dE, dU)$.
+
+## Transpose
+
+For raw output cotangents $(\bar{E}, \bar{U})$, the transpose map uses the
+inner matrix
+
+$$
+D =
+\frac{1}{2}
+\left(
+F \odot (\bar{U}^\dagger U)
++ (F \odot (\bar{U}^\dagger U))^\dagger
+\right)
++ \operatorname{diag}(\bar{E}),
+$$
+
+and returns
+
+$$
+\bar{A} = U D U^\dagger.
+$$
+
+## VJP (JAX convention)
+
+JAX reads the same raw transpose on the Hermitian eigendecomposition outputs.
+
+## VJP (PyTorch convention)
+
+PyTorch routes the Hermitian case through the same raw rule as a structured
+specialization of the general eigendecomposition kernels.
+
 ## Forward Definition
 
 $$

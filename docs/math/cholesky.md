@@ -1,5 +1,72 @@
 # Cholesky AD Notes
 
+## Conventions
+
+Unless noted otherwise, `Linearization` and `Transpose` are written for the
+raw-output-space Cholesky map before any DB observable projection. For complex
+tensors, `Transpose` means the adjoint under the real Frobenius inner product
+
+$$
+\langle X, Y \rangle_{\mathbb{R}} = \operatorname{Re}\operatorname{tr}(X^\dagger Y).
+$$
+
+## Forward
+
+The raw operator is the lower-triangular factor
+
+$$
+A \mapsto L,
+\qquad
+A = L L^{\mathsf{H}},
+\qquad
+A = A^{\mathsf{H}} \succ 0.
+$$
+
+## Linearization
+
+With the helper
+
+$$
+\varphi(X) = \mathrm{tril}(X) - \tfrac{1}{2}\mathrm{diag}(X),
+$$
+
+the raw-output-space linearization is
+
+$$
+\dot{L} = L \, \varphi\!\bigl(L^{-1}\dot{A}\,L^{-\mathsf{H}}\bigr).
+$$
+
+## JVP
+
+The JVP is exactly the same tangent formula:
+
+$$
+\operatorname{jvp}(\operatorname{chol})(A;\dot{A})
+= L \, \varphi\!\bigl(L^{-1}\dot{A}\,L^{-\mathsf{H}}\bigr).
+$$
+
+## Transpose
+
+For a raw output cotangent $\bar{L}$, the transpose map is
+
+$$
+\bar{A} =
+L^{-\mathsf{H}} \,
+\varphi^*\!\bigl(\mathrm{tril}(L^{\mathsf{H}}\bar{L})\bigr)
+\, L^{-1}.
+$$
+
+## VJP (JAX convention)
+
+JAX reads the same raw transpose map directly as the cotangent rule on the
+Cholesky factor.
+
+## VJP (PyTorch convention)
+
+PyTorch uses the same triangular-solve sandwich. For `cholesky_ex`, auxiliary
+status outputs are treated as metadata, so the VJP applies only to the factor
+output.
+
 ## Forward Definition
 
 $$

@@ -72,7 +72,7 @@ def audit_against_upstream_ad_tolerances(
         spec = spec_index[(op, family)]
         resolver = (
             resolve_upstream_scalar_ad_tolerance
-            if spec.inventory_kind == "scalar"
+            if spec.inventory_kind in ("scalar", "cmi_linalg")
             else resolve_upstream_ad_tolerance
         )
         upstream = resolver(
@@ -116,7 +116,7 @@ def audit_against_upstream_ad_tolerances(
         spec = spec_index[(op, family)]
         resolver = (
             resolve_upstream_scalar_ad_tolerance
-            if spec.inventory_kind == "scalar"
+            if spec.inventory_kind in ("scalar", "cmi_linalg")
             else resolve_upstream_ad_tolerance
         )
         upstream = resolver(

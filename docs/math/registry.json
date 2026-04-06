@@ -458,6 +458,12 @@
       "anchor": "family-matrix-norm-identity"
     },
     {
+      "op": "matrix_exp",
+      "family": "identity",
+      "note_path": "docs/math/matrix_exp.md",
+      "anchor": "family-identity"
+    },
+    {
       "op": "matrix_power",
       "family": "identity",
       "note_path": "docs/math/scalar_ops.md",

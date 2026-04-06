@@ -22,6 +22,8 @@ class RepoConfigTests(unittest.TestCase):
         self.assertEqual(config["tool"]["uv"]["package"], False)
         self.assertIn("dev", config["dependency-groups"])
         self.assertIn("torch==2.10.0", config["project"]["dependencies"])
+        self.assertIn("jax==0.9.1", config["project"]["dependencies"])
+        self.assertIn("jaxlib==0.9.1", config["project"]["dependencies"])
 
     def test_readme_documents_uv_sync_and_uv_run(self) -> None:
         readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
@@ -30,6 +32,8 @@ class RepoConfigTests(unittest.TestCase):
         self.assertIn("uv run python -m unittest", readme)
         self.assertIn("uv run python -m generators.pytorch_v1 --list", readme)
         self.assertIn("uv run python scripts/check_math_registry.py", readme)
+        self.assertIn("uv run python scripts/check_complex_support.py", readme)
+        self.assertIn("uv run python scripts/report_complex_support.py", readme)
         self.assertIn("uv run python scripts/check_upstream_ad_tolerances.py", readme)
 
     def test_readme_documents_structured_input_semantics(self) -> None:
@@ -46,8 +50,23 @@ class RepoConfigTests(unittest.TestCase):
         self.assertIn("mathematical AD notes", readme)
         self.assertIn("oracle database", readme)
         self.assertIn("docs/math/registry.json", readme)
+        self.assertIn("dual-backend", readme)
+        self.assertIn("added in later tasks", readme)
+        self.assertIn("Planned JAX Surface", readme)
+        self.assertIn("later tasks", readme)
+        self.assertIn("not implemented yet", readme)
+        self.assertIn("uv run python -m generators.jax_v1 --list", readme)
+        self.assertIn("jax_ref", readme)
+        self.assertIn("linearization", readme)
+        self.assertIn("transpose", readme)
         self.assertTrue((REPO_ROOT / "docs" / "math" / "index.md").exists())
         self.assertTrue((REPO_ROOT / "docs" / "math" / "registry.json").exists())
+
+    def test_readme_documents_complex_support_ledger(self) -> None:
+        readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+
+        self.assertIn("docs/math/complex-support.json", readme)
+        self.assertIn("docs/generated/complex-support.md", readme)
 
     def test_readme_documents_pages_deployment(self) -> None:
         readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
@@ -71,6 +90,10 @@ class RepoConfigTests(unittest.TestCase):
         self.assertIn("3.12.12", agents)
         self.assertIn("expecttest", agents)
         self.assertIn("torch==2.10.0", agents)
+        self.assertIn("jax==0.9.1", agents)
+        self.assertIn("jaxlib==0.9.1", agents)
+        self.assertIn("The JAX generator surface is a first-class part of the repository contract.", agents)
+        self.assertIn("Run every JAX command through `uv run`", agents)
 
     def test_github_policy_files_are_present(self) -> None:
         self.assertTrue((REPO_ROOT / ".github" / "CODEOWNERS").exists())
@@ -96,6 +119,7 @@ class RepoConfigTests(unittest.TestCase):
         ).read_text(encoding="utf-8")
 
         self.assertIn("uv run python scripts/check_math_registry.py", workflow)
+        self.assertIn("uv run python scripts/check_complex_support.py", workflow)
         self.assertIn("uv run python scripts/check_tolerances.py", workflow)
         self.assertIn("uv run python scripts/check_upstream_ad_tolerances.py", workflow)
 

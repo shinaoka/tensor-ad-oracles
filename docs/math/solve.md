@@ -1,5 +1,70 @@
 # Solve AD Notes
 
+## Conventions
+
+Unless noted otherwise, `Linearization` and `Transpose` are written for the
+raw-output-space solve map before any DB observable projection. For complex
+tensors, `Transpose` means the adjoint under the real Frobenius inner product
+
+$$
+\langle X, Y \rangle_{\mathbb{R}} = \operatorname{Re}\operatorname{tr}(X^\dagger Y).
+$$
+
+## Forward
+
+The raw operator is the solution map
+
+$$
+(A, B) \mapsto X,
+\qquad
+A X = B.
+$$
+
+## Linearization
+
+Differentiating the defining equation gives
+
+$$
+\dot{A} X + A \dot{X} = \dot{B},
+\qquad
+\dot{X} = A^{-1}(\dot{B} - \dot{A}X).
+$$
+
+## JVP
+
+The JVP is the same tangent solve:
+
+$$
+\operatorname{jvp}(\operatorname{solve})(A,B;\dot{A},\dot{B})
+= A^{-1}(\dot{B} - \dot{A}X).
+$$
+
+## Transpose
+
+For a raw output cotangent $\bar{X}$, define
+
+$$
+G = A^{-\mathsf{H}}\bar{X}.
+$$
+
+Then the transpose map is
+
+$$
+(\bar{A}, \bar{B}) = (-G X^{\mathsf{H}}, G).
+$$
+
+## VJP (JAX convention)
+
+JAX exposes the same raw transpose on the solution output. Right solves,
+triangular solves, and `tensorsolve` are the same cotangent geometry with the
+matching primal structure.
+
+## VJP (PyTorch convention)
+
+PyTorch uses the same raw adjoint formulas in `linalg_solve_backward` and its
+triangular variants. For `solve_ex`, the status output remains nondifferentiable
+metadata.
+
 ## Forward Definition
 
 For the left solve

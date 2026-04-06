@@ -1,5 +1,67 @@
 # Least Squares AD Notes
 
+## Conventions
+
+Unless noted otherwise, `Linearization` and `Transpose` are written for the
+raw-output-space least-squares solution map. For complex tensors, `Transpose`
+means the adjoint under the real Frobenius inner product
+
+$$
+\langle X, Y \rangle_{\mathbb{R}} = \operatorname{Re}\operatorname{tr}(X^\dagger Y).
+$$
+
+## Forward
+
+The raw operator is
+
+$$
+(A, b) \mapsto x = \arg\min_x \|Ax - b\|_2^2,
+\qquad
+x = R^{-1}Q^\dagger b
+$$
+
+for the thin QR factorization $A = Q R$.
+
+## Linearization
+
+With residual $r = b - A x$, the raw-output-space linearization is
+
+$$
+dx = (A^\dagger A)^{-1}(A^\dagger db + dA^\dagger r - A^\dagger dA\,x).
+$$
+
+## JVP
+
+The JVP is that same linearization evaluated at $(dA, db)$.
+
+## Transpose
+
+For a raw output cotangent $\bar{x}$, define
+
+$$
+y = R^{-\dagger}\bar{x},
+\qquad
+z = R^{-1}y.
+$$
+
+Then
+
+$$
+\bar{b} = Q y,
+\qquad
+\bar{A} = r z^\dagger - \bar{b} x^\dagger.
+$$
+
+## VJP (JAX convention)
+
+JAX reads the same raw transpose map on the least-squares solution output.
+
+## VJP (PyTorch convention)
+
+PyTorch currently routes the solution term through `pinv`-style helpers and
+adds the residual correction separately, but the resulting raw cotangent map is
+the same.
+
 ## Forward Definition
 
 For the least-squares problem
