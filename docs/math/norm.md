@@ -1,5 +1,92 @@
 # Norm AD Notes
 
+## Conventions
+
+Unless noted otherwise, `Linearization` and `Transpose` are written for the
+raw-output-space norm map before any DB observable projection. For complex
+tensors, `Transpose` means the adjoint under the real Frobenius inner product
+
+$$
+\langle X, Y \rangle_{\mathbb{R}} = \operatorname{Re}\operatorname{tr}(X^\dagger Y).
+$$
+
+## Forward
+
+This note covers the raw scalar outputs of vector $p$-norms, Frobenius norm,
+nuclear norm, and spectral norm.
+
+## Linearization
+
+Representative raw-output-space linearizations are:
+
+- vector $p$-norm:
+
+$$
+\dot{n} =
+\frac{\sum_i |x_i|^{p-2}\operatorname{Re}(\bar{x}_i \dot{x}_i)}
+{\|x\|_p^{p-1}}
+$$
+
+- Frobenius norm:
+
+$$
+\dot{n} = \frac{\operatorname{Re}\operatorname{tr}(A^\dagger \dot{A})}{\|A\|_F}
+$$
+
+- nuclear norm:
+
+$$
+\dot{n} = \operatorname{Re}\operatorname{tr}(U^\dagger \dot{A} V)
+$$
+
+- spectral norm:
+
+$$
+\dot{n} = \operatorname{Re}(u_1^\dagger \dot{A} v_1)
+$$
+
+## JVP
+
+The JVP is the same scalar linearization evaluated at the chosen tangent.
+
+## Transpose
+
+Representative transpose rules are:
+
+- vector $p$-norm:
+
+$$
+\bar{x}_i = \bar{n} \cdot \frac{x_i |x_i|^{p-2}}{\|x\|_p^{p-1}}
+$$
+
+- Frobenius norm:
+
+$$
+\bar{A} = \bar{n} \cdot \frac{A}{\|A\|_F}
+$$
+
+- nuclear norm:
+
+$$
+\bar{A} = \bar{n} \cdot U V^\dagger
+$$
+
+- spectral norm:
+
+$$
+\bar{A} = \bar{n} \cdot u_1 v_1^\dagger
+$$
+
+## VJP (JAX convention)
+
+JAX reads the same scalar-output transpose maps directly. Nonsmooth points keep
+their subgradient caveats.
+
+## VJP (PyTorch convention)
+
+PyTorch uses the same raw adjoints, together with the same masking and
+subgradient conventions at zeros, ties, and repeated singular values.
+
 ## 1. Vector $p$-norm
 
 $$

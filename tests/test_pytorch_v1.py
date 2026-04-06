@@ -8,6 +8,8 @@ from unittest.mock import patch
 
 from generators import pytorch_v1
 
+REPO_ROOT = Path(__file__).resolve().parents[1]
+
 
 class PytorchV1RegistryTests(unittest.TestCase):
     def test_build_case_families_returns_expected_registry(self) -> None:
@@ -326,6 +328,22 @@ class PytorchV1RegistryTests(unittest.TestCase):
 
             self.assertEqual(exit_code, 0)
             self.assertTrue((Path(tmpdir) / "abs" / "identity.jsonl").exists())
+
+    def test_published_abs_and_exp_cases_include_jax_refs(self) -> None:
+        for op in ("abs", "exp"):
+            path = REPO_ROOT / "cases" / op / "identity.jsonl"
+            records = [
+                json.loads(line)
+                for line in path.read_text(encoding="utf-8").splitlines()
+                if line.strip()
+            ]
+
+            self.assertGreater(len(records), 0)
+            for record in records:
+                self.assertEqual(record["expected_behavior"], "success")
+                self.assertIn("jax_ref", record["probes"][0], msg=f"{op} record missing jax_ref")
+                self.assertIn("pytorch_ref", record["probes"][0])
+                self.assertIn("fd_ref", record["probes"][0])
 
     def test_main_materialize_all_writes_every_family(self) -> None:
         try:

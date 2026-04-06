@@ -29,6 +29,15 @@ uv sync --locked --all-groups
 - Treat the public version string `2.10.0` as the repository contract. Local build suffixes
   such as `+cu128` or `+cpu` should not appear in generated provenance.
 
+## JAX Generator Dependencies
+
+- The JAX generator surface is a first-class part of the repository contract.
+- Keep `jax` and `jaxlib` pinned to exact matching versions in `pyproject.toml`.
+- The current exact JAX pins are `jax==0.9.1` and `jaxlib==0.9.1`.
+- Run every JAX command through `uv run`, including generator smoke checks and any
+  validation commands added for JAX witnesses.
+- When updating JAX-related dependencies, refresh `uv.lock` before syncing the environment.
+
 ## Operational Notes
 
 - Do not run `uv lock` and `uv sync --locked --all-groups` in parallel. Update the lockfile first, then sync.
@@ -38,6 +47,7 @@ uv sync --locked --all-groups
   - `uv run python scripts/verify_cases.py`
   - `uv run python scripts/check_replay.py`
   - `uv run python scripts/check_regeneration.py`
+- Add any JAX-specific validation scripts under the same `uv run` discipline.
 - `scripts/check_regeneration.py` compares regenerated JSONL files semantically.
   Metadata must match exactly, while numeric tensors may differ only within the
   case-level `comparison.rtol` / `comparison.atol`.

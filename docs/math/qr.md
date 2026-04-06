@@ -4,6 +4,77 @@ This note covers the reduced QR rule that is materialized in the DB and keeps
 the transpose-dual LQ formulas from `tenferro-rs/docs/AD/qr.md` so that no
 derivation detail is lost in the migration.
 
+## Conventions
+
+Unless noted otherwise, `Linearization` and `Transpose` are written for the
+raw-output-space QR factorization before any DB observable projection. For
+complex tensors, `Transpose` means the adjoint under the real Frobenius inner
+product
+
+$$
+\langle X, Y \rangle_{\mathbb{R}} = \operatorname{Re}\operatorname{tr}(X^\dagger Y).
+$$
+
+## Forward
+
+The raw operator is
+
+$$
+A \mapsto (Q, R),
+\qquad
+A = Q R,
+\qquad
+Q^\dagger Q = I.
+$$
+
+## Linearization
+
+For $M \geq N$,
+
+$$
+dR = \operatorname{syminv}\!\left(\operatorname{sym}(Q^\dagger dA R^{-1})\right) R,
+$$
+
+$$
+dQ = (dA)R^{-1} - Q(dR R^{-1}).
+$$
+
+For $M < N$, the leading square block $R_1$ controls the constrained part and
+the exact `trilIm` / `trilImInv` formulas are recorded below.
+
+## JVP
+
+The JVP is the same case-split linearization returned on the raw factors
+$(dQ, dR)$.
+
+## Transpose
+
+For $M \geq N$,
+
+$$
+\bar{A} =
+\left[\bar{Q} + Q \cdot \operatorname{copyltu}(R \bar{R}^\dagger - \bar{Q}^\dagger Q)\right] R^{-\dagger}.
+$$
+
+For $M < N$,
+
+$$
+\bar{A} = Q \bar{R} + \pi^\*\!\left(
+Q \, \operatorname{trilImInvAdjSkew}(Q^\dagger \bar{Q} - \bar{R} R^\dagger)
+R_1^{-\dagger}\right).
+$$
+
+## VJP (JAX convention)
+
+JAX reads the same raw transpose on the QR outputs before any downstream
+observable repackages the factors.
+
+## VJP (PyTorch convention)
+
+PyTorch uses the same full-rank versus wide-reduced case split in
+`linalg_qr_backward`. The transpose-dual LQ formulas are preserved later in
+this note.
+
 ## QR Forward Definition
 
 For

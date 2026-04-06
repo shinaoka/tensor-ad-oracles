@@ -6,6 +6,37 @@ validation:
 - mathematical AD notes
 - a machine-readable JSON oracle database
 
+The repository is intentionally dual-backend:
+
+- PyTorch remains the baseline oracle source for the existing case DB
+- JAX support is being added in later tasks as a parallel generator and witness
+  surface
+
+## Planned JAX Surface
+
+The following JAX-facing entrypoint and witness fields are planned for later
+tasks and are not implemented yet:
+
+- `uv run python -m generators.jax_v1 --list`
+- `jax_ref`
+- `linearization`
+- `transpose`
+
+These names document the intended future contract so the JAX backend can be
+added without changing the vocabulary later.
+
+## JAX Witness Source Policy
+
+JAX witness materialization uses two source modes:
+
+- Prefer `jax_test` for families with a dedicated JAX internal harness.
+- Fall back to `torch_aligned` when a published PyTorch case should be reused
+  as the exact serialized primal-input source.
+
+When a witness comes from a JAX internal harness, the top-level provenance
+records the harness `source_file`, `source_function`, `seed`, and a
+`comment` entry containing `harness_fullname=...`.
+
 The oracle database covers both scalar-style `OpInfo` families and linear
 algebra operations.
 
@@ -80,6 +111,11 @@ uv run python scripts/report_upstream_publish_coverage.py
 uv run python scripts/report_complex_support.py
 ```
 
+`uv run python scripts/validate_schema.py` is a repository-integrity and
+publish-time check for maintainers and CI. Downstream consumers should treat
+`schema/case.schema.json` as the contract and normally do not need to invoke
+the repository script directly.
+
 Repository-managed environment files:
 
 - `.python-version`
@@ -89,6 +125,10 @@ Repository-managed environment files:
 The repository requires an exact PyTorch dependency pin: `torch==2.10.0`.
 Generated provenance stores the public version string `2.10.0`, not local
 build suffixes such as `+cpu` or `+cu128`.
+
+The planned JAX backend will use exact version pins as well; those pins are
+tracked in the repository contract now so the later generator work can rely on a
+fixed runtime.
 
 ## Math Notes
 
@@ -141,6 +181,12 @@ A case is defined by:
 - materialized inputs
 - an `observable`
 - one or more paired derivative probes
+
+Published JSONL files store materialized numeric tensor payloads directly. For
+`success` cases this includes serialized inputs, probe directions, cotangents,
+and numeric reference tensors such as `pytorch_ref`, `fd_ref`, and any present
+`jax_ref` witness payloads. Downstream readers do not need PyTorch or JAX to
+reconstruct those published numbers.
 
 The database does not require raw decomposition outputs to be the comparison target. For spectral operations, the observable may be a processed output such as `U.abs()`, `S`, `Vh.abs()`, or `U @ Vh`, following the same derivative-relevant observables used by PyTorch AD tests.
 

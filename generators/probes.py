@@ -62,8 +62,32 @@ def make_probe_record(
     fd_step: float,
     fd_jvp: dict[str, dict],
     fd_hvp: dict[str, dict] | None = None,
+    jax_jvp: dict[str, dict] | None = None,
+    jax_vjp: dict[str, dict] | None = None,
+    jax_linearization: dict[str, dict] | None = None,
+    jax_raw_output_cotangent: dict[str, dict] | None = None,
+    jax_transpose: dict[str, dict] | None = None,
+    jax_adjoint_check: dict[str, float] | None = None,
+    jax_provenance: dict[str, object] | None = None,
 ) -> dict:
     """Assemble one paired derivative probe record."""
+    jax_values = {
+        "jvp": jax_jvp,
+        "vjp": jax_vjp,
+        "linearization": jax_linearization,
+        "raw_output_cotangent": jax_raw_output_cotangent,
+        "transpose": jax_transpose,
+        "adjoint_check": jax_adjoint_check,
+        "provenance": jax_provenance,
+    }
+    provided_jax_fields = [name for name, value in jax_values.items() if value is not None]
+    if provided_jax_fields and len(provided_jax_fields) != len(jax_values):
+        missing = [name for name, value in jax_values.items() if value is None]
+        raise ValueError(
+            "jax_ref requires all JAX witness fields when any JAX payload is provided; "
+            f"missing: {', '.join(missing)}"
+        )
+
     pytorch_ref = {
         "jvp": pytorch_jvp,
         "vjp": pytorch_vjp,
@@ -80,10 +104,24 @@ def make_probe_record(
     if fd_hvp is not None:
         fd_ref["hvp"] = fd_hvp
 
-    return {
+    probe = {
         "probe_id": probe_id,
         "direction": direction,
         "cotangent": cotangent,
         "pytorch_ref": pytorch_ref,
         "fd_ref": fd_ref,
     }
+    jax_ref = {}
+    if provided_jax_fields:
+        jax_ref = {
+            "jvp": jax_jvp,
+            "vjp": jax_vjp,
+            "linearization": jax_linearization,
+            "raw_output_cotangent": jax_raw_output_cotangent,
+            "transpose": jax_transpose,
+            "adjoint_check": jax_adjoint_check,
+            "provenance": jax_provenance,
+        }
+        probe["jax_ref"] = jax_ref
+
+    return probe
