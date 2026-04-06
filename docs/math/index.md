@@ -6,9 +6,8 @@
 - the machine-readable oracle database
 
 The mathematical notes under `docs/math/` are the human-facing source of truth
-for known AD rules in this repository. They are maintained to preserve the full
-derivation detail migrated from `tenferro-rs/docs/AD/` while adding explicit
-correspondence to PyTorch's manual autograd formulas where relevant.
+for known AD rules in this repository. They are maintained to preserve full
+derivation detail without collapsing the rules into implementation summaries.
 
 Standalone linalg operations are documented as one note per operation, while
 shared scalar and wrapper formulas are grouped where that keeps the corpus
