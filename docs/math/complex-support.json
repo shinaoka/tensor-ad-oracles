@@ -236,6 +236,19 @@
       "unsupported_reason": null
     },
     {
+      "op": "cat",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/structural.md",
+        "anchor": "family-cat-identity",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
       "op": "cdouble",
       "family": "identity",
       "note": {
@@ -281,6 +294,19 @@
         "path": null,
         "anchor": null,
         "status": "not_required"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "clamp",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/structural.md",
+        "anchor": "family-clamp-identity",
+        "status": "reviewed"
       },
       "db": {
         "status": "covered"
@@ -730,6 +756,19 @@
       "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
     },
     {
+      "op": "full_pivot_lu",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/lu.md",
+        "anchor": "family-full-pivot-lu-identity",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
       "op": "householder_product",
       "family": "identity",
       "note": {
@@ -1170,6 +1209,19 @@
         "status": "unsupported"
       },
       "unsupported_reason": "float-only in pinned PyTorch upstream AD coverage"
+    },
+    {
+      "op": "narrow",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/structural.md",
+        "anchor": "family-narrow-identity",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
     },
     {
       "op": "nansum",
@@ -2283,6 +2335,19 @@
         "path": null,
         "anchor": null,
         "status": "not_required"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "where",
+      "family": "identity",
+      "note": {
+        "path": "docs/math/structural.md",
+        "anchor": "family-where-identity",
+        "status": "reviewed"
       },
       "db": {
         "status": "covered"

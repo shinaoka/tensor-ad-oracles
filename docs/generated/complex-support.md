@@ -4,8 +4,8 @@ Generated from the checked-in complex-support ledger and the published `cases/` 
 
 ## Summary
 
-- Total tracked families: 177
-- Ready for downstream: 104
+- Total tracked families: 182
+- Ready for downstream: 109
 - Unsupported: 73
 - Pending note review: 0
 - Pending DB coverage: 0
@@ -32,10 +32,12 @@ Generated from the checked-in complex-support ledger and the published `cases/` 
 | atan | identity | reviewed | covered | complex128, complex64 | - | yes |
 | atan2 | identity | not_required | unsupported | - | float-only in pinned PyTorch upstream AD coverage | no |
 | atanh | identity | reviewed | covered | complex128, complex64 | - | yes |
+| cat | identity | reviewed | covered | complex128, complex64 | - | yes |
 | cdouble | identity | reviewed | covered | complex128, complex64 | - | yes |
 | ceil | identity | not_required | unsupported | - | float-only in pinned PyTorch upstream AD coverage | no |
 | cholesky | identity | reviewed | covered | complex128, complex64 | - | yes |
 | cholesky_ex | identity | not_required | covered | complex128, complex64 | - | yes |
+| clamp | identity | reviewed | covered | - | - | yes |
 | clamp_max | identity | not_required | unsupported | - | float-only in pinned PyTorch upstream AD coverage | no |
 | clamp_min | identity | not_required | unsupported | - | float-only in pinned PyTorch upstream AD coverage | no |
 | complex | identity | not_required | unsupported | - | float-only in pinned PyTorch upstream AD coverage | no |
@@ -70,6 +72,7 @@ Generated from the checked-in complex-support ledger and the published `cases/` 
 | fmin | identity | not_required | unsupported | - | float-only in pinned PyTorch upstream AD coverage | no |
 | frac | identity | not_required | unsupported | - | float-only in pinned PyTorch upstream AD coverage | no |
 | frexp | identity | not_required | unsupported | - | float-only in pinned PyTorch upstream AD coverage | no |
+| full_pivot_lu | identity | reviewed | covered | complex128, complex64 | - | yes |
 | householder_product | identity | reviewed | covered | complex128, complex64 | - | yes |
 | hypot | identity | not_required | unsupported | - | float-only in pinned PyTorch upstream AD coverage | no |
 | i0 | identity | not_required | unsupported | - | float-only in pinned PyTorch upstream AD coverage | no |
@@ -105,6 +108,7 @@ Generated from the checked-in complex-support ledger and the published `cases/` 
 | nan_to_num | identity | not_required | unsupported | - | float-only in pinned PyTorch upstream AD coverage | no |
 | nanmean | identity | not_required | unsupported | - | float-only in pinned PyTorch upstream AD coverage | no |
 | nansum | identity | not_required | unsupported | - | float-only in pinned PyTorch upstream AD coverage | no |
+| narrow | identity | reviewed | covered | complex128, complex64 | - | yes |
 | neg | identity | reviewed | covered | complex128, complex64 | - | yes |
 | nn_functional_celu | identity | not_required | unsupported | - | float-only in pinned PyTorch upstream AD coverage | no |
 | nn_functional_elu | identity | not_required | unsupported | - | float-only in pinned PyTorch upstream AD coverage | no |
@@ -190,6 +194,7 @@ Generated from the checked-in complex-support ledger and the published `cases/` 
 | var_unbiased | identity | reviewed | covered | complex128, complex64 | - | yes |
 | vecdot | identity | reviewed | covered | complex128, complex64 | - | yes |
 | vector_norm | identity | not_required | covered | complex128, complex64 | - | yes |
+| where | identity | reviewed | covered | complex128, complex64 | - | yes |
 | xlogy | identity | not_required | unsupported | - | float-only in pinned PyTorch upstream AD coverage | no |
 
 ## Ready For Downstream
@@ -210,9 +215,11 @@ Generated from the checked-in complex-support ledger and the published `cases/` 
 | asinh | identity | reviewed | covered | complex128, complex64 | - | yes |
 | atan | identity | reviewed | covered | complex128, complex64 | - | yes |
 | atanh | identity | reviewed | covered | complex128, complex64 | - | yes |
+| cat | identity | reviewed | covered | complex128, complex64 | - | yes |
 | cdouble | identity | reviewed | covered | complex128, complex64 | - | yes |
 | cholesky | identity | reviewed | covered | complex128, complex64 | - | yes |
 | cholesky_ex | identity | not_required | covered | complex128, complex64 | - | yes |
+| clamp | identity | reviewed | covered | - | - | yes |
 | cond | identity | not_required | covered | complex128, complex64 | - | yes |
 | conj | identity | reviewed | covered | complex128, complex64 | - | yes |
 | conj_physical | identity | reviewed | covered | complex128, complex64 | - | yes |
@@ -233,6 +240,7 @@ Generated from the checked-in complex-support ledger and the published `cases/` 
 | expm1 | identity | reviewed | covered | complex128, complex64 | - | yes |
 | fill | identity | reviewed | covered | complex128, complex64 | - | yes |
 | float_power | identity | reviewed | covered | complex128, complex64 | - | yes |
+| full_pivot_lu | identity | reviewed | covered | complex128, complex64 | - | yes |
 | householder_product | identity | reviewed | covered | complex128, complex64 | - | yes |
 | imag | identity | reviewed | covered | complex128, complex64 | - | yes |
 | inv | identity | reviewed | covered | complex128, complex64 | - | yes |
@@ -254,6 +262,7 @@ Generated from the checked-in complex-support ledger and the published `cases/` 
 | mean | identity | reviewed | covered | complex128, complex64 | - | yes |
 | mul | identity | reviewed | covered | complex128, complex64 | - | yes |
 | multi_dot | identity | reviewed | covered | complex128, complex64 | - | yes |
+| narrow | identity | reviewed | covered | complex128, complex64 | - | yes |
 | neg | identity | reviewed | covered | complex128, complex64 | - | yes |
 | nn_functional_softsign | identity | reviewed | covered | complex128, complex64 | - | yes |
 | nn_functional_tanhshrink | identity | reviewed | covered | complex128, complex64 | - | yes |
@@ -300,6 +309,7 @@ Generated from the checked-in complex-support ledger and the published `cases/` 
 | var_unbiased | identity | reviewed | covered | complex128, complex64 | - | yes |
 | vecdot | identity | reviewed | covered | complex128, complex64 | - | yes |
 | vector_norm | identity | not_required | covered | complex128, complex64 | - | yes |
+| where | identity | reviewed | covered | complex128, complex64 | - | yes |
 
 ## Unsupported
 

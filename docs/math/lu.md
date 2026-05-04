@@ -276,6 +276,68 @@ All appearances of $L^{-1}X$, $XU^{-1}$, $L^{-\dagger}X$, and $XU^{-\dagger}$
 should be interpreted as triangular solves rather than as explicit inverse
 formation.
 
+## Full-Pivot Extension
+
+The full-pivot raw operator is
+
+$$
+A \mapsto (P, Q, L, U),
+\qquad
+P A Q = L U,
+$$
+
+or, in plain text, P A Q = L U.  The row permutation $P$, column permutation
+$Q$, parity, and status outputs are discrete metadata.  Only the factor outputs
+$(L, U)$ are differentiated.
+
+For any open region where the selected row and column pivots are fixed, define
+
+$$
+B = P A Q,
+\qquad
+\dot{B} = P \dot{A} Q.
+$$
+
+The partial-pivot formulas above apply unchanged to the no-pivot factorization
+$B = L U$.  Equivalently, the square full-pivot linearization is
+
+$$
+\dot{F} = L^{-1} P \dot{A} Q U^{-1},
+$$
+
+$$
+\dot{L} = L \, \mathrm{tril}_-(\dot{F}),
+\qquad
+\dot{U} = \mathrm{triu}(\dot{F}) \, U.
+$$
+
+The wide and tall cases use the same block formulas as the partial-pivot note
+after replacing $P\dot{A}$ by $P\dot{A}Q$ and partitioning the columns or rows
+of $B = P A Q$ rather than of $A$.
+
+For reverse mode, first compute the same raw cotangent $\bar{B}$ for the
+factorization $B = L U$.  In the square case,
+
+$$
+\bar{B} =
+L^{-\dagger}
+\left(
+\mathrm{tril}_-(L^\dagger \bar{L})
++ \mathrm{triu}(\bar{U} U^\dagger)
+\right)
+U^{-\dagger},
+$$
+
+and the input cotangent is
+
+$$
+\bar{A} = P^T \bar{B} Q^T.
+$$
+
+The wide and tall reverse rules are the partial-pivot block adjoints interpreted
+as cotangents for $B$, followed by the same permutation pullback
+$\bar{A}=P^T\bar{B}Q^T$.
+
 ## Verification
 
 ### Forward reconstruction
@@ -285,6 +347,12 @@ $$
 $$
 
 with $L$ unit lower triangular and $U$ upper triangular.
+
+For the full-pivot family, the reconstruction check is
+
+$$
+\|P A Q - L U\|_F < \varepsilon.
+$$
 
 ### Backward checks
 
@@ -322,3 +390,12 @@ nondifferentiable metadata.
 
 The extended factorization uses the same derivative contract on the factor
 tensor; status outputs remain metadata.
+
+<a id="family-full-pivot-lu-identity"></a>
+### `full_pivot_lu/identity`
+
+The DB publishes the differentiable $(L, U)$ factors for the full-pivot
+contract while treating row pivots, column pivots, parity, and status as
+nondifferentiable metadata.  Cases cover square, wide, and tall matrices under
+fixed-pivot finite-difference probes because pinned PyTorch does not expose an
+upstream full-pivot LU OpInfo.

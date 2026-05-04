@@ -68,5 +68,6 @@ anchors intact.
 ## Shared And Cross-Cutting Notes
 
 - [scalar_ops.md](./scalar_ops.md)
+- [structural.md](./structural.md)
 - [matrix_exp.md](./matrix_exp.md)
 - [dyadtensor_reverse.md](./dyadtensor_reverse.md)

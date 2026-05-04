@@ -211,6 +211,35 @@ class MathRegistryTests(unittest.TestCase):
         self.assertIn("Tall case", text)
         self.assertIn("triangular solves", text)
 
+    def test_repo_lu_note_exposes_full_pivot_lu_family(self) -> None:
+        text = (
+            Path(__file__).resolve().parents[1] / "docs" / "math" / "lu.md"
+        ).read_text(encoding="utf-8")
+        anchors = math_registry.extract_markdown_anchors(text)
+
+        self.assertIn("P A Q = L U", text)
+        self.assertIn("full_pivot_lu/identity", text)
+        self.assertIn("family-full-pivot-lu-identity", anchors)
+
+    def test_repo_structural_note_exposes_family_anchors(self) -> None:
+        note_path = Path(__file__).resolve().parents[1] / "docs" / "math" / "structural.md"
+        text = note_path.read_text(encoding="utf-8")
+        anchors = math_registry.extract_markdown_anchors(text)
+
+        self.assertIn("condition is nondifferentiable", text)
+        self.assertIn("axis is metadata", text)
+        self.assertIn("start indices and sizes are nondifferentiable", text)
+        self.assertEqual(
+            {
+                "family-where-identity",
+                "family-cat-identity",
+                "family-narrow-identity",
+                "family-clamp-identity",
+            }
+            - anchors,
+            set(),
+        )
+
     def test_repo_eig_note_retains_gap_and_normalization_details(self) -> None:
         text = (
             Path(__file__).resolve().parents[1] / "docs" / "math" / "eig.md"

@@ -21,6 +21,7 @@ from validators.encoding import decode_tensor_map
 
 
 UPSTREAM_AD_AUDIT_DTYPES = {"float64", "complex128"}
+LOCAL_INVENTORY_PREFIX = "local_"
 
 
 @dataclass(frozen=True)
@@ -32,6 +33,10 @@ class UpstreamAdToleranceAudit:
     upstream_rtol: float
     upstream_atol: float
     violates_upstream: bool = False
+
+
+def _has_upstream_ad_tolerance(spec: object) -> bool:
+    return not getattr(spec, "inventory_kind", "").startswith(LOCAL_INVENTORY_PREFIX)
 
 
 def audit_against_upstream_ad_tolerances(
@@ -70,6 +75,8 @@ def audit_against_upstream_ad_tolerances(
     for key, residuals in sorted(first_order.items()):
         op, family, dtype = key
         spec = spec_index[(op, family)]
+        if not _has_upstream_ad_tolerance(spec):
+            continue
         resolver = (
             resolve_upstream_scalar_ad_tolerance
             if spec.inventory_kind in ("scalar", "cmi_linalg")
@@ -114,6 +121,8 @@ def audit_against_upstream_ad_tolerances(
     for key, residuals in sorted(second_order.items()):
         op, family, dtype = key
         spec = spec_index[(op, family)]
+        if not _has_upstream_ad_tolerance(spec):
+            continue
         resolver = (
             resolve_upstream_scalar_ad_tolerance
             if spec.inventory_kind in ("scalar", "cmi_linalg")

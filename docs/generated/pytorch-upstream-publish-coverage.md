@@ -9,7 +9,7 @@ and the checked-in `cases/` tree.
 - AD-relevant scalar upstream variants: 138
 - Mapped publishable success families: 174
 - Explicit publishable error families: 2
-- Total tracked DB families: 177
+- Total tracked DB families: 182
 
 ## Publishable Family Coverage
 
@@ -36,10 +36,12 @@ publishable upstream coverage that is not yet materialized in this repository.
 | atan | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | atan2 | identity | success | float64, float32 | float64, float32 | - |
 | atanh | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
+| cat | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | cdouble | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | ceil | identity | success | float64, float32 | float64, float32 | - |
 | cholesky | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | cholesky_ex | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
+| clamp | identity | success | float64, float32 | float64, float32 | - |
 | clamp_max | identity | success | float64, float32 | float64, float32 | - |
 | clamp_min | identity | success | float64, float32 | float64, float32 | - |
 | complex | identity | success | float64, float32 | float64, float32 | - |
@@ -74,6 +76,7 @@ publishable upstream coverage that is not yet materialized in this repository.
 | fmin | identity | success | float64, float32 | float64, float32 | - |
 | frac | identity | success | float64, float32 | float64, float32 | - |
 | frexp | identity | success | float64, float32 | float64, float32 | - |
+| full_pivot_lu | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | householder_product | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | hypot | identity | success | float64, float32 | float64, float32 | - |
 | i0 | identity | success | float64, float32 | float64, float32 | - |
@@ -109,6 +112,7 @@ publishable upstream coverage that is not yet materialized in this repository.
 | nan_to_num | identity | success | float64, float32 | float64, float32 | - |
 | nanmean | identity | success | float64, float32 | float64, float32 | - |
 | nansum | identity | success | float64, float32 | float64, float32 | - |
+| narrow | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | neg | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | nn_functional_celu | identity | success | float64, float32 | float64, float32 | - |
 | nn_functional_elu | identity | success | float64, float32 | float64, float32 | - |
@@ -194,6 +198,7 @@ publishable upstream coverage that is not yet materialized in this repository.
 | var_unbiased | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | vecdot | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | vector_norm | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
+| where | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | xlogy | identity | success | float64, float32 | float64, float32 | - |
 
 ## Missing Publishable Coverage

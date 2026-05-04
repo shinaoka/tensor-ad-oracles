@@ -110,6 +110,12 @@
       "anchor": "op-atanh"
     },
     {
+      "op": "cat",
+      "family": "identity",
+      "note_path": "docs/math/structural.md",
+      "anchor": "family-cat-identity"
+    },
+    {
       "op": "cdouble",
       "family": "identity",
       "note_path": "docs/math/scalar_ops.md",
@@ -132,6 +138,12 @@
       "family": "identity",
       "note_path": "docs/math/cholesky.md",
       "anchor": "family-cholesky-ex-identity"
+    },
+    {
+      "op": "clamp",
+      "family": "identity",
+      "note_path": "docs/math/structural.md",
+      "anchor": "family-clamp-identity"
     },
     {
       "op": "clamp_max",
@@ -338,6 +350,12 @@
       "anchor": "op-frexp"
     },
     {
+      "op": "full_pivot_lu",
+      "family": "identity",
+      "note_path": "docs/math/lu.md",
+      "anchor": "family-full-pivot-lu-identity"
+    },
+    {
       "op": "householder_product",
       "family": "identity",
       "note_path": "docs/math/scalar_ops.md",
@@ -540,6 +558,12 @@
       "family": "identity",
       "note_path": "docs/math/scalar_ops.md",
       "anchor": "op-nanmean"
+    },
+    {
+      "op": "narrow",
+      "family": "identity",
+      "note_path": "docs/math/structural.md",
+      "anchor": "family-narrow-identity"
     },
     {
       "op": "nansum",
@@ -1056,6 +1080,12 @@
       "family": "identity",
       "note_path": "docs/math/norm.md",
       "anchor": "family-vector-norm-identity"
+    },
+    {
+      "op": "where",
+      "family": "identity",
+      "note_path": "docs/math/structural.md",
+      "anchor": "family-where-identity"
     },
     {
       "op": "xlogy",
