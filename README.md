@@ -40,7 +40,9 @@ records the harness `source_file`, `source_function`, `seed`, and a
 The oracle database covers both scalar-style `OpInfo` families and linear
 algebra operations.
 
-Version 1 targets the full PyTorch `OpInfo`-backed AD-relevant dense family set currently materialized in this repository, including:
+Version 1 targets the full PyTorch `OpInfo`-backed AD-relevant dense family set
+currently materialized in this repository, plus local finite-difference-backed
+families where no pinned PyTorch upstream equivalent exists, including:
 
 - dense unary elementwise ops such as `abs`, `exp`, `log`, `sin`, `cos`, `tanh`, `conj`
 - dense binary elementwise ops such as `add`, `mul`, `div`, `pow`, `xlogy`
@@ -66,6 +68,11 @@ Version 1 targets the full PyTorch `OpInfo`-backed AD-relevant dense family set 
   - `lu_factor`
   - `lu_factor_ex`
   - `lu_solve`
+  - `full_pivot_lu`
+  - `where`
+  - `cat`
+  - `narrow`
+  - `clamp`
   - `inv`
   - `inv_ex`
   - `matrix_power`

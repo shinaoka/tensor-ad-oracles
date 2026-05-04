@@ -38,6 +38,7 @@ website:
           - math/pinv.md
           - math/matrix_exp.md
           - math/norm.md
+          - math/structural.md
           - math/dyadtensor_reverse.md
       - section: "Reference"
         contents:

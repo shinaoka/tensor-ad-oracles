@@ -9,6 +9,8 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Iterable
 
+from . import full_pivot_lu
+from . import structural
 from . import encoding
 from .fd import FD_POLICY_VERSION, compute_step
 from .probes import make_probe_record, normalize_tensor_map
@@ -63,6 +65,7 @@ class CaseFamilySpec:
     expected_behavior: str
     source_file: str
     source_function: str
+    source_repo: str = "pytorch"
     gradcheck_wrapper: str | None = None
     upstream_name: str | None = None
     upstream_variant_name: str = ""
@@ -367,11 +370,48 @@ def _build_cmi_linalg_case_specs() -> tuple[CaseFamilySpec, ...]:
     )
 
 
+def _build_local_case_specs() -> tuple[CaseFamilySpec, ...]:
+    """Case specs for repository-local oracle families without PyTorch OpInfo."""
+    return tuple(
+        CaseFamilySpec(
+            op=op,
+            family="identity",
+            observable_kind="identity",
+            expected_behavior="success",
+            source_file="torch",
+            source_function=structural.source_function(op),
+            source_repo="pytorch",
+            upstream_name=None,
+            upstream_variant_name="",
+            hvp_enabled=True,
+            inventory_kind="local_structural",
+            supported_dtype_names=structural.supported_dtype_names(op),
+        )
+        for op in structural.STRUCTURAL_OPS
+    ) + (
+        CaseFamilySpec(
+            op="full_pivot_lu",
+            family="identity",
+            observable_kind="identity",
+            expected_behavior="success",
+            source_file="generators/full_pivot_lu.py",
+            source_function="fixed_permutation_lu",
+            source_repo="tensor-ad-oracles",
+            upstream_name=None,
+            upstream_variant_name="",
+            hvp_enabled=True,
+            inventory_kind="local_full_pivot_lu",
+            supported_dtype_names=("float64", "complex128", "float32", "complex64"),
+        ),
+    )
+
+
 def _build_case_specs() -> tuple[CaseFamilySpec, ...]:
     return (
         _build_success_case_specs()
         + _build_error_case_specs()
         + _build_cmi_linalg_case_specs()
+        + _build_local_case_specs()
         + _build_scalar_case_specs()
     )
 
@@ -438,7 +478,7 @@ def build_provenance(
 ) -> dict:
     """Build the common provenance block for a materialized case record."""
     provenance = {
-        "source_repo": "pytorch",
+        "source_repo": spec.source_repo,
         "source_file": spec.source_file,
         "source_function": spec.source_function,
         "source_commit": source_commit,
@@ -950,6 +990,392 @@ def _generate_success_records(
     return records
 
 
+def _generate_full_pivot_lu_records(
+    spec: CaseFamilySpec,
+    *,
+    limit: int | None = None,
+    seed: int = 17,
+) -> list[dict]:
+    ensure_runtime_dependencies()
+    import torch
+
+    shape_limit = len(full_pivot_lu.SAMPLE_SHAPES) if limit is None else limit
+    shapes = full_pivot_lu.SAMPLE_SHAPES[:shape_limit]
+    records: list[dict] = []
+
+    for dtype_index, current_dtype_name in enumerate(spec.supported_dtype_names):
+        current_dtype = getattr(torch, current_dtype_name)
+        payloads: list[SuccessProbePayload] = []
+
+        for shape_index, shape in enumerate(shapes):
+            case_seed = seed + dtype_index * 100 + shape_index
+            generator = torch.Generator(device="cpu")
+            generator.manual_seed(case_seed)
+
+            a = full_pivot_lu.make_sample_matrix(
+                torch,
+                dtype=current_dtype,
+                shape=shape,
+            ).requires_grad_(True)
+            metadata = full_pivot_lu.full_pivot_metadata(torch, a)
+            row_perm = list(metadata["row_perm"])
+            col_perm = list(metadata["col_perm"])
+            inputs = {"a": a}
+            output = full_pivot_lu.fixed_permutation_lu(
+                torch,
+                a,
+                row_perm=row_perm,
+                col_perm=col_perm,
+            )
+            output_names = tuple(output.keys())
+
+            direction = normalize_raw_tensor_map(
+                torch,
+                {"a": randn_like(torch, a, generator=generator)},
+            )
+            cotangent = normalize_raw_tensor_map(
+                torch,
+                {
+                    name: randn_like(torch, tensor, generator=generator)
+                    for name, tensor in output.items()
+                },
+            )
+
+            def observable_fn(a_value):
+                return full_pivot_lu.fixed_permutation_lu_tuple(
+                    torch,
+                    a_value,
+                    row_perm=row_perm,
+                    col_perm=col_perm,
+                )
+
+            _, jvp_tuple = torch.func.jvp(
+                observable_fn,
+                (a,),
+                (direction["a"],),
+            )
+            pytorch_jvp = tuple_to_tensor_map(output_names, jvp_tuple)
+            grads = torch.autograd.grad(
+                tensor_map_to_tuple(output),
+                (a,),
+                grad_outputs=tensor_map_to_tuple(cotangent),
+                allow_unused=True,
+            )
+            pytorch_vjp = zeros_like_input_map(torch, inputs, grads)
+
+            fd_step = compute_step(
+                dtype_name(torch, a.dtype),
+                input_norm=combined_input_norm(torch, inputs),
+            )
+            plus_output = full_pivot_lu.fixed_permutation_lu(
+                torch,
+                a + fd_step * direction["a"],
+                row_perm=row_perm,
+                col_perm=col_perm,
+            )
+            minus_output = full_pivot_lu.fixed_permutation_lu(
+                torch,
+                a - fd_step * direction["a"],
+                row_perm=row_perm,
+                col_perm=col_perm,
+            )
+            fd_jvp = {
+                name: (plus_output[name] - minus_output[name]) / (2.0 * fd_step)
+                for name in output_names
+            }
+
+            pytorch_hvp = None
+            fd_hvp = None
+            second_order_abs = 0.0
+            second_order_rel = 0.0
+            if _materialize_hvp_for_spec(spec, dtype_name=current_dtype_name):
+                scalarized_fn = build_scalarized_observable_function(
+                    torch,
+                    observable_fn,
+                    output_names=output_names,
+                    cotangent=cotangent,
+                )
+                pytorch_hvp = compute_pytorch_hvp(
+                    torch,
+                    scalarized_fn,
+                    inputs=inputs,
+                    direction=direction,
+                )
+                fd_hvp = compute_fd_hvp(
+                    torch,
+                    scalarized_fn,
+                    inputs=inputs,
+                    direction=direction,
+                    step=fd_step,
+                )
+                second_order_abs, second_order_rel = hvp_residuals(
+                    torch,
+                    pytorch_hvp,
+                    fd_hvp,
+                )
+
+            jvp_abs = max_abs_diff(torch, pytorch_jvp, fd_jvp)
+            jvp_rel = max_rel_diff(torch, pytorch_jvp, fd_jvp)
+            lhs = tensor_map_inner_product(torch, cotangent, fd_jvp)
+            rhs = tensor_map_inner_product(torch, pytorch_vjp, direction)
+            adj_abs, adj_rel = scalar_residual(torch, lhs, rhs)
+            payloads.append(
+                SuccessProbePayload(
+                    case_seed=case_seed,
+                    dtype_name=current_dtype_name,
+                    op_args=[],
+                    op_kwargs=metadata,
+                    inputs=inputs,
+                    direction=direction,
+                    cotangent=cotangent,
+                    pytorch_jvp=pytorch_jvp,
+                    pytorch_vjp=pytorch_vjp,
+                    pytorch_hvp=pytorch_hvp,
+                    fd_step=fd_step,
+                    fd_jvp=fd_jvp,
+                    fd_hvp=fd_hvp,
+                    first_order_max_rel_residual=max(jvp_rel, adj_rel),
+                    first_order_max_abs_residual=max(jvp_abs, adj_abs),
+                    second_order_max_rel_residual=second_order_rel,
+                    second_order_max_abs_residual=second_order_abs,
+                )
+            )
+
+        comparison = _measured_comparison(payloads)
+        for index, payload in enumerate(payloads, start=1):
+            _validate_success_probe(
+                torch,
+                comparison=comparison,
+                direction=payload.direction,
+                cotangent=payload.cotangent,
+                pytorch_jvp=payload.pytorch_jvp,
+                pytorch_vjp=payload.pytorch_vjp,
+                fd_jvp=payload.fd_jvp,
+                pytorch_hvp=payload.pytorch_hvp,
+                fd_hvp=payload.fd_hvp,
+            )
+            provenance = build_provenance(
+                spec,
+                source_commit="local-full-pivot-lu-v1",
+                seed=payload.case_seed,
+                torch_version=normalize_torch_version(torch.__version__),
+                comment=(
+                    "local fixed-pivot full-pivot LU reference; "
+                    "no upstream full-pivot LU OpInfo is available in pinned PyTorch"
+                ),
+            )
+            records.append(
+                materialize_success_case(
+                    spec,
+                    case_id=_case_id(spec, dtype=payload.dtype_name, index=index),
+                    dtype=payload.dtype_name,
+                    raw_inputs=payload.inputs,
+                    op_kwargs=payload.op_kwargs,
+                    comparison=comparison,
+                    probe_id="p0",
+                    raw_direction=payload.direction,
+                    raw_cotangent=payload.cotangent,
+                    raw_pytorch_jvp=payload.pytorch_jvp,
+                    raw_pytorch_vjp=payload.pytorch_vjp,
+                    raw_pytorch_hvp=payload.pytorch_hvp,
+                    fd_step=payload.fd_step,
+                    raw_fd_jvp=payload.fd_jvp,
+                    raw_fd_hvp=payload.fd_hvp,
+                    provenance=provenance,
+                )
+            )
+
+    return records
+
+
+def _generate_structural_records(
+    spec: CaseFamilySpec,
+    *,
+    limit: int | None = None,
+    seed: int = 17,
+) -> list[dict]:
+    ensure_runtime_dependencies()
+    import torch
+
+    records: list[dict] = []
+    for dtype_index, current_dtype_name in enumerate(spec.supported_dtype_names):
+        current_dtype = getattr(torch, current_dtype_name)
+        all_cases = structural.sample_cases(torch, spec.op, dtype=current_dtype)
+        cases = all_cases if limit is None else all_cases[:limit]
+        payloads: list[SuccessProbePayload] = []
+
+        for case_index, case in enumerate(cases):
+            case_seed = seed + dtype_index * 100 + case_index
+            generator = torch.Generator(device="cpu")
+            generator.manual_seed(case_seed)
+            inputs = {
+                name: tensor.detach().clone().requires_grad_(True)
+                for name, tensor in case["inputs"].items()
+            }
+            op_kwargs = dict(case["op_kwargs"])
+            output = structural.apply(torch, spec.op, inputs, op_kwargs)
+            output_names = tuple(output.keys())
+            input_names = tuple(inputs.keys())
+            direction = normalize_raw_tensor_map(
+                torch,
+                {
+                    name: randn_like(torch, tensor, generator=generator)
+                    for name, tensor in inputs.items()
+                },
+            )
+            cotangent = normalize_raw_tensor_map(
+                torch,
+                {
+                    name: randn_like(torch, tensor, generator=generator)
+                    for name, tensor in output.items()
+                },
+            )
+
+            def observable_fn(*args):
+                return structural.apply_tuple(
+                    torch,
+                    spec.op,
+                    input_names,
+                    op_kwargs,
+                    *args,
+                )
+
+            _, jvp_tuple = torch.func.jvp(
+                observable_fn,
+                tensor_map_to_tuple(inputs),
+                tensor_map_to_tuple(direction),
+            )
+            pytorch_jvp = tuple_to_tensor_map(output_names, jvp_tuple)
+            grads = torch.autograd.grad(
+                tensor_map_to_tuple(output),
+                tensor_map_to_tuple(inputs),
+                grad_outputs=tensor_map_to_tuple(cotangent),
+                allow_unused=True,
+            )
+            pytorch_vjp = zeros_like_input_map(torch, inputs, grads)
+
+            first_input = next(iter(inputs.values()))
+            fd_step = compute_step(
+                dtype_name(torch, first_input.dtype),
+                input_norm=combined_input_norm(torch, inputs),
+            )
+            plus_inputs = {
+                name: tensor + fd_step * direction[name]
+                for name, tensor in inputs.items()
+            }
+            minus_inputs = {
+                name: tensor - fd_step * direction[name]
+                for name, tensor in inputs.items()
+            }
+            plus_output = structural.apply(torch, spec.op, plus_inputs, op_kwargs)
+            minus_output = structural.apply(torch, spec.op, minus_inputs, op_kwargs)
+            fd_jvp = {
+                name: (plus_output[name] - minus_output[name]) / (2.0 * fd_step)
+                for name in output_names
+            }
+
+            pytorch_hvp = None
+            fd_hvp = None
+            second_order_abs = 0.0
+            second_order_rel = 0.0
+            if _materialize_hvp_for_spec(spec, dtype_name=current_dtype_name):
+                scalarized_fn = build_scalarized_observable_function(
+                    torch,
+                    observable_fn,
+                    output_names=output_names,
+                    cotangent=cotangent,
+                )
+                pytorch_hvp = compute_pytorch_hvp(
+                    torch,
+                    scalarized_fn,
+                    inputs=inputs,
+                    direction=direction,
+                )
+                fd_hvp = compute_fd_hvp(
+                    torch,
+                    scalarized_fn,
+                    inputs=inputs,
+                    direction=direction,
+                    step=fd_step,
+                )
+                second_order_abs, second_order_rel = hvp_residuals(
+                    torch,
+                    pytorch_hvp,
+                    fd_hvp,
+                )
+
+            jvp_abs = max_abs_diff(torch, pytorch_jvp, fd_jvp)
+            jvp_rel = max_rel_diff(torch, pytorch_jvp, fd_jvp)
+            lhs = tensor_map_inner_product(torch, cotangent, fd_jvp)
+            rhs = tensor_map_inner_product(torch, pytorch_vjp, direction)
+            adj_abs, adj_rel = scalar_residual(torch, lhs, rhs)
+            payloads.append(
+                SuccessProbePayload(
+                    case_seed=case_seed,
+                    dtype_name=current_dtype_name,
+                    op_args=[],
+                    op_kwargs=op_kwargs,
+                    inputs=inputs,
+                    direction=direction,
+                    cotangent=cotangent,
+                    pytorch_jvp=pytorch_jvp,
+                    pytorch_vjp=pytorch_vjp,
+                    pytorch_hvp=pytorch_hvp,
+                    fd_step=fd_step,
+                    fd_jvp=fd_jvp,
+                    fd_hvp=fd_hvp,
+                    first_order_max_rel_residual=max(jvp_rel, adj_rel),
+                    first_order_max_abs_residual=max(jvp_abs, adj_abs),
+                    second_order_max_rel_residual=second_order_rel,
+                    second_order_max_abs_residual=second_order_abs,
+                )
+            )
+
+        comparison = _measured_comparison(payloads)
+        source_commit = getattr(torch.version, "git_version", None) or torch.__version__
+        for index, payload in enumerate(payloads, start=1):
+            _validate_success_probe(
+                torch,
+                comparison=comparison,
+                direction=payload.direction,
+                cotangent=payload.cotangent,
+                pytorch_jvp=payload.pytorch_jvp,
+                pytorch_vjp=payload.pytorch_vjp,
+                fd_jvp=payload.fd_jvp,
+                pytorch_hvp=payload.pytorch_hvp,
+                fd_hvp=payload.fd_hvp,
+            )
+            provenance = build_provenance(
+                spec,
+                source_commit=source_commit,
+                seed=payload.case_seed,
+                torch_version=normalize_torch_version(torch.__version__),
+                comment="local deterministic structural samples with direct Torch reference",
+            )
+            records.append(
+                materialize_success_case(
+                    spec,
+                    case_id=_case_id(spec, dtype=payload.dtype_name, index=index),
+                    dtype=payload.dtype_name,
+                    raw_inputs=payload.inputs,
+                    op_kwargs=payload.op_kwargs,
+                    comparison=comparison,
+                    probe_id="p0",
+                    raw_direction=payload.direction,
+                    raw_cotangent=payload.cotangent,
+                    raw_pytorch_jvp=payload.pytorch_jvp,
+                    raw_pytorch_vjp=payload.pytorch_vjp,
+                    raw_pytorch_hvp=payload.pytorch_hvp,
+                    fd_step=payload.fd_step,
+                    raw_fd_jvp=payload.fd_jvp,
+                    raw_fd_hvp=payload.fd_hvp,
+                    provenance=provenance,
+                )
+            )
+
+    return records
+
+
 def _make_spectral_error_input(torch, spec: CaseFamilySpec, *, generator):
     a = torch.randn((3, 3), dtype=torch.complex128, device="cpu", generator=generator)
     if spec.op == "eigh":
@@ -1019,6 +1445,29 @@ def generate_solve_identity_records(*, limit: int = 1, seed: int = 17) -> list[d
     return _generate_success_records(spec, limit=limit, seed=seed)
 
 
+def generate_full_pivot_lu_identity_records(
+    *,
+    limit: int | None = None,
+    seed: int = 17,
+) -> list[dict]:
+    """Materialize local `full_pivot_lu/identity` success cases."""
+    spec = build_case_spec_index()[("full_pivot_lu", "identity")]
+    return _generate_full_pivot_lu_records(spec, limit=limit, seed=seed)
+
+
+def generate_structural_identity_records(
+    op: str,
+    *,
+    limit: int | None = None,
+    seed: int = 17,
+) -> list[dict]:
+    """Materialize local structural `op/identity` success cases."""
+    spec = build_case_spec_index()[(op, "identity")]
+    if spec.inventory_kind != "local_structural":
+        raise ValueError(f"not a local structural op: {op}")
+    return _generate_structural_records(spec, limit=limit, seed=seed)
+
+
 def materialize_case_family(
     op: str,
     family: str,
@@ -1028,7 +1477,11 @@ def materialize_case_family(
 ) -> Path:
     """Generate and write one supported case family."""
     spec = build_case_spec_index()[(op, family)]
-    if spec.expected_behavior == "success":
+    if spec.inventory_kind == "local_structural":
+        records = _generate_structural_records(spec, limit=limit)
+    elif spec.inventory_kind == "local_full_pivot_lu":
+        records = _generate_full_pivot_lu_records(spec, limit=limit)
+    elif spec.expected_behavior == "success":
         records = _generate_success_records(spec, limit=limit)
     else:
         records = _generate_error_records(spec, limit=limit)
