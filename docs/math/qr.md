@@ -94,6 +94,13 @@ $$
 Here $\mathbf{1}_Q$ and $\mathbf{1}_R$ are all-ones matrices with the
 same shapes as $Q$ and $R$, respectively.
 
+The $R$ cotangent is intentionally not masked to the triangular support. In the
+full-rank case, leading strictly lower entries of $\mathbf{1}_R$ enter
+$R\mathbf{1}_R^\dagger$ only through the strictly upper part ignored by
+`copyltu`. In the wide case, those leading strictly lower entries contribute
+$Q\mathbf{1}_R$ through the direct path and cancel against the leading-block
+correction in the $\pi^\*$ term.
+
 The JVP of this scalarized loss is
 
 $$

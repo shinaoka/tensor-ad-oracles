@@ -91,9 +91,11 @@ $$
 Here $\mathbf{1}_L$ and $\mathbf{1}_U$ are all-ones matrices with the
 same shapes as $L$ and $U$, respectively.
 
-The unit diagonal of $L$ is fixed metadata: the reverse rule below projects
-$L^\dagger \bar{L}$ with $\mathrm{tril}_-$, so diagonal cotangent entries do
-not contribute to $\bar{A}$.
+These are full-shape cotangents. Entries outside the differentiable triangular
+supports are harmless: the reverse rule below projects $L^\dagger \bar{L}$ with
+$\mathrm{tril}_-$ and $\bar{U}U^\dagger$ with $\mathrm{triu}$, so the fixed
+unit diagonal of $L$ and structurally zero entries of either factor do not
+contribute to $\bar{A}$.
 
 For a square LU factorization, the JVP of the scalarized loss is
 
