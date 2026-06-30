@@ -71,6 +71,67 @@ JAX reads the same raw cotangent map on the differentiable factor outputs.
 PyTorch uses the same block-triangular adjoint in `linalg_lu_backward`; pivots
 and status metadata stay outside the differentiable surface.
 
+## Scalarized Sum-Loss Rule
+
+For the scalar loss used by downstream gradient benchmarks,
+
+$$
+\phi_{\mathrm{lu}}(A) =
+\operatorname{Re}\left(\sum_{ij} L_{ij} + \sum_{ij} U_{ij}\right),
+$$
+
+set the raw output cotangents to
+
+$$
+\bar{L} = \mathbf{1}_L,
+\qquad
+\bar{U} = \mathbf{1}_U.
+$$
+
+The unit diagonal of $L$ is fixed metadata: the reverse rule below projects
+$L^\dagger \bar{L}$ with $\mathrm{tril}_-$, so diagonal cotangent entries do
+not contribute to $\bar{A}$.
+
+For a square LU factorization, the JVP of the scalarized loss is
+
+$$
+d\phi_{\mathrm{lu}}[\dot{A}]
+=
+\left\langle \mathbf{1}_L, \dot{L} \right\rangle_{\mathbb{R}}
++
+\left\langle \mathbf{1}_U, \dot{U} \right\rangle_{\mathbb{R}},
+$$
+
+where $(\dot{L}, \dot{U})$ are obtained from the LU linearization above. The
+corresponding VJP is the raw LU transpose specialized to all-ones cotangents:
+
+$$
+\bar{F}_{\mathrm{sum}} =
+\mathrm{tril}_-(L^\dagger \mathbf{1}_L)
++
+\mathrm{triu}(\mathbf{1}_U U^\dagger),
+$$
+
+$$
+\nabla_A \phi_{\mathrm{lu}}
+=
+P^T L^{-\dagger} \bar{F}_{\mathrm{sum}} U^{-\dagger}.
+$$
+
+Equivalently, compute two triangular solves:
+
+$$
+Y = L^{-\dagger}\bar{F}_{\mathrm{sum}},
+\qquad
+Z = Y U^{-\dagger},
+\qquad
+\nabla_A \phi_{\mathrm{lu}} = P^T Z.
+$$
+
+For wide and tall LU, use the wide/tall reverse formulas below with
+$\bar{L}=\mathbf{1}_L$ and $\bar{U}=\mathbf{1}_U$ after applying the same
+partitions to the all-ones cotangents.
+
 ## Forward Definition
 
 $$

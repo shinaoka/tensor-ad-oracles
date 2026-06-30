@@ -74,6 +74,66 @@ PyTorch uses the same full-rank versus wide-reduced case split in
 `linalg_qr_backward`. The transpose-dual LQ formulas are preserved later in
 this note.
 
+## Scalarized Sum-Loss Rule
+
+For the scalar loss used by downstream gradient benchmarks,
+
+$$
+\phi_{\mathrm{qr}}(A) =
+\operatorname{Re}\left(\sum_{ij} Q_{ij} + \sum_{ij} R_{ij}\right),
+$$
+
+set the raw output cotangents to
+
+$$
+\bar{Q} = \mathbf{1}_Q,
+\qquad
+\bar{R} = \mathbf{1}_R.
+$$
+
+The JVP of this scalarized loss is
+
+$$
+d\phi_{\mathrm{qr}}[\dot{A}]
+=
+\left\langle \mathbf{1}_Q, \dot{Q} \right\rangle_{\mathbb{R}}
++
+\left\langle \mathbf{1}_R, \dot{R} \right\rangle_{\mathbb{R}},
+$$
+
+where $(\dot{Q}, \dot{R})$ are obtained from the QR linearization above.
+
+For the full-rank reduced case $M \geq N$, the VJP is the raw QR transpose
+specialized to all-ones cotangents:
+
+$$
+W_{\mathrm{sum}} =
+R \mathbf{1}_R^\dagger - \mathbf{1}_Q^\dagger Q,
+$$
+
+$$
+H_{\mathrm{sum}} = \operatorname{copyltu}(W_{\mathrm{sum}}),
+$$
+
+$$
+\nabla_A \phi_{\mathrm{qr}}
+=
+\left(\mathbf{1}_Q + Q H_{\mathrm{sum}}\right) R^{-\dagger}.
+$$
+
+This is a right triangular solve with $R^\dagger$. For wide reduced QR
+($M < N$), use the wide reverse formula below with
+$\bar{Q}=\mathbf{1}_Q$ and $\bar{R}=\mathbf{1}_R$:
+
+$$
+\nabla_A \phi_{\mathrm{qr}}
+=
+Q \mathbf{1}_R + \pi^\*\!\left(
+Q \, \operatorname{trilImInvAdjSkew}(Q^\dagger \mathbf{1}_Q
+- \mathbf{1}_R R^\dagger)
+R_1^{-\dagger}\right).
+$$
+
 ## QR Forward Definition
 
 For

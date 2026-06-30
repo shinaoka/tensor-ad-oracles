@@ -211,6 +211,30 @@ class MathRegistryTests(unittest.TestCase):
         self.assertIn("Tall case", text)
         self.assertIn("triangular solves", text)
 
+    def test_repo_lu_note_defines_scalarized_sum_loss_rule(self) -> None:
+        text = (
+            Path(__file__).resolve().parents[1] / "docs" / "math" / "lu.md"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn("\\phi_{\\mathrm{lu}}", text)
+        self.assertIn("\\bar{L} = \\mathbf{1}_L", text)
+        self.assertIn("\\bar{U} = \\mathbf{1}_U", text)
+        self.assertIn("\\bar{F}_{\\mathrm{sum}}", text)
+        self.assertIn("P^T L^{-\\dagger} \\bar{F}_{\\mathrm{sum}} U^{-\\dagger}", text)
+        self.assertIn("Y = L^{-\\dagger}\\bar{F}_{\\mathrm{sum}}", text)
+
+    def test_repo_qr_note_defines_scalarized_sum_loss_rule(self) -> None:
+        text = (
+            Path(__file__).resolve().parents[1] / "docs" / "math" / "qr.md"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn("\\phi_{\\mathrm{qr}}", text)
+        self.assertIn("\\bar{Q} = \\mathbf{1}_Q", text)
+        self.assertIn("\\bar{R} = \\mathbf{1}_R", text)
+        self.assertIn("W_{\\mathrm{sum}}", text)
+        self.assertIn("H_{\\mathrm{sum}} = \\operatorname{copyltu}", text)
+        self.assertIn("\\mathbf{1}_Q + Q H_{\\mathrm{sum}}", text)
+
     def test_repo_lu_note_exposes_full_pivot_lu_family(self) -> None:
         text = (
             Path(__file__).resolve().parents[1] / "docs" / "math" / "lu.md"
