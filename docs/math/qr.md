@@ -74,6 +74,76 @@ PyTorch uses the same full-rank versus wide-reduced case split in
 `linalg_qr_backward`. The transpose-dual LQ formulas are preserved later in
 this note.
 
+## Scalarized Sum-Loss Rule
+
+For the scalar loss used by downstream gradient benchmarks,
+
+$$
+\phi_{\mathrm{qr}}(A) =
+\operatorname{Re}\left(\sum_{ij} Q_{ij} + \sum_{ij} R_{ij}\right),
+$$
+
+set the raw output cotangents to
+
+$$
+\bar{Q} = \mathbf{1}_Q,
+\qquad
+\bar{R} = \mathbf{1}_R.
+$$
+
+Here $\mathbf{1}_Q$ and $\mathbf{1}_R$ are all-ones matrices with the
+same shapes as $Q$ and $R$, respectively.
+
+The $R$ cotangent is intentionally not masked to the triangular support. In the
+full-rank case, leading strictly lower entries of $\mathbf{1}_R$ enter
+$R\mathbf{1}_R^\dagger$ only through the strictly upper part ignored by
+`copyltu`. In the wide case, those leading strictly lower entries contribute
+$Q\mathbf{1}_R$ through the direct path and cancel against the leading-block
+correction in the $\pi^\*$ term.
+
+The JVP of this scalarized loss is
+
+$$
+d\phi_{\mathrm{qr}}[dA]
+=
+\left\langle \mathbf{1}_Q, dQ \right\rangle_{\mathbb{R}}
++
+\left\langle \mathbf{1}_R, dR \right\rangle_{\mathbb{R}},
+$$
+
+where $(dQ, dR)$ are obtained from the QR linearization above.
+
+For the full-rank reduced case $M \geq N$, the VJP is the raw QR transpose
+specialized to all-ones cotangents:
+
+$$
+W_{\mathrm{sum}} =
+R \mathbf{1}_R^\dagger - \mathbf{1}_Q^\dagger Q,
+$$
+
+$$
+H_{\mathrm{sum}} = \operatorname{copyltu}(W_{\mathrm{sum}}),
+$$
+
+$$
+\nabla_A \phi_{\mathrm{qr}}
+=
+\left(\mathbf{1}_Q + Q H_{\mathrm{sum}}\right) R^{-\dagger}.
+$$
+
+This is a right triangular solve with $R^\dagger$. For wide reduced QR
+($M < N$), use the wide reverse formula below with
+$\bar{Q}=\mathbf{1}_Q$ and $\bar{R}=\mathbf{1}_R$:
+
+$$
+\nabla_A \phi_{\mathrm{qr}}
+=
+Q \mathbf{1}_R + \pi^\*\!\left(
+Q \, \operatorname{trilImInvAdjSkew}(Q^\dagger \mathbf{1}_Q
+- \mathbf{1}_R R^\dagger)
+R_1^{-\dagger}\right).
+$$
+
 ## QR Forward Definition
 
 For
