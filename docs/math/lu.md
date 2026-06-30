@@ -88,6 +88,9 @@ $$
 \bar{U} = \mathbf{1}_U.
 $$
 
+Here $\mathbf{1}_L$ and $\mathbf{1}_U$ are all-ones matrices with the
+same shapes as $L$ and $U$, respectively.
+
 The unit diagonal of $L$ is fixed metadata: the reverse rule below projects
 $L^\dagger \bar{L}$ with $\mathrm{tril}_-$, so diagonal cotangent entries do
 not contribute to $\bar{A}$.

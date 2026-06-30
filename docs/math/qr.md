@@ -91,17 +91,20 @@ $$
 \bar{R} = \mathbf{1}_R.
 $$
 
+Here $\mathbf{1}_Q$ and $\mathbf{1}_R$ are all-ones matrices with the
+same shapes as $Q$ and $R$, respectively.
+
 The JVP of this scalarized loss is
 
 $$
-d\phi_{\mathrm{qr}}[\dot{A}]
+d\phi_{\mathrm{qr}}[dA]
 =
-\left\langle \mathbf{1}_Q, \dot{Q} \right\rangle_{\mathbb{R}}
+\left\langle \mathbf{1}_Q, dQ \right\rangle_{\mathbb{R}}
 +
-\left\langle \mathbf{1}_R, \dot{R} \right\rangle_{\mathbb{R}},
+\left\langle \mathbf{1}_R, dR \right\rangle_{\mathbb{R}},
 $$
 
-where $(\dot{Q}, \dot{R})$ are obtained from the QR linearization above.
+where $(dQ, dR)$ are obtained from the QR linearization above.
 
 For the full-rank reduced case $M \geq N$, the VJP is the raw QR transpose
 specialized to all-ones cotangents:
