@@ -168,6 +168,65 @@ $$
 
 with the understanding that the skew-Hermitian gauge is projected away.
 
+## Eigenvalue-Sum Scalarization
+
+The `grad_sum_eigh_jvp` and `grad_sum_eigh_vjp` benchmark scalarization uses
+only the eigenvalue output. The SPD benchmark input is the real symmetric
+positive definite subcase of this Hermitian domain:
+
+$$
+\phi(A) = \sum_i E_i.
+$$
+
+For Hermitian inputs,
+
+$$
+\phi(A) = \operatorname{tr}(\operatorname{diag}(E))
+= \operatorname{tr}(A),
+$$
+
+so the scalarized JVP along a Hermitian tangent $\dot{A}$ is
+
+$$
+\dot{\phi}
+= \sum_i \dot{E}_i
+= \operatorname{tr}(U^\dagger \dot{A} U)
+= \operatorname{tr}(\dot{A}).
+$$
+
+Equivalently, substituting the raw linearization gives
+
+$$
+\dot{E} = \operatorname{diag}(U^\dagger \dot{A} U),
+\qquad
+\dot{\phi} = \mathbf{1}^\mathsf{T}\dot{E}.
+$$
+
+For the scalarized VJP with output cotangent $\bar{\phi}$, the raw output
+cotangents are
+
+$$
+\bar{E} = \bar{\phi}\,\mathbf{1},
+\qquad
+\bar{U} = 0.
+$$
+
+The eigenvector cotangent path therefore drops out, and the transpose reduces
+to the eigenvalue-only term
+
+$$
+\bar{A}
+= U \operatorname{diag}(\bar{E}) U^\dagger
+= \bar{\phi}\, U I U^\dagger
+= \bar{\phi}\, I.
+$$
+
+For real symmetric inputs this is the same formula with $U^\dagger = U^T$.
+For complex Hermitian inputs, the adjoint convention is essential: the fast
+eigenvalue-only path is $U \operatorname{diag}(\bar{E}) U^\dagger$, not
+$U \operatorname{diag}(\bar{E}) U^T$. The inverse-gap matrix $F$ and the
+eigenvector cotangent branch are not needed in this specialization.
+
 ## Verification
 
 ### Forward reconstruction
