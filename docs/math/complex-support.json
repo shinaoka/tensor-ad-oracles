@@ -821,6 +821,71 @@
       "unsupported_reason": null
     },
     {
+      "op": "incremental_householder_qr",
+      "family": "factor_qr",
+      "note": {
+        "path": "docs/math/qr.md",
+        "anchor": "family-incremental-householder-qr-factor",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "incremental_householder_qr",
+      "family": "append_qr",
+      "note": {
+        "path": "docs/math/qr.md",
+        "anchor": "family-incremental-householder-qr-append",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "incremental_householder_qr",
+      "family": "from_factors_qr",
+      "note": {
+        "path": "docs/math/qr.md",
+        "anchor": "family-incremental-householder-qr-from-factors",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "incremental_householder_qr",
+      "family": "selected_q_columns",
+      "note": {
+        "path": "docs/math/qr.md",
+        "anchor": "family-incremental-householder-qr-selected-q",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
+      "op": "incremental_householder_qr",
+      "family": "r",
+      "note": {
+        "path": "docs/math/qr.md",
+        "anchor": "family-incremental-householder-qr-r",
+        "status": "reviewed"
+      },
+      "db": {
+        "status": "covered"
+      },
+      "unsupported_reason": null
+    },
+    {
       "op": "inv",
       "family": "identity",
       "note": {

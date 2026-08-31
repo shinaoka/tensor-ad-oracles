@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Iterable
 
 from . import full_pivot_lu
+from . import incremental_householder_qr
 from . import structural
 from . import encoding
 from .fd import FD_POLICY_VERSION, compute_step
@@ -402,6 +403,23 @@ def _build_local_case_specs() -> tuple[CaseFamilySpec, ...]:
             hvp_enabled=True,
             inventory_kind="local_full_pivot_lu",
             supported_dtype_names=("float64", "complex128", "float32", "complex64"),
+        ),
+        *(
+            CaseFamilySpec(
+                op="incremental_householder_qr",
+                family=family,
+                observable_kind="identity",
+                expected_behavior="success",
+                source_file="generators/incremental_householder_qr.py",
+                source_function="observable",
+                source_repo="tensor-ad-oracles",
+                upstream_name=None,
+                upstream_variant_name="",
+                hvp_enabled=False,
+                inventory_kind="local_incremental_householder_qr",
+                supported_dtype_names=("float64", "complex128", "float32", "complex64"),
+            )
+            for family in incremental_householder_qr.FAMILIES
         ),
     )
 
@@ -1188,6 +1206,188 @@ def _generate_full_pivot_lu_records(
     return records
 
 
+def _generate_incremental_householder_qr_records(
+    spec: CaseFamilySpec,
+    *,
+    limit: int | None = None,
+    seed: int = 17,
+) -> list[dict]:
+    ensure_runtime_dependencies()
+    import torch
+
+    available_specs = incremental_householder_qr.sample_specs(spec.family)
+    sample_specs = available_specs if limit is None else available_specs[:limit]
+    records: list[dict] = []
+
+    for dtype_index, current_dtype_name in enumerate(spec.supported_dtype_names):
+        current_dtype = getattr(torch, current_dtype_name)
+        payloads: list[SuccessProbePayload] = []
+
+        for sample_index, sample_spec in enumerate(sample_specs):
+            case_seed = seed + dtype_index * 100 + sample_index
+            generator = torch.Generator(device="cpu")
+            generator.manual_seed(case_seed)
+            inputs = {
+                name: value.requires_grad_(True)
+                for name, value in incremental_householder_qr.make_inputs(
+                    torch,
+                    family=spec.family,
+                    dtype=current_dtype,
+                    sample_spec=sample_spec,
+                ).items()
+            }
+            op_kwargs = incremental_householder_qr.metadata(
+                family=spec.family,
+                sample_spec=sample_spec,
+            )
+            output = incremental_householder_qr.observable(
+                torch,
+                family=spec.family,
+                inputs=inputs,
+                op_kwargs=op_kwargs,
+            )
+            input_names = tuple(inputs)
+            output_names = tuple(output)
+            raw_direction = {
+                name: randn_like(torch, tensor, generator=generator)
+                for name, tensor in inputs.items()
+            }
+            direction = normalize_raw_tensor_map(
+                torch,
+                incremental_householder_qr.project_direction(
+                    torch,
+                    family=spec.family,
+                    direction=raw_direction,
+                ),
+            )
+            cotangent = normalize_raw_tensor_map(
+                torch,
+                {
+                    name: randn_like(torch, tensor, generator=generator)
+                    for name, tensor in output.items()
+                },
+            )
+
+            def observable_fn(*input_values):
+                return incremental_householder_qr.observable_tuple(
+                    torch,
+                    family=spec.family,
+                    input_names=input_names,
+                    input_values=input_values,
+                    op_kwargs=op_kwargs,
+                )
+
+            primals = tensor_map_to_tuple(inputs)
+            _, jvp_tuple = torch.func.jvp(
+                observable_fn,
+                primals,
+                tensor_map_to_tuple(direction),
+            )
+            pytorch_jvp = tuple_to_tensor_map(output_names, jvp_tuple)
+            grads = torch.autograd.grad(
+                tensor_map_to_tuple(output),
+                primals,
+                grad_outputs=tensor_map_to_tuple(cotangent),
+                allow_unused=True,
+            )
+            pytorch_vjp = zeros_like_input_map(torch, inputs, grads)
+
+            fd_step = compute_step(
+                dtype_name(torch, current_dtype),
+                input_norm=combined_input_norm(torch, inputs),
+            )
+            plus_output = incremental_householder_qr.observable(
+                torch,
+                family=spec.family,
+                inputs={
+                    name: value + fd_step * direction[name]
+                    for name, value in inputs.items()
+                },
+                op_kwargs=op_kwargs,
+            )
+            minus_output = incremental_householder_qr.observable(
+                torch,
+                family=spec.family,
+                inputs={
+                    name: value - fd_step * direction[name]
+                    for name, value in inputs.items()
+                },
+                op_kwargs=op_kwargs,
+            )
+            fd_jvp = {
+                name: (plus_output[name] - minus_output[name]) / (2.0 * fd_step)
+                for name in output_names
+            }
+
+            jvp_abs = max_abs_diff(torch, pytorch_jvp, fd_jvp)
+            jvp_rel = max_rel_diff(torch, pytorch_jvp, fd_jvp)
+            lhs = tensor_map_inner_product(torch, cotangent, fd_jvp)
+            rhs = tensor_map_inner_product(torch, pytorch_vjp, direction)
+            adj_abs, adj_rel = scalar_residual(torch, lhs, rhs)
+            payloads.append(
+                SuccessProbePayload(
+                    case_seed=case_seed,
+                    dtype_name=current_dtype_name,
+                    op_args=[],
+                    op_kwargs=op_kwargs,
+                    inputs=inputs,
+                    direction=direction,
+                    cotangent=cotangent,
+                    pytorch_jvp=pytorch_jvp,
+                    pytorch_vjp=pytorch_vjp,
+                    pytorch_hvp=None,
+                    fd_step=fd_step,
+                    fd_jvp=fd_jvp,
+                    fd_hvp=None,
+                    first_order_max_rel_residual=max(jvp_rel, adj_rel),
+                    first_order_max_abs_residual=max(jvp_abs, adj_abs),
+                    second_order_max_rel_residual=0.0,
+                    second_order_max_abs_residual=0.0,
+                )
+            )
+
+        comparison = _measured_comparison(payloads)
+        for index, payload in enumerate(payloads, start=1):
+            _validate_success_probe(
+                torch,
+                comparison=comparison,
+                direction=payload.direction,
+                cotangent=payload.cotangent,
+                pytorch_jvp=payload.pytorch_jvp,
+                pytorch_vjp=payload.pytorch_vjp,
+                fd_jvp=payload.fd_jvp,
+            )
+            provenance = build_provenance(
+                spec,
+                source_commit="local-incremental-householder-qr-v1",
+                seed=payload.case_seed,
+                torch_version=normalize_torch_version(torch.__version__),
+                comment=(
+                    "local canonical reduced-QR reference with full-rank deterministic inputs"
+                ),
+            )
+            records.append(
+                materialize_success_case(
+                    spec,
+                    case_id=_case_id(spec, dtype=payload.dtype_name, index=index),
+                    dtype=payload.dtype_name,
+                    raw_inputs=payload.inputs,
+                    op_kwargs=payload.op_kwargs,
+                    comparison=comparison,
+                    probe_id="p0",
+                    raw_direction=payload.direction,
+                    raw_cotangent=payload.cotangent,
+                    raw_pytorch_jvp=payload.pytorch_jvp,
+                    raw_pytorch_vjp=payload.pytorch_vjp,
+                    fd_step=payload.fd_step,
+                    raw_fd_jvp=payload.fd_jvp,
+                    provenance=provenance,
+                )
+            )
+
+    return records
+
+
 def _generate_structural_records(
     spec: CaseFamilySpec,
     *,
@@ -1481,6 +1681,8 @@ def materialize_case_family(
         records = _generate_structural_records(spec, limit=limit)
     elif spec.inventory_kind == "local_full_pivot_lu":
         records = _generate_full_pivot_lu_records(spec, limit=limit)
+    elif spec.inventory_kind == "local_incremental_householder_qr":
+        records = _generate_incremental_householder_qr_records(spec, limit=limit)
     elif spec.expected_behavior == "success":
         records = _generate_success_records(spec, limit=limit)
     else:

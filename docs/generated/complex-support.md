@@ -4,8 +4,8 @@ Generated from the checked-in complex-support ledger and the published `cases/` 
 
 ## Summary
 
-- Total tracked families: 182
-- Ready for downstream: 109
+- Total tracked families: 187
+- Ready for downstream: 114
 - Unsupported: 73
 - Pending note review: 0
 - Pending DB coverage: 0
@@ -77,6 +77,11 @@ Generated from the checked-in complex-support ledger and the published `cases/` 
 | hypot | identity | not_required | unsupported | - | float-only in pinned PyTorch upstream AD coverage | no |
 | i0 | identity | not_required | unsupported | - | float-only in pinned PyTorch upstream AD coverage | no |
 | imag | identity | reviewed | covered | complex128, complex64 | - | yes |
+| incremental_householder_qr | append_qr | reviewed | covered | complex128, complex64 | - | yes |
+| incremental_householder_qr | factor_qr | reviewed | covered | complex128, complex64 | - | yes |
+| incremental_householder_qr | from_factors_qr | reviewed | covered | complex128, complex64 | - | yes |
+| incremental_householder_qr | r | reviewed | covered | complex128, complex64 | - | yes |
+| incremental_householder_qr | selected_q_columns | reviewed | covered | complex128, complex64 | - | yes |
 | inv | identity | reviewed | covered | complex128, complex64 | - | yes |
 | inv_ex | identity | not_required | covered | complex128, complex64 | - | yes |
 | ldexp | identity | reviewed | covered | complex128, complex64 | - | yes |
@@ -243,6 +248,11 @@ Generated from the checked-in complex-support ledger and the published `cases/` 
 | full_pivot_lu | identity | reviewed | covered | complex128, complex64 | - | yes |
 | householder_product | identity | reviewed | covered | complex128, complex64 | - | yes |
 | imag | identity | reviewed | covered | complex128, complex64 | - | yes |
+| incremental_householder_qr | append_qr | reviewed | covered | complex128, complex64 | - | yes |
+| incremental_householder_qr | factor_qr | reviewed | covered | complex128, complex64 | - | yes |
+| incremental_householder_qr | from_factors_qr | reviewed | covered | complex128, complex64 | - | yes |
+| incremental_householder_qr | r | reviewed | covered | complex128, complex64 | - | yes |
+| incremental_householder_qr | selected_q_columns | reviewed | covered | complex128, complex64 | - | yes |
 | inv | identity | reviewed | covered | complex128, complex64 | - | yes |
 | inv_ex | identity | not_required | covered | complex128, complex64 | - | yes |
 | ldexp | identity | reviewed | covered | complex128, complex64 | - | yes |
