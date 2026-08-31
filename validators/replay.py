@@ -6,7 +6,7 @@ import math
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from generators import full_pivot_lu, structural
+from generators import full_pivot_lu, incremental_householder_qr, structural
 from generators.pytorch_v1 import build_case_spec_index
 from generators import runtime_jax
 from generators.runtime import (
@@ -688,6 +688,107 @@ def _replay_full_pivot_lu_success_case(
     )
 
 
+def _replay_incremental_householder_qr_success_case(
+    torch,
+    *,
+    record: dict,
+    inputs: dict[str, object],
+    direction: dict[str, object],
+    cotangent: dict[str, object],
+    stored_pytorch_jvp: dict[str, object],
+    stored_pytorch_vjp: dict[str, object],
+    stored_pytorch_hvp: dict[str, object] | None,
+    stored_fd_jvp: dict[str, object],
+    fd_step: float,
+    stored_fd_hvp: dict[str, object] | None,
+) -> None:
+    if stored_pytorch_hvp is not None or stored_fd_hvp is not None:
+        raise ValueError("incremental Householder QR v1 cases do not contain HVP probes")
+
+    family = record["family"]
+    op_kwargs = dict(record.get("op_kwargs", {}))
+    output = incremental_householder_qr.observable(
+        torch,
+        family=family,
+        inputs=inputs,
+        op_kwargs=op_kwargs,
+    )
+    input_names = tuple(inputs)
+    output_names = tuple(output)
+
+    def observable_fn(*input_values):
+        return incremental_householder_qr.observable_tuple(
+            torch,
+            family=family,
+            input_names=input_names,
+            input_values=input_values,
+            op_kwargs=op_kwargs,
+        )
+
+    primals = tensor_map_to_tuple(inputs)
+    _, jvp_tuple = torch.func.jvp(
+        observable_fn,
+        primals,
+        tensor_map_to_tuple(direction),
+    )
+    pytorch_jvp = tuple_to_tensor_map(output_names, jvp_tuple)
+    grads = torch.autograd.grad(
+        tensor_map_to_tuple(output),
+        primals,
+        grad_outputs=tensor_map_to_tuple(cotangent),
+        allow_unused=True,
+    )
+    pytorch_vjp = zeros_like_input_map(torch, inputs, grads)
+    plus_output = incremental_householder_qr.observable(
+        torch,
+        family=family,
+        inputs={
+            name: value + fd_step * direction[name]
+            for name, value in inputs.items()
+        },
+        op_kwargs=op_kwargs,
+    )
+    minus_output = incremental_householder_qr.observable(
+        torch,
+        family=family,
+        inputs={
+            name: value - fd_step * direction[name]
+            for name, value in inputs.items()
+        },
+        op_kwargs=op_kwargs,
+    )
+    fd_jvp = {
+        name: (plus_output[name] - minus_output[name]) / (2.0 * fd_step)
+        for name in output_names
+    }
+
+    first_order = _first_order_comparison(record["comparison"])
+    references = (
+        ("PyTorch JVP", stored_pytorch_jvp, pytorch_jvp),
+        ("PyTorch VJP", stored_pytorch_vjp, pytorch_vjp),
+        ("FD-JVP", stored_fd_jvp, fd_jvp),
+    )
+    for label, stored, replayed in references:
+        if not map_allclose(
+            torch,
+            stored,
+            replayed,
+            rtol=first_order["rtol"],
+            atol=first_order["atol"],
+        ):
+            raise ValueError(f"stored and replayed {label} disagree")
+
+    validate_live_success_probe(
+        torch,
+        comparison=record["comparison"],
+        direction=direction,
+        cotangent=cotangent,
+        pytorch_jvp=pytorch_jvp,
+        pytorch_vjp=pytorch_vjp,
+        fd_jvp=fd_jvp,
+    )
+
+
 def _replay_structural_success_case(
     torch,
     *,
@@ -917,6 +1018,21 @@ def _replay_success_case(
         return
     if getattr(spec, "inventory_kind", "linalg") == "local_full_pivot_lu":
         _replay_full_pivot_lu_success_case(
+            torch,
+            record=record,
+            inputs=inputs,
+            direction=direction,
+            cotangent=cotangent,
+            stored_pytorch_jvp=stored_pytorch_jvp,
+            stored_pytorch_vjp=stored_pytorch_vjp,
+            stored_pytorch_hvp=stored_pytorch_hvp,
+            stored_fd_jvp=stored_fd_jvp,
+            fd_step=fd_step,
+            stored_fd_hvp=stored_fd_hvp,
+        )
+        return
+    if getattr(spec, "inventory_kind", "linalg") == "local_incremental_householder_qr":
+        _replay_incremental_householder_qr_success_case(
             torch,
             record=record,
             inputs=inputs,

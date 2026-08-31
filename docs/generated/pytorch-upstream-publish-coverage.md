@@ -9,7 +9,7 @@ and the checked-in `cases/` tree.
 - AD-relevant scalar upstream variants: 138
 - Mapped publishable success families: 174
 - Explicit publishable error families: 2
-- Total tracked DB families: 182
+- Total tracked DB families: 187
 
 ## Publishable Family Coverage
 
@@ -81,6 +81,11 @@ publishable upstream coverage that is not yet materialized in this repository.
 | hypot | identity | success | float64, float32 | float64, float32 | - |
 | i0 | identity | success | float64, float32 | float64, float32 | - |
 | imag | identity | success | complex128, complex64 | complex128, complex64 | - |
+| incremental_householder_qr | append_qr | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
+| incremental_householder_qr | factor_qr | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
+| incremental_householder_qr | from_factors_qr | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
+| incremental_householder_qr | r | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
+| incremental_householder_qr | selected_q_columns | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | inv | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | inv_ex | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
 | ldexp | identity | success | float64, complex128, float32, complex64 | float64, complex128, float32, complex64 | - |
